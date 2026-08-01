@@ -1,5 +1,7 @@
 # TabelaFin
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/ianptkcs)
+
 App de finanças pessoais que puxa sozinho os dados do Nubank (conta + cartão)
 e da XP (conta digital + investimentos) via Open Finance, categoriza gastos
 com IA e gera um relatório mensal de onde dá pra melhorar — sem lançamento
@@ -71,6 +73,17 @@ Copie `.env.example` pra `.dev.vars` e preencha as variáveis antes de rodar:
 `VAPID_PRIVATE_KEY` pro push do relatório mensal (o `.env.example` tem o
 comando pra gerar cada par de chaves). `OWNER_EMAIL` (não é segredo) já está
 em `wrangler.jsonc` com um placeholder — troque pelo seu e-mail real.
+
+## Apoie o projeto
+
+- **Global**: [ko-fi.com/ianptkcs](https://ko-fi.com/ianptkcs)
+- **Brasil (Pix)**: escaneie o QR abaixo ou copie o código
+
+  ![Pix QR](pix-qr.png)
+
+  ```
+  00020126580014BR.GOV.BCB.PIX01365ad933b0-dcdc-4525-a736-0759902aeec65204000053039865802BR5925Ian Patrick da Costa Soar6009SAO PAULO62140510tQA85x6Dov63041FB6
+  ```
 
 ## Licença
 
