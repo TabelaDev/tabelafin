@@ -113,6 +113,23 @@ export async function getUncategorizedTransactions(db: Db, userId: string) {
 		);
 }
 
+// Transações de um usuário num intervalo [from, to) — usado pelo relatório
+// mensal (server/reports/generate.ts). `to` é exclusivo de propósito (ver
+// chamador: passa o primeiro dia do mês seguinte).
+export async function getTransactionsInRange(db: Db, userId: string, from: Date, to: Date) {
+	return db
+		.select()
+		.from(transactions)
+		.where(
+			and(
+				eq(transactions.userId, userId),
+				isNull(transactions.supersededByTransactionId),
+				gte(transactions.date, from),
+				lte(transactions.date, new Date(to.getTime() - 1))
+			)
+		);
+}
+
 // `category_source='user'` nunca é sobrescrito por uma rodada de
 // categorização em lote — só atualiza linhas ainda sem categoria manual.
 export async function updateTransactionCategory(

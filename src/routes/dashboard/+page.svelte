@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
+	import PushSubscribe from '$lib/PushSubscribe.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -18,9 +19,12 @@
 <div class="mx-auto flex min-h-svh max-w-2xl flex-col gap-6 p-6">
 	<header class="flex items-center justify-between">
 		<h1 class="text-xl font-semibold">TabelaFin</h1>
-		<form method="POST" action="/logout">
-			<Button type="submit" variant="ghost" size="sm">Sair</Button>
-		</form>
+		<div class="flex items-center gap-2">
+			<PushSubscribe vapidPublicKey={data.vapidPublicKey} />
+			<form method="POST" action="/logout">
+				<Button type="submit" variant="ghost" size="sm">Sair</Button>
+			</form>
+		</div>
 	</header>
 
 	<Card.Root>
@@ -39,8 +43,8 @@
 		<Card.Content>
 			{#if data.accounts.length === 0}
 				<p class="text-sm text-muted-foreground">
-					Nenhuma conta sincronizada ainda — o sync automático via Pluggy ainda está em
-					desenvolvimento.
+					Nenhuma conta sincronizada ainda — o sync diário via Pluggy roda de madrugada; a primeira
+					sincronização pode levar até 24h depois de conectar.
 				</p>
 			{:else}
 				<ul class="flex flex-col gap-2">
@@ -77,4 +81,23 @@
 			{/if}
 		</Card.Content>
 	</Card.Root>
+
+	{#if data.latestReport}
+		<Card.Root>
+			<Card.Header>
+				<Card.Title>Relatório de {data.latestReport.yearMonth}</Card.Title>
+			</Card.Header>
+			<Card.Content class="flex flex-col gap-3">
+				<p class="text-sm">{data.latestReport.summary.narrative}</p>
+				<ul class="flex flex-col gap-1 text-sm">
+					{#each Object.entries(data.latestReport.summary.categoryTotals) as [category, amount] (category)}
+						<li class="flex justify-between">
+							<span>{category}</span>
+							<span>{currencyFormatter.format(amount)}</span>
+						</li>
+					{/each}
+				</ul>
+			</Card.Content>
+		</Card.Root>
+	{/if}
 </div>

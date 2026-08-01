@@ -13,3 +13,7 @@ export async function createUser(db: Db, email: string, timezone: string) {
 	const [created] = await db.insert(users).values({ email, timezone }).returning();
 	return created;
 }
+
+export async function getAllUsers(db: Db) {
+	return db.select().from(users);
+}

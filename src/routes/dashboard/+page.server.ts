@@ -4,7 +4,9 @@ import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
+import { getLatestMonthlyReport } from '$lib/server/db/monthly-reports';
 import { accounts, transactions } from '$lib/server/db/schema';
+import type { ReportSummary } from '$lib/server/reports/generate';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -30,10 +32,19 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.orderBy(desc(transactions.date))
 		.limit(10);
 
+	const latestReport = await getLatestMonthlyReport(db, locals.userId);
+
 	return {
 		aiProvider: aiCredentials.provider,
 		aiModel: aiCredentials.model,
 		accounts: userAccounts,
-		recentTransactions
+		recentTransactions,
+		vapidPublicKey: platform!.env.VAPID_PUBLIC_KEY,
+		latestReport: latestReport
+			? {
+					yearMonth: latestReport.yearMonth,
+					summary: JSON.parse(latestReport.summaryJson) as ReportSummary
+				}
+			: null
 	};
 };
