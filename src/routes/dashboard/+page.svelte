@@ -66,7 +66,10 @@
 				<ul class="flex flex-col gap-2">
 					{#each data.recentTransactions as tx (tx.id)}
 						<li class="flex justify-between text-sm">
-							<span>{tx.description}</span>
+							<span class="flex flex-col">
+								{tx.description}
+								<span class="text-xs text-muted-foreground">{tx.category ?? 'Sem categoria'}</span>
+							</span>
 							<span>{currencyFormatter.format(tx.amount)}</span>
 						</li>
 					{/each}

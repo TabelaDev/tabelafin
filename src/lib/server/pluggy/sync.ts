@@ -1,20 +1,24 @@
 // Sync diário via cron (ESCOPO.md §3.2): puxa accounts/transactions/investments
-// da Pluggy pra cada pluggy_item de cada usuário e roda o dedupe (§5). A
-// categorização em lote (IA) NÃO acontece aqui — ver TODO pontual abaixo,
-// é um pedaço separado, ainda não construído.
+// da Pluggy pra cada pluggy_item de cada usuário, roda o dedupe (§5) e dispara
+// a categorização em lote via IA (§3.3) uma vez por usuário no final.
 import { getDb } from '$lib/server/db';
 import { decryptSecret } from '$lib/server/crypto';
+import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { getAllPluggyItems, updateLastSyncedAt } from '$lib/server/db/pluggy-items';
 import { upsertAccount } from '$lib/server/db/accounts';
 import {
 	findSupersedeCandidate,
 	getTransactionByPluggyId,
+	getUncategorizedTransactions,
 	insertPluggyTransaction,
-	markSuperseded
+	markSuperseded,
+	updateTransactionCategory
 } from '$lib/server/db/transactions';
 import { getApiKey, fetchAccounts, fetchInvestments, fetchTransactions } from './client';
 import { computeDedupeHash } from './dedupe';
+import { categorizeTransactions } from '$lib/server/ai/categorize';
+import type { AiProvider } from '$lib/ai-providers';
 
 type Db = ReturnType<typeof getDb>;
 type PluggyItemRow = Awaited<ReturnType<typeof getAllPluggyItems>>[number];
@@ -30,48 +34,100 @@ export async function syncAllUsers(env: Env): Promise<void> {
 	const db = getDb(env.DB);
 	const items = await getAllPluggyItems(db);
 
-	// Reusa 1 apiKey por usuário dentro desta rodada — Client ID/Secret é por
-	// usuário (ESCOPO.md §2.3), não por item, então não faz sentido autenticar
-	// de novo pra cada pluggy_item do mesmo usuário.
-	const apiKeyByUser = new Map<string, string>();
-
+	// Agrupa por usuário: Client ID/Secret é por usuário (ESCOPO.md §2.3), não
+	// por item, e a categorização em lote (§3.3) precisa rodar 1x por usuário
+	// no final do sync — nunca por item nem por transação.
+	const itemsByUser = new Map<string, PluggyItemRow[]>();
 	for (const item of items) {
+		const list = itemsByUser.get(item.userId) ?? [];
+		list.push(item);
+		itemsByUser.set(item.userId, list);
+	}
+
+	for (const [userId, userItems] of itemsByUser) {
 		try {
-			let apiKey = apiKeyByUser.get(item.userId);
-			if (!apiKey) {
-				const credentials = await getPluggyCredentials(db, item.userId);
-				if (!credentials) {
-					console.error('[pluggy/sync] usuário sem pluggy_credentials salvas, pulando item', {
+			const credentials = await getPluggyCredentials(db, userId);
+			if (!credentials) {
+				console.error('[pluggy/sync] usuário sem pluggy_credentials salvas, pulando', { userId });
+				continue;
+			}
+			const clientId = await decryptSecret(env.MASTER_KEY, {
+				ciphertext: credentials.clientIdEncrypted,
+				nonce: credentials.clientIdNonce
+			});
+			const clientSecret = await decryptSecret(env.MASTER_KEY, {
+				ciphertext: credentials.clientSecretEncrypted,
+				nonce: credentials.clientSecretNonce
+			});
+			const apiKey = await getApiKey(clientId, clientSecret);
+
+			for (const item of userItems) {
+				try {
+					await syncItem(db, apiKey, item);
+					await updateLastSyncedAt(db, item.id, new Date());
+				} catch (err) {
+					// Um item com credencial bancária expirada/erro de login não pode
+					// travar o sync dos outros items do mesmo usuário nem dos outros
+					// usuários — nunca logar clientSecret/apiKey decifrados, só o
+					// suficiente pra debugar.
+					console.error('[pluggy/sync] falha ao sincronizar item', {
 						userId: item.userId,
-						itemId: item.id
+						itemId: item.id,
+						pluggyItemId: item.pluggyItemId,
+						error: err instanceof Error ? err.message : String(err)
 					});
-					continue;
 				}
-				const clientId = await decryptSecret(env.MASTER_KEY, {
-					ciphertext: credentials.clientIdEncrypted,
-					nonce: credentials.clientIdNonce
-				});
-				const clientSecret = await decryptSecret(env.MASTER_KEY, {
-					ciphertext: credentials.clientSecretEncrypted,
-					nonce: credentials.clientSecretNonce
-				});
-				apiKey = await getApiKey(clientId, clientSecret);
-				apiKeyByUser.set(item.userId, apiKey);
 			}
 
-			await syncItem(db, apiKey, item);
-			await updateLastSyncedAt(db, item.id, new Date());
+			await categorizeNewTransactions(db, env.MASTER_KEY, userId);
 		} catch (err) {
-			// Um item com credencial expirada/erro de login não pode travar o
-			// sync dos outros usuários/items — nunca logar clientSecret/apiKey
-			// decifrados, só o suficiente pra debugar (userId/itemId/mensagem).
-			console.error('[pluggy/sync] falha ao sincronizar item', {
-				userId: item.userId,
-				itemId: item.id,
-				pluggyItemId: item.pluggyItemId,
+			console.error('[pluggy/sync] falha ao sincronizar usuário', {
+				userId,
 				error: err instanceof Error ? err.message : String(err)
 			});
 		}
+	}
+}
+
+// Uma chamada de IA em lote por usuário por rodada de sync (ESCOPO.md §3.3),
+// cobrindo todas as transações ainda sem categoria — nunca uma chamada por
+// transação. Se o usuário não tiver ai_credentials configurado ainda (só
+// completou o onboarding de Pluggy, não o de IA — improvável já que a ordem
+// do onboarding exige IA primeiro, mas o sync roda independente da sessão web
+// e não pode assumir isso), as transações ficam sem categoria até a próxima
+// rodada em vez de travar o sync.
+async function categorizeNewTransactions(db: Db, masterKey: string, userId: string): Promise<void> {
+	const pending = await getUncategorizedTransactions(db, userId);
+	if (pending.length === 0) return;
+
+	const aiCredentials = await getAiCredentials(db, userId);
+	if (!aiCredentials) {
+		console.error('[pluggy/sync] usuário sem ai_credentials, transações ficam sem categoria', {
+			userId,
+			pendingCount: pending.length
+		});
+		return;
+	}
+
+	const apiKey = await decryptSecret(masterKey, {
+		ciphertext: aiCredentials.keyEncrypted,
+		nonce: aiCredentials.nonce
+	});
+
+	const results = await categorizeTransactions({
+		provider: aiCredentials.provider as AiProvider,
+		model: aiCredentials.model,
+		apiKey,
+		transactions: pending.map((t) => ({
+			id: t.id,
+			description: t.description,
+			amount: t.amount,
+			date: t.date.toISOString().slice(0, 10)
+		}))
+	});
+
+	for (const result of results) {
+		await updateTransactionCategory(db, result.id, result.category);
 	}
 }
 

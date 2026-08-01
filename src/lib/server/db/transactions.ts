@@ -1,6 +1,7 @@
 import { and, eq, gte, isNull, lte, or } from 'drizzle-orm';
 import type { getDb } from './index';
 import { transactions } from './schema';
+import type { TransactionCategory } from '$lib/categories';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -39,8 +40,9 @@ export async function insertPluggyTransaction(db: Db, input: NewPluggyTransactio
 			amount: input.amount,
 			currency: input.currency,
 			source: 'pluggy',
-			// TODO: categorização em lote via IA ainda não implementada — fica
-			// null até o batch de categorização (fora de escopo desta tarefa).
+			// Categorizada depois, em lote, no final do sync (ver
+			// categorizeNewTransactions em server/pluggy/sync.ts) — nunca aqui,
+			// transação por transação.
 			category: null,
 			categorySource: null,
 			dedupeHash: input.dedupeHash
@@ -93,4 +95,38 @@ export async function markSuperseded(
 		.update(transactions)
 		.set({ supersededByTransactionId: newTransactionId })
 		.where(eq(transactions.id, oldTransactionId));
+}
+
+// Transações prontas pra entrar num lote de categorização (ESCOPO.md §3.3):
+// sem categoria ainda e não superadas (uma linha de PDF substituída nunca
+// precisa de categoria própria, ela some das telas mesmo assim).
+export async function getUncategorizedTransactions(db: Db, userId: string) {
+	return db
+		.select()
+		.from(transactions)
+		.where(
+			and(
+				eq(transactions.userId, userId),
+				isNull(transactions.category),
+				isNull(transactions.supersededByTransactionId)
+			)
+		);
+}
+
+// `category_source='user'` nunca é sobrescrito por uma rodada de
+// categorização em lote — só atualiza linhas ainda sem categoria manual.
+export async function updateTransactionCategory(
+	db: Db,
+	transactionId: string,
+	category: TransactionCategory
+): Promise<void> {
+	await db
+		.update(transactions)
+		.set({ category, categorySource: 'ai' })
+		.where(
+			and(
+				eq(transactions.id, transactionId),
+				or(isNull(transactions.categorySource), eq(transactions.categorySource, 'ai'))
+			)
+		);
 }
