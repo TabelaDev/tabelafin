@@ -1,0 +1,38 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "tabelafin",
+	"compatibility_date": "2026-08-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"main": "worker/entry.js",
+	"alias": { "$lib": "./src/lib" },
+	"assets": { "binding": "ASSETS", "directory": ".svelte-kit/cloudflare" },
+	"workers_dev": true,
+	"preview_urls": true,
+	"vars": {
+		"ORIGIN": "https://tabelafin.ianptkcs-023.workers.dev",
+		// TODO(cloudflare-resources): gerar par VAPID novo (ver .env.example) e
+		// substituir estes placeholders antes do primeiro deploy — não
+		// reaproveitar as chaves do TabelaCal.
+		"VAPID_PUBLIC_KEY": "REPLACE_ME_VAPID_PUBLIC_KEY",
+		"VAPID_SUBJECT": "https://tabelafin.ianptkcs-023.workers.dev"
+	},
+	// Cron diário (sync Pluggy: accounts/transactions/investments) + cron
+	// mensal (dia 1, relatório do mês anterior + push) — ver ESCOPO.md §3.2/§3.6.
+	// O handler `scheduled` em worker/entry.js distingue os dois por `event.cron`.
+	"triggers": { "crons": ["0 6 * * *", "0 7 1 * *"] },
+	"d1_databases": [
+		// TODO(cloudflare-resources): rodar `wrangler d1 create tabelafin-db` e
+		// colar o database_id real aqui antes de aplicar migrations/deployar.
+		{
+			"binding": "DB",
+			"database_name": "tabelafin-db",
+			"database_id": "REPLACE_ME_D1_DATABASE_ID",
+			"migrations_dir": "drizzle"
+		}
+	],
+	"kv_namespaces": [
+		// TODO(cloudflare-resources): rodar `wrangler kv namespace create SESSIONS`
+		// e colar o id real aqui.
+		{ "binding": "SESSIONS", "id": "REPLACE_ME_KV_NAMESPACE_ID" }
+	]
+}
