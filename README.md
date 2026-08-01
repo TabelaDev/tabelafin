@@ -14,9 +14,10 @@ manual.
 3. As transações novas são categorizadas em lote pela sua própria IA (BYOK).
 4. No dia 1 de cada mês, um relatório do mês anterior é gerado e você recebe
    um push avisando que está pronto.
-5. Upload de PDF de fatura/extrato existe como fallback manual — o arquivo é
-   enviado direto pro modelo de IA escolhido (document understanding), sem
-   lib de parsing.
+5. Upload de PDF de fatura/extrato existe como fallback manual (ainda não
+   implementado, ver "Status de implementação" no `ESCOPO.md`) — o arquivo
+   será enviado direto pro modelo de IA escolhido (document understanding),
+   sem lib de parsing.
 
 Também funciona como PWA: você pode "instalar" no celular ou no desktop e usar
 como um app nativo, com atualização automática.
@@ -32,7 +33,14 @@ dobro:
   [Meu Pluggy](https://www.pluggy.ai/meu-pluggy) (gratuito pra uso pessoal),
   em vez do TabelaFin manter uma conta Pluggy comercial paga compartilhada.
 
-Ver `ESCOPO.md` pra decisões de produto com mais detalhe.
+Ver `ESCOPO.md` pra decisões de produto com mais detalhe — incluindo a seção
+"Status de implementação", que lista o que já está pronto, o que falta
+(hoje: só o upload de PDF) e os pontos marcados `TODO(pluggy-verify)` pra
+conferir antes de testar com uma conta Meu Pluggy real.
+
+Login (só pra você, sem cadastro de outros usuários por enquanto) é feito
+por token compartilhado, não por OAuth do Google — o TabelaFin não usa
+nenhuma API do Google, diferente do TabelaCal. Ver `src/lib/server/auth.ts`.
 
 ## Rodando localmente
 
@@ -58,9 +66,11 @@ bun run build   # build de produção (worker + PWA assets)
 ```
 
 Copie `.env.example` pra `.dev.vars` e preencha as variáveis antes de rodar:
-`MASTER_KEY` pra criptografia das credenciais dos usuários, e
+`MASTER_KEY` pra criptografia das credenciais dos usuários, `LOGIN_TOKEN`
+(o "app password" pra entrar, ver `src/lib/server/auth.ts`) e
 `VAPID_PRIVATE_KEY` pro push do relatório mensal (o `.env.example` tem o
-comando pra gerar um par de chaves novo).
+comando pra gerar cada par de chaves). `OWNER_EMAIL` (não é segredo) já está
+em `wrangler.jsonc` com um placeholder — troque pelo seu e-mail real.
 
 ## Licença
 

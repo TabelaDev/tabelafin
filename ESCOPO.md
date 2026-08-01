@@ -7,6 +7,70 @@
 > próprias credenciais (IA + Open Finance). Upload de PDF de fatura/extrato
 > existe só como fallback manual, não como fluxo principal.
 
+## Status de implementação (2026-08-01)
+
+O scaffold e a maior parte do MVP (seção 4) já foram implementados — 7
+commits locais na `main`, ainda **não pushados** pro GitHub. Resumo pra
+continuar em outra sessão:
+
+### ✅ Implementado e validado (`bun run check/lint/test/build` passam)
+
+- Scaffold SvelteKit + Cloudflare Workers (adapter, PWA, worker com cron),
+  Drizzle/D1 com o schema completo da seção 5.
+- **Login**: como o TabelaFin não usa nenhuma API do Google, o login **não**
+  é OAuth (diferente do TabelaCal) — é um token compartilhado (`LOGIN_TOKEN`
+  secret) que autentica um único usuário fixo (`OWNER_EMAIL`). Decisão nova,
+  não estava documentada neste ESCOPO originalmente — pragmática porque o app
+  é de uso pessoal único por enquanto (ver "Fora de escopo" abaixo). Ver
+  `src/lib/server/auth.ts`, `src/routes/login/`.
+- **Onboarding de IA** (`src/routes/onboarding/ai/`): form real, grava
+  `ai_credentials` cifrado.
+- **Onboarding de Open Finance** (`src/routes/onboarding/pluggy/`): paste de
+  Client ID/Secret do Meu Pluggy + Pluggy Connect Widget (via CDN,
+  `src/lib/PluggyConnect.svelte`) pra conectar Nubank/XP de verdade.
+- **Cliente Pluggy** (`src/lib/server/pluggy/client.ts`): fetch-based, sem
+  SDK. Endpoints confirmados via WebFetch contra docs.pluggy.ai + o repo
+  oficial `pluggyai/quickstart` — não só conhecimento de treino.
+- **Sync diário** (`src/lib/server/pluggy/sync.ts`, cron `0 6 * * *`):
+  accounts + transactions (janela de 35 dias) + investments, com o dedupe/
+  supersede da seção 5.
+- **Categorização em lote via IA** (`src/lib/server/ai/categorize.ts`): 1
+  chamada por usuário no fim de cada sync, nunca por transação.
+- **Relatório mensal + push** (`src/lib/server/reports/generate.ts`, cron
+  `0 7 1 * *`): narrativa via IA, comparação mês a mês, notificação Web Push
+  quando fica pronto (`src/lib/PushSubscribe.svelte`).
+- **Dashboard** (`src/routes/dashboard/`): contas, transações com categoria,
+  relatório mais recente.
+
+### ⬜ Ainda não implementado
+
+- **Upload de PDF como fallback** (seção 2.4) — único item do MVP (seção 4)
+  que falta. O gating por `supportsDocuments` já existe em
+  `src/lib/ai-providers.ts`, só falta o fluxo de upload + extração
+  (document understanding) em si.
+
+### ⚠️ Conferir antes de testar com uma conta Meu Pluggy real
+
+Deixados como `TODO(pluggy-verify)` no código (commit `2ec093d`) — a doc
+pública da Pluggy não fechou 100% nestes pontos:
+
+- `src/lib/server/pluggy/client.ts` (~linha 75-81): enum completo de
+  `status` de item — só UPDATED/UPDATING/LOGIN_ERROR confirmados;
+  OUTDATED/WAITING_USER_INPUT são suposição histórica.
+- `src/lib/server/pluggy/client.ts` (~linha 144-151): `GET /transactions`
+  está **deprecated** (remoção depois de 2026-12-31) a favor de
+  `GET /v2/transactions` (paginação por cursor) — migrar antes do prazo.
+- `src/lib/PluggyConnect.svelte` (~linha 12-18): CDN do widget pinado em
+  v2.8.2 — conferir se já existe versão mais nova.
+
+### Recursos Cloudflare já criados (conta real, não placeholder)
+
+D1 `tabelafin-db` (`08a3cf81-b376-41ab-b41d-21a0778f3257`), KV `SESSIONS`
+(`34086589c9b34c1ab5c5b59e236662f0`), par VAPID novo. Segredos
+(`MASTER_KEY`, `LOGIN_TOKEN`, `VAPID_PRIVATE_KEY`) só em `.dev.vars` local,
+nunca commitados — `wrangler secret put` ainda não foi rodado em produção
+(o Worker em si também ainda não foi deployado, só os recursos D1/KV).
+
 ## 1. Problema
 
 Controle manual de gasto exige lançar cada transação à mão — fricção grande
