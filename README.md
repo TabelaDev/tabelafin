@@ -15,6 +15,8 @@
 
 ---
 
+## O que é
+
 App de finanças pessoais que puxa sozinho os dados do Nubank (conta + cartão)
 e da XP (conta digital + investimentos) via Open Finance, categoriza gastos
 com IA e gera um relatório mensal de onde dá pra melhorar — sem lançamento
@@ -78,10 +80,22 @@ bun run build     # build de produção
 bun run deploy    # build + migrations remotas + deploy
 ```
 
-Copie `.env.example` pra `.dev.vars` e preencha as variáveis antes de rodar:
 `MASTER_KEY` pra criptografia das credenciais, `BETTER_AUTH_SECRET` pra
 autenticação (email/senha via Better Auth) e `VAPID_PRIVATE_KEY` pro push
 do relatório mensal.
+
+## Desenvolvimento
+
+Stack e comandos: veja a seção *Rodando localmente* acima. Testes:
+
+```sh
+bun run test      # testes unitários
+bun run test:e2e  # testes E2E (Playwright)
+```
+
+## Changelog
+
+Veja [CHANGELOG.md](CHANGELOG.md) para o histórico de versões.
 
 ## Apoie o projeto
 
