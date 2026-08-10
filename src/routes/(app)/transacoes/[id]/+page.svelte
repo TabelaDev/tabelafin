@@ -3,7 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import CategoryBadge from '$lib/CategoryBadge.svelte';
-	import { Badge, Button, Card, Select } from '@tabeladev/tabelawebui';
+	import { Button, Card, Select } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -39,14 +39,6 @@
 	const categoryColor = (name: string | null) => {
 		if (!name) return 'ctp-overlay1';
 		return data.categories.find((c) => c.name === name)?.color ?? 'ctp-overlay1';
-	};
-
-	// Badge colorido via CSS variable (classes Tailwind dinâmicas não são
-	// compiladas pelo JIT). `color` vem como "ctp-peach" e mapeia pra
-	// --catppuccin-peach (variável global definida em layout.css).
-	const categoryBadgeStyle = (name: string | null) => {
-		const color = categoryColor(name).replace('ctp-', '');
-		return `background-color: color-mix(in oklab, var(--catppuccin-${color}) 10%, transparent); color: var(--catppuccin-${color});`;
 	};
 
 	const accountLabel = $derived(

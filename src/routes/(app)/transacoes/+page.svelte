@@ -4,7 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Table, Badge, Button, Select, DatePicker, Input } from '@tabeladev/tabelawebui';
+	import { Table, Button, Select, DatePicker, Input } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -65,14 +65,6 @@
 	const categoryColor = (cat: string | null) => {
 		if (!cat) return 'ctp-overlay1';
 		return data.categories.find((c) => c.name === cat)?.color ?? 'ctp-overlay1';
-	};
-
-	// Badge colorido via CSS variable (classes Tailwind dinâmicas não são
-	// compiladas pelo JIT). `color` vem como "ctp-peach" e mapeia pra
-	// --catppuccin-peach (variável global definida em layout.css).
-	const categoryBadgeStyle = (cat: string | null) => {
-		const color = categoryColor(cat).replace('ctp-', '');
-		return `background-color: color-mix(in oklab, var(--catppuccin-${color}) 10%, transparent); color: var(--catppuccin-${color});`;
 	};
 
 	function formatDate(ts: Date | string): string {

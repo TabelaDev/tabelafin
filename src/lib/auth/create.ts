@@ -22,7 +22,7 @@ export interface AuthConfig {
 	// para os objetos de tabela do Drizzle, se os nomes diferirem do padrão.
 	// As chaves são os nomes dos modelos; o nome real da tabela vem da própria
 	// definição Drizzle.
-	schema?: Partial<Record<'user' | 'session' | 'account', Record<string, any>>>;
+	schema?: Partial<Record<'user' | 'session' | 'account', Record<string, unknown>>>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -2,7 +2,7 @@
 	import CategoryBadge from '$lib/CategoryBadge.svelte';
 	import { resolve } from '$app/paths';
 	import Chart from '$lib/Chart.svelte';
-	import { Card, Table, Badge, Button } from '@tabeladev/tabelawebui';
+	import { Card, Table, Button } from '@tabeladev/tabelawebui';
 	import type { ApexOptions } from 'apexcharts';
 	import { formatCompactCurrency } from '$lib/format';
 	import type { PageData } from './$types';
@@ -98,14 +98,6 @@
 	const categoryColor = (cat: string | null) => {
 		if (!cat) return 'ctp-overlay1';
 		return data.categories.find((c) => c.name === cat)?.color ?? 'ctp-overlay1';
-	};
-
-	// Badge colorido via CSS variable (classes Tailwind dinâmicas não são
-	// compiladas pelo JIT). `color` vem como "ctp-peach" e mapeia pra
-	// --catppuccin-peach (variável global definida em layout.css).
-	const categoryBadgeStyle = (cat: string | null) => {
-		const color = categoryColor(cat).replace('ctp-', '');
-		return `background-color: color-mix(in oklab, var(--catppuccin-${color}) 10%, transparent); color: var(--catppuccin-${color});`;
 	};
 
 	// 4 maiores contas por saldo (são 189 ativos de investimento — filtrar).
