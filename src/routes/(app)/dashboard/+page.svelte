@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CategoryBadge from '$lib/CategoryBadge.svelte';
 	import { resolve } from '$app/paths';
 	import Chart from '$lib/Chart.svelte';
 	import { Card, Table, Badge, Button } from '@tabeladev/tabelawebui';
@@ -296,9 +297,10 @@
 					<span class="text-xs text-ink-soft">{row.date}</span>
 				{:else if key === 'category'}
 					{#if row.category}
-						<Badge style={categoryBadgeStyle(String(row.category))}>
-							[{row.category}]
-						</Badge>
+						<CategoryBadge
+							category={String(row.category)}
+							color={categoryColor(String(row.category))}
+						/>
 					{:else}
 						<span class="text-xs text-ink-faint">[sem categoria]</span>
 					{/if}

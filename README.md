@@ -86,7 +86,7 @@ do relatório mensal.
 
 ## Desenvolvimento
 
-Stack e comandos: veja a seção *Rodando localmente* acima. Testes:
+Stack e comandos: veja a seção _Rodando localmente_ acima. Testes:
 
 ```sh
 bun run test      # testes unitários

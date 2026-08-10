@@ -18,12 +18,24 @@ export const TRANSACTION_CATEGORIES = [
 	'Outros'
 ] as const;
 
-export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number];
+/** One of the categories every account is seeded with. */
+export type BuiltinCategory = (typeof TRANSACTION_CATEGORIES)[number];
+
+/**
+ * A category name as stored on a transaction.
+ *
+ * Categories are user-defined now (see the user_categories table), so the value
+ * can be any name the user created — the list above only describes the seed
+ * set. Keeping the closed union here made every path that carries a name out of
+ * the database or off a form fail to type-check against its own data.
+ */
+export type TransactionCategory = string;
 
 // Cor Catppuccin por categoria — usada nos badges e gráficos. As classes são
 // estáticas (Tailwind precisa ver a string completa pra gerar o CSS), por isso
-// o map com literais em vez de template strings.
-export const CATEGORY_COLORS: Record<TransactionCategory, string> = {
+// o map com literais em vez de template strings. Cobre só as categorias
+// padrão; as do usuário trazem a própria cor.
+export const CATEGORY_COLORS: Record<BuiltinCategory, string> = {
 	Alimentação: 'ctp-peach',
 	Transporte: 'ctp-sky',
 	Moradia: 'ctp-mauve',

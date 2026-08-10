@@ -77,7 +77,7 @@
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ provider, model, apiKey })
 			});
-			const data = await res.json();
+			const data = (await res.json()) as { error?: string };
 			if (!res.ok || data.error) {
 				error = data.error ?? 'Não foi possível salvar. Tente novamente.';
 				return;
@@ -101,7 +101,7 @@
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ token })
 			});
-			const data = await res.json();
+			const data = (await res.json()) as { error?: string };
 			if (!res.ok || data.error) {
 				error = data.error ?? 'Não foi possível conectar. Tente novamente.';
 				return;

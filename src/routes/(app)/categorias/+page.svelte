@@ -25,7 +25,7 @@
 			// Desloca a label pra fora da barra (à direita) — evita o valor
 			// sobrepor a barra accent.
 			offsetX: 6,
-			textAnchor: 'start',
+			textAnchor: 'start' as const,
 			formatter: (value: number) => {
 				const n = Number(value);
 				if (!Number.isFinite(n)) return '';

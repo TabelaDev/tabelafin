@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CategoryBadge from '$lib/CategoryBadge.svelte';
 	import { untrack } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -144,7 +145,7 @@
 				method: 'POST',
 				body
 			});
-			const result = await res.json();
+			const result = (await res.json()) as { data?: { error?: string } };
 			// SvelteKit responde fetch de form action como
 			// { type, status, data } — o payload fica em `result.data`.
 			if (!res.ok || result.data?.error) {
@@ -276,9 +277,10 @@
 					<span class="text-xs text-ink-soft">{row.date}</span>
 				{:else if key === 'category'}
 					{#if row.category}
-						<Badge style={categoryBadgeStyle(String(row.category))}>
-							[{row.category}]
-						</Badge>
+						<CategoryBadge
+							category={String(row.category)}
+							color={categoryColor(String(row.category))}
+						/>
 					{:else}
 						<span class="text-xs text-ink-faint">[sem categoria]</span>
 					{/if}

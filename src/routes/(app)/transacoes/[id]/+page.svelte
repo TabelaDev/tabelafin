@@ -2,6 +2,7 @@
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import CategoryBadge from '$lib/CategoryBadge.svelte';
 	import { Badge, Button, Card, Select } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
@@ -114,9 +115,10 @@
 			<div class="flex items-center justify-between border-t border-rule pt-3">
 				<span class="font-mono text-sm text-ink-soft">Categoria</span>
 				{#if data.transaction.category}
-					<Badge style={categoryBadgeStyle(data.transaction.category)}
-						>[{data.transaction.category}]</Badge
-					>
+					<CategoryBadge
+						category={data.transaction.category}
+						color={categoryColor(data.transaction.category)}
+					/>
 				{:else}
 					<span class="font-mono text-sm text-ink-faint">[sem categoria]</span>
 				{/if}
@@ -146,9 +148,10 @@
 			     re-categorizar. -->
 			<div class="mt-3 flex items-center justify-between gap-3">
 				<div class="flex items-center gap-2">
-					<Badge style={categoryBadgeStyle(data.transaction.category)}
-						>[{data.transaction.category}]</Badge
-					>
+					<CategoryBadge
+						category={data.transaction.category}
+						color={categoryColor(data.transaction.category)}
+					/>
 					{#if data.transaction.categorySource}
 						<span class="font-mono text-xs text-ink-faint">
 							({sourceLabel[data.transaction.categorySource] ?? data.transaction.categorySource})
@@ -177,7 +180,7 @@
 					return async ({ result }) => {
 						await applyAction(result);
 						if (result.type === 'failure') {
-							categorizeError = result.data?.error ?? 'Não foi possível salvar.';
+							categorizeError = String(result.data?.error ?? 'Não foi possível salvar.');
 							return;
 						}
 						// Sucesso: recarrega pra o badge/regra refletirem.
@@ -194,7 +197,6 @@
 					bind:value={selectedCategory}
 					filter
 					filterPlaceholder="Buscar categoria…"
-					required
 				/>
 				{#if categorizeError}
 					<p class="text-sm text-destructive">{categorizeError}</p>
@@ -223,7 +225,7 @@
 				return async ({ result }) => {
 					await applyAction(result);
 					if (result.type === 'failure') {
-						recurringError = result.data?.error ?? 'Não foi possível criar a recorrência.';
+						recurringError = String(result.data?.error ?? 'Não foi possível criar a recorrência.');
 						return;
 					}
 					await invalidateAll();
