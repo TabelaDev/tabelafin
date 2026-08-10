@@ -1,0 +1,318 @@
+<script lang="ts">
+	import { resolve } from '$app/paths';
+	import Chart from '$lib/Chart.svelte';
+	import { Card, Table, Badge, Button } from '@tabeladev/tabelawebui';
+	import type { ApexOptions } from 'apexcharts';
+	import { formatCompactCurrency } from '$lib/format';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+
+	const currency = new Intl.NumberFormat('pt-BR', {
+		style: 'currency',
+		currency: 'BRL'
+	});
+
+	// Mês atual no formato YYYY-MM — usada nos links dos cards de gastos/
+	// receitas que abrem a página de transações com os filtros aplicados.
+	const currentMonth = $derived(
+		`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+	);
+
+	const monthName = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+	// Variação % vs mês anterior.
+	const expenseDelta = $derived.by(() => {
+		if (data.summary.prevExpense === 0) return null;
+		return (
+			((data.summary.monthExpense - data.summary.prevExpense) / data.summary.prevExpense) * 100
+		);
+	});
+
+	const barSeries = $derived([
+		{ name: 'Gasto', data: data.summary.topCategories.map((c) => c.value) }
+	]);
+	const barOptions = $derived<ApexOptions>({
+		plotOptions: {
+			bar: { horizontal: true, borderRadius: 0, barHeight: '60%' }
+		},
+		xaxis: { categories: data.summary.topCategories.map((c) => c.name) },
+		// Label com valor protegido contra NaN (o Apex pode passar o valor em
+		// formato inesperado) e deslocada pra fora da barra.
+		dataLabels: {
+			enabled: true,
+			offsetX: 6,
+			textAnchor: 'start',
+			formatter: (value: number) => {
+				const n = Number(value);
+				if (!Number.isFinite(n)) return '';
+				return n.toLocaleString('pt-BR', {
+					style: 'currency',
+					currency: 'BRL',
+					maximumFractionDigits: 0
+				});
+			},
+			style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }
+		}
+	});
+
+	const areaSeries = $derived([{ name: 'Saldo', data: data.summary.monthValues }]);
+	const areaOptions = $derived<ApexOptions>({
+		xaxis: { categories: data.summary.monthLabels },
+		stroke: { curve: 'smooth', width: 2 }
+	});
+
+	// Donut: só as maiores categorias com valor > 0 (top 7) — as de R$ 0,00
+	// poluem a composição.
+	const positiveCategories = $derived(
+		Object.entries(data.summary.categoryTotals)
+			.filter(([, v]) => v > 0)
+			.sort(([, a], [, b]) => b - a)
+	);
+	const donutSeries = $derived(positiveCategories.slice(0, 7).map(([, v]) => v));
+	const donutLabels = $derived(positiveCategories.slice(0, 7).map(([k]) => k));
+	const donutOptions = $derived<ApexOptions>({
+		labels: donutLabels,
+		legend: { position: 'bottom', horizontalAlign: 'center' },
+		// Tooltip igual aos outros gráficos: valor em moeda, mono (o estilo vem
+		// do base do Chart). `tooltip.y.formatter` só mostra o valor; o Apex
+		// já adiciona o % do slice no donut.
+		tooltip: {
+			y: {
+				formatter: (value) => currency.format(Number(value))
+			}
+		}
+	});
+
+	// Se os gráficos laterais (top categorias / composição) não tiverem dados
+	// pra renderizar, a evolução do saldo ocupa a largura toda.
+	const hasSideCharts = $derived(data.summary.topCategories.length > 0 || donutSeries.length > 0);
+	const evolutionClass = $derived(hasSideCharts ? 'lg:col-span-2 lg:row-span-2' : 'lg:col-span-3');
+
+	function formatDate(ts: Date | string): string {
+		const d = typeof ts === 'string' ? new Date(ts) : ts;
+		return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+	}
+
+	const categoryColor = (cat: string | null) => {
+		if (!cat) return 'ctp-overlay1';
+		return data.categories.find((c) => c.name === cat)?.color ?? 'ctp-overlay1';
+	};
+
+	// Badge colorido via CSS variable (classes Tailwind dinâmicas não são
+	// compiladas pelo JIT). `color` vem como "ctp-peach" e mapeia pra
+	// --catppuccin-peach (variável global definida em layout.css).
+	const categoryBadgeStyle = (cat: string | null) => {
+		const color = categoryColor(cat).replace('ctp-', '');
+		return `background-color: color-mix(in oklab, var(--catppuccin-${color}) 10%, transparent); color: var(--catppuccin-${color});`;
+	};
+
+	// 4 maiores contas por saldo (são 189 ativos de investimento — filtrar).
+	const topAccounts = $derived(
+		[...data.accounts].sort((a, b) => b.cachedBalance - a.cachedBalance).slice(0, 4)
+	);
+
+	// Negativo = gasto (vermelho), positivo = entrada (verde).
+	function amountClass(amount: number): string {
+		return amount < 0 ? 'text-ctp-red' : 'text-ctp-green';
+	}
+</script>
+
+<svelte:head>
+	<title>Dashboard — TabelaFin</title>
+</svelte:head>
+
+<div class="flex flex-col gap-6">
+	<!-- Header -->
+	<header class="flex items-center justify-between">
+		<div>
+			<h1 class="font-mono text-2xl font-bold">Dashboard</h1>
+			<p class="font-mono text-sm text-ink-soft">
+				<span class="text-ink-faint">//</span>
+				{monthName}
+			</p>
+		</div>
+		<a href={resolve('/nova')}>
+			<Button variant="primary">+ Nova transação</Button>
+		</a>
+	</header>
+
+	<!-- Cards de resumo -->
+	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+		<Card>
+			<p class="font-mono text-xs text-ink-soft">Saldo total</p>
+			<p class="mt-1 font-mono text-xl font-bold">
+				{formatCompactCurrency(data.summary.totalBalance)}
+			</p>
+		</Card>
+		<Card>
+			<a
+				href={resolve(`/transacoes?mes=${currentMonth}&tipo=despesas`)}
+				class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
+			>
+				Gastos do mês →
+			</a>
+			<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
+				{currency.format(data.summary.monthExpense)}
+			</p>
+			{#if expenseDelta !== null}
+				<span class="font-mono text-xs {expenseDelta > 0 ? 'text-ctp-red' : 'text-ctp-green'}">
+					{expenseDelta > 0 ? '▲' : '▼'}
+					{Math.abs(expenseDelta).toFixed(1)}% vs. mês anterior
+				</span>
+			{/if}
+		</Card>
+		<Card>
+			<a
+				href={resolve(`/transacoes?mes=${currentMonth}&tipo=receitas`)}
+				class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
+			>
+				Receitas do mês →
+			</a>
+			<p class="mt-1 font-mono text-xl font-bold text-ctp-green">
+				{currency.format(data.summary.monthIncome)}
+			</p>
+		</Card>
+		<Card>
+			<p class="font-mono text-xs text-ink-soft">Investimentos</p>
+			<p class="mt-1 font-mono text-xl font-bold">
+				{formatCompactCurrency(data.summary.investmentBalance)}
+			</p>
+		</Card>
+	</div>
+
+	<!-- Gráficos: grid 2x3 — evolução ocupa 2 colunas × 2 linhas; top categorias
+	     e composição empilhadas na coluna da direita. Sem gráficos laterais,
+	     evolução ocupa a largura toda e o grid não força a 2ª linha. -->
+	<div class="grid grid-cols-1 gap-3 lg:grid-cols-3 {hasSideCharts && 'lg:grid-rows-2'}">
+		{#if data.summary.monthValues.length > 0}
+			<Card class={evolutionClass}>
+				<div>
+					<h2 class="font-mono text-sm font-semibold">Evolução do saldo</h2>
+					<p class="font-mono text-xs text-ink-soft">últimos 6 meses</p>
+				</div>
+				<div class="mt-2 min-h-56 flex-1">
+					<Chart type="area" series={areaSeries} options={areaOptions} />
+				</div>
+			</Card>
+		{/if}
+
+		{#if data.summary.topCategories.length > 0}
+			<Card class="lg:col-span-1">
+				{#snippet header()}
+					<div class="flex items-center justify-between">
+						<div>
+							<h2 class="font-mono text-sm font-semibold">Top categorias</h2>
+							<p class="font-mono text-xs text-ink-soft">maiores gastos do mês</p>
+						</div>
+						<a href={resolve('/categorias')} class="font-mono text-xs text-accent hover:underline"
+							>ver todas</a
+						>
+					</div>
+				{/snippet}
+				<div class="mt-2 min-h-40 flex-1">
+					<Chart type="bar" series={barSeries} options={barOptions} />
+				</div>
+			</Card>
+		{/if}
+
+		{#if donutSeries.length > 0}
+			<Card class="lg:col-span-1">
+				<div>
+					<h2 class="font-mono text-sm font-semibold">Composição de gastos</h2>
+					<p class="font-mono text-xs text-ink-soft">por categoria</p>
+				</div>
+				<div class="mt-2 min-h-48 flex-1">
+					<Chart type="donut" series={donutSeries} options={donutOptions} />
+				</div>
+			</Card>
+		{/if}
+	</div>
+
+	<!-- Contas — primeiro; ver todas leva pra página dedicada -->
+	<Card>
+		{#snippet header()}
+			<div class="flex items-center justify-between">
+				<h2 class="font-mono text-sm font-semibold">Contas</h2>
+				{#if data.accounts.length > 0}
+					<a href={resolve('/contas')} class="font-mono text-xs text-accent hover:underline"
+						>ver todas</a
+					>
+				{/if}
+			</div>
+		{/snippet}
+
+		{#if data.accounts.length === 0}
+			<p class="py-4 text-center font-mono text-sm text-ink-soft">
+				Nenhuma conta ainda. Conecte via Open Finance ou adicione transações manualmente.
+			</p>
+		{:else}
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+				{#each topAccounts as account (account.id)}
+					<a
+						href={resolve('/contas')}
+						class="block border border-rule bg-paper p-3 transition-colors hover:border-accent"
+					>
+						<p class="truncate font-mono text-sm font-medium">{account.name}</p>
+						<p class="font-mono text-xs text-ink-soft">{account.institution}</p>
+						<p class="mt-2 font-mono text-sm">
+							{formatCompactCurrency(account.cachedBalance)}
+						</p>
+					</a>
+				{/each}
+			</div>
+		{/if}
+	</Card>
+
+	<!-- Transações recentes — tabela real -->
+	<Card>
+		{#snippet header()}
+			<div class="flex items-center justify-between">
+				<h2 class="font-mono text-sm font-semibold">Transações recentes</h2>
+				<a href={resolve('/transacoes')} class="font-mono text-xs text-accent hover:underline"
+					>ver todas</a
+				>
+			</div>
+		{/snippet}
+
+		<Table
+			columns={[
+				{ key: 'date', label: 'Data', sortable: true },
+				{ key: 'description', label: 'Descrição' },
+				{ key: 'category', label: 'Categoria' },
+				{ key: 'amount', label: 'Valor', sortable: true }
+			]}
+			rows={data.recentTransactions.map((tx) => ({
+				id: tx.id,
+				date: formatDate(tx.date),
+				description: tx.description,
+				category: tx.category,
+				amount: tx.amount
+			}))}
+			pageSize={0}
+		>
+			{#snippet cell(row: Record<string, unknown>, key: string)}
+				{#if key === 'date'}
+					<span class="text-xs text-ink-soft">{row.date}</span>
+				{:else if key === 'category'}
+					{#if row.category}
+						<Badge style={categoryBadgeStyle(String(row.category))}>
+							[{row.category}]
+						</Badge>
+					{:else}
+						<span class="text-xs text-ink-faint">[sem categoria]</span>
+					{/if}
+				{:else if key === 'amount'}
+					<span class={amountClass(Number(row.amount))}>{currency.format(Number(row.amount))}</span>
+				{:else}
+					{row.description}
+				{/if}
+			{/snippet}
+			{#snippet empty()}
+				<p class="py-8 text-center font-mono text-sm text-ink-soft">
+					Nenhuma transação ainda. Adicione uma manualmente ou conecte suas contas.
+				</p>
+			{/snippet}
+		</Table>
+	</Card>
+</div>

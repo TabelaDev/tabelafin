@@ -1,119 +1,309 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 @import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn-svelte/tailwind.css';
-@import '@fontsource-variable/inter';
+@import '@tabeladev/tabelawebui/theme.css';
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Design system: "reading someone's source file" — mesma estética do
+ * portfolio. Mono leva a estrutura (labels, datas, valores); bordas afiadas e
+ * bem definidas; accent maroon (claro) / pink (escuro), nunca azul.
+ * Palette: Catppuccin (Latte / Mocha).
+ */
+
+/* ── Catppuccin Latte (tema claro) ───────────────────────────────────────── */
 :root {
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
-	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
-	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
-	--chart-1: oklch(0.87 0 0);
-	--chart-2: oklch(0.556 0 0);
-	--chart-3: oklch(0.439 0 0);
-	--chart-4: oklch(0.371 0 0);
-	--chart-5: oklch(0.269 0 0);
-	--radius: 0.625rem;
-	--sidebar: oklch(0.985 0 0);
-	--sidebar-foreground: oklch(0.145 0 0);
-	--sidebar-primary: oklch(0.205 0 0);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.97 0 0);
-	--sidebar-accent-foreground: oklch(0.205 0 0);
-	--sidebar-border: oklch(0.922 0 0);
-	--sidebar-ring: oklch(0.708 0 0);
+	/* Tokens vêm da lib @tabeladev/tabelawebui (theme.css) — uma fonte de verdade. */
+	--catppuccin-base: var(--twui-latte-base, #eff1f5);
+	--catppuccin-mantle: var(--twui-latte-mantle, #e6e9ef);
+	--catppuccin-crust: var(--twui-latte-crust, #dce0e8);
+	--catppuccin-surface0: var(--twui-latte-surface0, #ccd0da);
+	--catppuccin-surface1: var(--twui-latte-surface1, #bcc0cc);
+	--catppuccin-surface2: var(--twui-latte-surface2, #acb0be);
+	--catppuccin-overlay0: var(--twui-latte-overlay0, #9ca0b0);
+	--catppuccin-overlay1: var(--twui-latte-overlay1, #8c8fa1);
+	--catppuccin-overlay2: var(--twui-latte-overlay2, #7c7f93);
+	--catppuccin-subtext0: var(--twui-latte-subtext0, #6c6f85);
+	--catppuccin-subtext1: var(--twui-latte-subtext1, #5c5f77);
+	--catppuccin-text: var(--twui-latte-text, #4c4f69);
+	--catppuccin-rosewater: var(--twui-rosewater, #dc8a78);
+	--catppuccin-flamingo: var(--twui-flamingo, #dd7878);
+	--catppuccin-pink: var(--twui-pink, #ea76cb);
+	--catppuccin-mauve: var(--twui-mauve, #8839ef);
+	--catppuccin-red: var(--twui-red, #d20f39);
+	--catppuccin-maroon: var(--twui-maroon, #e64553);
+	--catppuccin-peach: var(--twui-peach, #fe640b);
+	--catppuccin-yellow: var(--twui-yellow, #df8e1d);
+	--catppuccin-green: var(--twui-green, #40a02b);
+	--catppuccin-teal: var(--twui-teal, #179299);
+	--catppuccin-sky: var(--twui-sky, #04a5e5);
+	--catppuccin-sapphire: var(--twui-sapphire, #209fb5);
+	--catppuccin-blue: var(--twui-blue, #1e66f5);
+	--catppuccin-lavender: var(--twui-lavender, #7287fd);
+
+	/* Tokens do design system (espelham a lib) */
+	--paper: var(--twui-paper);
+	--paper-raised: var(--twui-paper-raised);
+	--ink: var(--twui-ink);
+	--ink-soft: var(--twui-ink-soft);
+	--ink-faint: var(--twui-ink-faint);
+	--rule: var(--twui-rule);
+	--accent: var(--twui-accent);
+	--accent-soft: var(--twui-accent-soft);
+	--signal: var(--twui-signal);
+	--signal-soft: var(--twui-signal-soft);
+	--danger: var(--twui-danger);
+	--danger-soft: color-mix(in oklab, var(--twui-danger) 14%, var(--twui-paper));
+	/* Landing: acento escurecido (maroon Latte é fraco em texto pequeno) */
+	--accent-ink: #a83240;
+	--shadow-glow:
+		0 0 0 1px var(--catppuccin-maroon),
+		0 20px 50px -20px color-mix(in oklab, var(--catppuccin-maroon) 45%, transparent);
+	--gradient-hero: radial-gradient(
+		ellipse 80% 60% at 50% -10%,
+		color-mix(in oklab, var(--catppuccin-maroon) 14%, transparent),
+		transparent 70%
+	);
+
+	/* Compat shadcn */
+	--background: var(--paper);
+	--foreground: var(--ink);
+	--card: var(--paper-raised);
+	--card-foreground: var(--ink);
+	--popover: var(--paper-raised);
+	--popover-foreground: var(--ink);
+	--primary: var(--accent);
+	--primary-foreground: var(--paper);
+	--secondary: var(--catppuccin-surface0);
+	--secondary-foreground: var(--ink);
+	--muted: var(--catppuccin-surface0);
+	--muted-foreground: var(--ink-soft);
+	--accent-hover: var(--catppuccin-surface1);
+	--destructive: var(--catppuccin-red);
+	--border: var(--rule);
+	--input: var(--rule);
+	--ring: var(--accent);
+	--chart-1: var(--accent);
+	--chart-2: var(--catppuccin-mauve);
+	--chart-3: var(--catppuccin-green);
+	--chart-4: var(--catppuccin-yellow);
+	--chart-5: var(--catppuccin-peach);
+	--radius: 0.375rem; /* afiado */
+	--sidebar: var(--paper-raised);
+	--sidebar-foreground: var(--ink);
+	--sidebar-primary: var(--accent);
+	--sidebar-primary-foreground: var(--paper);
+	--sidebar-accent: var(--catppuccin-surface0);
+	--sidebar-accent-foreground: var(--ink);
+	--sidebar-border: var(--rule);
+	--sidebar-ring: var(--accent);
 }
 
+/* ── Catppuccin Mocha (tema escuro) ──────────────────────────────────────── */
 .dark {
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.922 0 0);
-	--primary-foreground: oklch(0.205 0 0);
-	--secondary: oklch(0.269 0 0);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(0.269 0 0);
-	--accent-foreground: oklch(0.985 0 0);
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
-	--chart-1: oklch(0.87 0 0);
-	--chart-2: oklch(0.556 0 0);
-	--chart-3: oklch(0.439 0 0);
-	--chart-4: oklch(0.371 0 0);
-	--chart-5: oklch(0.269 0 0);
-	--sidebar: oklch(0.205 0 0);
-	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: oklch(0.488 0.243 264.376);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.269 0 0);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: oklch(0.556 0 0);
+	--catppuccin-base: var(--twui-mocha-base, #1e1e2e);
+	--catppuccin-mantle: var(--twui-mocha-mantle, #181825);
+	--catppuccin-crust: var(--twui-mocha-crust, #11111b);
+	--catppuccin-surface0: var(--twui-mocha-surface0, #313244);
+	--catppuccin-surface1: var(--twui-mocha-surface1, #45475a);
+	--catppuccin-surface2: var(--twui-mocha-surface2, #585b70);
+	--catppuccin-overlay0: var(--twui-mocha-overlay0, #6c7086);
+	--catppuccin-overlay1: var(--twui-mocha-overlay1, #7f849c);
+	--catppuccin-overlay2: var(--twui-mocha-overlay2, #9399b2);
+	--catppuccin-subtext0: var(--twui-mocha-subtext0, #a6adc8);
+	--catppuccin-subtext1: var(--twui-mocha-subtext1, #bac2de);
+	--catppuccin-text: var(--twui-mocha-text, #cdd6f4);
+	--catppuccin-rosewater: var(--twui-rosewater, #f5e0dc);
+	--catppuccin-flamingo: var(--twui-flamingo, #f2cdcd);
+	--catppuccin-pink: var(--twui-pink, #f5c2e7);
+	--catppuccin-mauve: var(--twui-mauve, #cba6f7);
+	--catppuccin-red: var(--twui-red, #f38ba8);
+	--catppuccin-maroon: var(--twui-maroon, #eba0ac);
+	--catppuccin-peach: var(--twui-peach, #fab387);
+	--catppuccin-yellow: var(--twui-yellow, #f9e2af);
+	--catppuccin-green: var(--twui-green, #a6e3a1);
+	--catppuccin-teal: var(--twui-teal, #94e2d5);
+	--catppuccin-sky: var(--twui-sky, #89dceb);
+	--catppuccin-sapphire: var(--twui-sapphire, #74c7ec);
+	--catppuccin-blue: var(--twui-blue, #89b4fa);
+	--catppuccin-lavender: var(--twui-lavender, #b4befe);
+
+	--paper: var(--twui-paper);
+	--paper-raised: var(--twui-paper-raised);
+	--ink: var(--twui-ink);
+	--ink-soft: var(--twui-ink-soft);
+	--ink-faint: var(--twui-ink-faint);
+	--rule: var(--twui-rule);
+	--accent: var(--twui-accent);
+	--accent-soft: var(--twui-accent-soft);
+	--signal: var(--twui-signal);
+	--signal-soft: var(--twui-signal-soft);
+
+	/* Landing — accent-ink já é ~10.7:1 sobre a Base */
+	--accent-ink: var(--catppuccin-pink);
+	--shadow-glow:
+		0 0 0 1px var(--catppuccin-pink),
+		0 20px 50px -20px color-mix(in oklab, var(--catppuccin-pink) 55%, transparent);
+	--gradient-hero: radial-gradient(
+		ellipse 80% 60% at 50% -10%,
+		color-mix(in oklab, var(--catppuccin-pink) 22%, transparent),
+		transparent 70%
+	);
+
+	--background: var(--paper);
+	--foreground: var(--ink);
+	--card: var(--paper-raised);
+	--card-foreground: var(--ink);
+	--popover: var(--paper-raised);
+	--popover-foreground: var(--ink);
+	--primary: var(--accent);
+	--primary-foreground: var(--paper);
+	--secondary: var(--catppuccin-surface0);
+	--secondary-foreground: var(--ink);
+	--muted: var(--catppuccin-surface0);
+	--muted-foreground: var(--ink-soft);
+	--destructive: var(--catppuccin-red);
+	--border: var(--rule);
+	--input: var(--rule);
+	--ring: var(--accent);
+	--chart-1: var(--accent);
+	--chart-2: var(--catppuccin-mauve);
+	--chart-3: var(--catppuccin-green);
+	--chart-4: var(--catppuccin-yellow);
+	--chart-5: var(--catppuccin-peach);
+	--sidebar: var(--paper-raised);
+	--sidebar-foreground: var(--ink);
+	--sidebar-primary: var(--accent);
+	--sidebar-primary-foreground: var(--paper);
+	--sidebar-accent: var(--catppuccin-surface0);
+	--sidebar-accent-foreground: var(--ink);
+	--sidebar-border: var(--rule);
+	--sidebar-ring: var(--accent);
 }
 
+/* Estética do app é mono: sobrescreve a serif default da lib onde o
+   componente ChatMessage usa --twui-font-serif */
+:root {
+	--twui-font-serif: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Expor as cores como utilitários Tailwind */
 @theme inline {
-	--font-sans: 'Inter Variable', sans-serif;
-	--color-sidebar-ring: var(--sidebar-ring);
-	--color-sidebar-border: var(--sidebar-border);
-	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-	--color-sidebar-accent: var(--sidebar-accent);
-	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-	--color-sidebar-primary: var(--sidebar-primary);
-	--color-sidebar-foreground: var(--sidebar-foreground);
-	--color-sidebar: var(--sidebar);
-	--color-chart-5: var(--chart-5);
-	--color-chart-4: var(--chart-4);
-	--color-chart-3: var(--chart-3);
-	--color-chart-2: var(--chart-2);
-	--color-chart-1: var(--chart-1);
-	--color-ring: var(--ring);
-	--color-input: var(--input);
-	--color-border: var(--border);
-	--color-destructive: var(--destructive);
-	--color-accent-foreground: var(--accent-foreground);
+	--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--font-sans: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+	--color-paper: var(--paper);
+	--color-paper-raised: var(--paper-raised);
+	--color-ink: var(--ink);
+	--color-ink-soft: var(--ink-soft);
+	--color-ink-faint: var(--ink-faint);
+	--color-rule: var(--rule);
 	--color-accent: var(--accent);
-	--color-muted-foreground: var(--muted-foreground);
-	--color-muted: var(--muted);
-	--color-secondary-foreground: var(--secondary-foreground);
-	--color-secondary: var(--secondary);
-	--color-primary-foreground: var(--primary-foreground);
-	--color-primary: var(--primary);
-	--color-popover-foreground: var(--popover-foreground);
-	--color-popover: var(--popover);
-	--color-card-foreground: var(--card-foreground);
-	--color-card: var(--card);
-	--color-foreground: var(--foreground);
+	--color-accent-soft: var(--accent-soft);
+	--color-accent-ink: var(--accent-ink);
+	--color-signal: var(--signal);
+	--color-signal-soft: var(--signal-soft);
+	--color-danger: var(--danger);
+	--color-danger-soft: var(--danger-soft);
+
+	--color-ctp-base: var(--catppuccin-base);
+	--color-ctp-mantle: var(--catppuccin-mantle);
+	--color-ctp-crust: var(--catppuccin-crust);
+	--color-ctp-surface0: var(--catppuccin-surface0);
+	--color-ctp-surface1: var(--catppuccin-surface1);
+	--color-ctp-surface2: var(--catppuccin-surface2);
+	--color-ctp-overlay0: var(--catppuccin-overlay0);
+	--color-ctp-overlay1: var(--catppuccin-overlay1);
+	--color-ctp-overlay2: var(--catppuccin-overlay2);
+	--color-ctp-subtext0: var(--catppuccin-subtext0);
+	--color-ctp-subtext1: var(--catppuccin-subtext1);
+	--color-ctp-text: var(--catppuccin-text);
+	--color-ctp-rosewater: var(--catppuccin-rosewater);
+	--color-ctp-flamingo: var(--catppuccin-flamingo);
+	--color-ctp-pink: var(--catppuccin-pink);
+	--color-ctp-mauve: var(--catppuccin-mauve);
+	--color-ctp-red: var(--catppuccin-red);
+	--color-ctp-maroon: var(--catppuccin-maroon);
+	--color-ctp-peach: var(--catppuccin-peach);
+	--color-ctp-yellow: var(--catppuccin-yellow);
+	--color-ctp-green: var(--catppuccin-green);
+	--color-ctp-teal: var(--catppuccin-teal);
+	--color-ctp-sky: var(--catppuccin-sky);
+	--color-ctp-sapphire: var(--catppuccin-sapphire);
+	--color-ctp-blue: var(--catppuccin-blue);
+	--color-ctp-lavender: var(--catppuccin-lavender);
+
 	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-destructive: var(--destructive);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+
 	--radius-sm: calc(var(--radius) * 0.6);
-	--radius-md: calc(var(--radius) * 0.8);
-	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) * 1.4);
-	--radius-2xl: calc(var(--radius) * 1.8);
-	--radius-3xl: calc(var(--radius) * 2.2);
-	--radius-4xl: calc(var(--radius) * 2.6);
+	--radius-md: var(--radius);
+	--radius-lg: calc(var(--radius) * 1.4);
+	--radius-xl: calc(var(--radius) * 1.8);
+	--radius-2xl: calc(var(--radius) * 2.2);
+	--radius-3xl: calc(var(--radius) * 2.6);
+	--radius-4xl: calc(var(--radius) * 3);
+
+	--shadow-glow: var(--shadow-glow);
+	--gradient-hero: var(--gradient-hero);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+::selection {
+	background-color: var(--accent);
+	color: var(--paper);
+}
+
+/* Inputs/selects nativos (busca, filtros) ganham borda accent no focus —
+   regra global porque usar `focus:border-accent` junto de `border-rule`
+   gera conflito de border-color no Tailwind v4 (cssConflict). */
+input:focus,
+select:focus,
+textarea:focus {
+	border-color: var(--accent);
+}
+
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+	border-radius: 2px;
 }
 
 @layer base {
@@ -125,5 +315,22 @@
 	}
 	html {
 		@apply font-sans;
+		/* Reserva sempre o espaço do scrollbar vertical — evita que o conteúdo
+		   "encolha/empurre" quando uma página mais alta que a viewport aparece
+		   e o scrollbar entra/sai. */
+		scrollbar-gutter: stable;
 	}
+	button:not(:disabled) {
+		cursor: pointer;
+	}
+}
+
+/* Dropdown do Select (twui): esconde a scrollbar nativa — o scroll continua
+   por teclado/roda, mas sem a barra feia no visual mono. Fica aqui enquanto
+   não roda o twui 0.14.1 (que já traz o fix no componente). */
+.twui-select-popover {
+	scrollbar-width: none;
+}
+.twui-select-popover::-webkit-scrollbar {
+	display: none;
 }

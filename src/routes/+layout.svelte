@@ -1,11 +1,12 @@
 <script lang="ts">
 	import './layout.css';
+	import { ModeWatcher } from 'mode-watcher';
 	import { page } from '$app/state';
-	import { Toaster } from '$lib/components/ui/sonner';
+	import { Toaster, toast } from '@tabeladev/tabelawebui';
 	import { ToastType } from '$lib/enums/toast-type';
 	import { pwaInfo } from 'virtual:pwa-info';
-	import { toast } from 'svelte-sonner';
 	import { getFlash } from 'sveltekit-flash-message';
+	import ReloadPrompt from '$lib/ReloadPrompt.svelte';
 
 	let { children } = $props();
 
@@ -26,6 +27,9 @@
 		} else if (f.type === ToastType.warning) {
 			toast.warning(f.message);
 		}
+
+		// Limpa o flash após mostrar o toast pra evitar re-trigger
+		$flash = undefined;
 	});
 </script>
 
@@ -35,8 +39,7 @@
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- gerado pelo plugin (virtual:pwa-info), não é input do usuário -->
 	{@html webManifestLink}
 </svelte:head>
+<ModeWatcher lightClassNames={['light']} darkClassNames={['dark']} />
 <Toaster />
-{#await import('$lib/ReloadPrompt.svelte') then { default: ReloadPrompt }}
-	<ReloadPrompt />
-{/await}
+<ReloadPrompt />
 {@render children()}
