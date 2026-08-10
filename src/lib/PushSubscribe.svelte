@@ -3,8 +3,8 @@
 	// Mesma convenção do TabelaCal (interagir via registration do próprio
 	// navigator, não virtual:pwa-register) e o padrão de toasts do
 	// $lib/ReloadPrompt.svelte.
-	import { Button } from '$lib/components/ui/button';
-	import { toast } from 'svelte-sonner';
+	import { Button } from '@tabeladev/tabelawebui';
+	import { toast } from '@tabeladev/tabelawebui';
 
 	let { vapidPublicKey }: { vapidPublicKey: string } = $props();
 
@@ -63,7 +63,7 @@
 </script>
 
 {#if supported && permission !== 'granted'}
-	<Button variant="outline" disabled={subscribing} onclick={subscribe}>
+	<Button variant="default" disabled={subscribing} onclick={subscribe}>
 		Avisar quando o relatório mensal estiver pronto
 	</Button>
 {/if}

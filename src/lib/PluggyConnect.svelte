@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
+	import { Button } from '@tabeladev/tabelawebui';
 
 	// Widget Pluggy Connect via CDN — expõe um `PluggyConnect` global depois de
 	// carregado, sem precisar de bundler/npm install (ver ESCOPO.md §2.3). Só
@@ -9,13 +9,16 @@
 	// fica restrito a fetch() puro pra rodar no Worker, esse componente não
 	// tem essa restrição por não rodar em `workerd`.
 	//
-	// TODO(pluggy-verify): v2.8.2 foi a última build confirmada respondendo
-	// 200 nesse CDN durante a pesquisa (a versão mais recente do pacote npm
-	// equivalente, pluggy-connect-sdk@2.14.1, não tinha uma build
-	// correspondente nesse CDN nesse momento) — conferir se já existe uma
-	// versão mais nova antes de ir pra produção. Exemplo oficial confirmado:
-	// github.com/pluggyai/quickstart/blob/master/frontend/html/index.html
-	const PLUGGY_CONNECT_SCRIPT_URL = 'https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js';
+	// CDN pinado em v2.11.0 — a build versionada mais recente confirmada
+	// servindo em cdn.pluggy.ai (verificado 2026-08-03: v2.10.0 e v2.11.0
+	// respondem 200; `latest` aponta pro mesmo bundle da v2.11.0). A API do
+	// widget (connectToken/includeSandbox/onSuccess/onError/onClose/init) é a
+	// mesma da v2.8.2 — conferido contra os typings publicados de
+	// pluggy-connect-sdk@2.11.0 (dist/main/pluggy-connect.d.ts). A versão npm
+	// mais nova (2.14.1) ainda não tem build correspondente no CDN.
+	// Exemplo oficial: github.com/pluggyai/quickstart/blob/master/frontend/html/index.html
+	const PLUGGY_CONNECT_SCRIPT_URL =
+		'https://cdn.pluggy.ai/pluggy-connect/v2.11.0/pluggy-connect.js';
 
 	interface PluggyConnectItem {
 		id: string;

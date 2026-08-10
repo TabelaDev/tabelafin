@@ -1,66 +1,40 @@
-// Cliente fetch-based pra API da Pluggy (Open Finance) — ver ESCOPO.md §2.3.
-// Sem SDK npm nesse lado (pluggy-js/pluggy-sdk não são um alvo garantido pro
-// runtime `workerd`) — só fetch() puro, mesmo padrão do cliente OAuth do
-// TabelaCal (src/lib/server/google/oauth.ts). O widget Pluggy Connect
-// client-side é outra história (ver $lib/PluggyConnect.svelte): esse sim
-// carrega um script de terceiro, mas nunca roda no Worker.
+// Cliente fetch-based pra API interna do Meu Pluggy (my-api.pluggy.ai) —
+// ver ESCOPO.md §2.3. Substitui o cliente anterior que usava api.pluggy.ai
+// com Client ID/Secret do Pluggy Dashboard (que só funciona em sandbox).
 //
-// Confirmado contra docs.pluggy.ai em 2026-08-01 (via WebFetch/WebSearch +
-// leitura direta de github.com/pluggyai/quickstart e do d.ts publicado do
-// pluggy-connect-sdk). Onde a doc pública não fechou 100%, ver comentários
-// `TODO(pluggy-verify)` pontuais abaixo — a pessoa fazendo o teste real com
-// uma conta Meu Pluggy de verdade deve conferir esses pontos primeiro.
+// A API do Meu Pluggy usa JWT (Auth0) em vez de API key. O token é obtido
+// quando o usuário faz login no Meu Pluggy e é armazenado cifrado em
+// pluggy_credentials.token_encrypted. A API retorna arrays simples (sem
+// paginação offset/cursor) — mais simples que a API comercial da Pluggy.
+//
+// Confirmado contra my-api.pluggy.ai em 2026-08-04 via MCP/DevTools.
 
-const PLUGGY_API_URL = 'https://api.pluggy.ai';
+const MY_API_URL = 'https://my-api.pluggy.ai';
 
-interface PluggyErrorBody {
+interface MyApiError {
 	message?: string;
 	code?: number;
-	codeDescription?: string;
 }
 
-async function pluggyFetch(path: string, init: RequestInit = {}): Promise<Response> {
-	const res = await fetch(`${PLUGGY_API_URL}${path}`, init);
+async function myApiFetch(path: string, token: string): Promise<Response> {
+	const res = await fetch(`${MY_API_URL}${path}`, {
+		headers: {
+			authorization: `Bearer ${token}`,
+			accept: 'application/json'
+		}
+	});
 	if (!res.ok) {
-		// Formato de erro confirmado (docs.pluggy.ai/reference/auth-create):
-		// { code, message, codeDescription?, data? } — mesmo shape usado nos
-		// outros endpoints da API.
-		const body = (await res.json().catch(() => null)) as PluggyErrorBody | null;
-		throw new Error(`Pluggy API error (${path}): ${res.status} ${body?.message ?? res.statusText}`);
+		const body = (await res.json().catch(() => null)) as MyApiError | null;
+		throw new Error(
+			`My Pluggy API error (${path}): ${res.status} ${body?.message ?? res.statusText}`
+		);
 	}
 	return res;
 }
 
-// POST /auth — troca o Client ID/Secret DO PRÓPRIO usuário (Meu Pluggy, não
-// nossa conta) por um apiKey de uso backend, válido por ~2h. Confirmado:
-// docs.pluggy.ai/docs/authentication + docs.pluggy.ai/reference/auth-create.
-export async function getApiKey(clientId: string, clientSecret: string): Promise<string> {
-	const res = await pluggyFetch('/auth', {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ clientId, clientSecret })
-	});
-	const data = (await res.json()) as { apiKey: string };
-	return data.apiKey;
-}
-
-// POST /connect_token — token de curta duração (30min, confirmado:
-// docs.pluggy.ai/reference/connect-token-create) pra entregar ao widget
-// client-side; o apiKey de backend nunca deve chegar no browser. `itemId`
-// opcional reautentica/atualiza um item já existente (fluxo de reconexão,
-// ex.: credenciais bancárias expiradas) em vez de criar um item novo.
-export async function createConnectToken(
-	apiKey: string,
-	options?: { itemId?: string }
-): Promise<string> {
-	const res = await pluggyFetch('/connect_token', {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', 'X-API-KEY': apiKey },
-		body: JSON.stringify(options?.itemId ? { itemId: options.itemId } : {})
-	});
-	const data = (await res.json()) as { accessToken: string };
-	return data.accessToken;
-}
+// ────────────────────────────────────────────────────────────────────────────
+// Itens (conexões bancárias)
+// ────────────────────────────────────────────────────────────────────────────
 
 export interface PluggyItem {
 	id: string;
@@ -69,34 +43,24 @@ export interface PluggyItem {
 	status: string;
 }
 
-// GET /items/{id} — status da conexão + dados da instituição. Confirmado:
-// docs.pluggy.ai/reference/items-retrieve, docs.pluggy.ai/docs/item.
-//
-// TODO(pluggy-verify): a doc pública (schema OpenAPI de items-retrieve) tipa
-// `status` como string genérica, sem enum fechado — só UPDATED/UPDATING/
-// LOGIN_ERROR apareceram confirmados em texto. OUTDATED e WAITING_USER_INPUT
-// (usados no comentário de schema.ts:pluggyItems.status) são suposição
-// histórica, não confirmada nesta pesquisa. Conferir a lista completa de
-// valores possíveis com uma conta Meu Pluggy real antes de depender desses
-// dois especificamente (ex.: pra decidir quando pedir o usuário reconectar).
-export async function fetchItem(apiKey: string, itemId: string): Promise<PluggyItem> {
-	const res = await pluggyFetch(`/items/${itemId}`, {
-		headers: { 'X-API-KEY': apiKey }
-	});
-	const data = (await res.json()) as {
+export async function fetchItems(token: string): Promise<PluggyItem[]> {
+	const res = await myApiFetch('/items?only_my_items=true', token);
+	const data = (await res.json()) as Array<{
 		id: string;
-		status: string;
 		connector: { name: string; type: string };
-	};
-	return {
-		id: data.id,
-		institutionName: data.connector.name,
-		institutionType: data.connector.type,
-		// schema.ts guarda o status em minúsculo (ver comentário na tabela
-		// pluggyItems) — a API devolve maiúsculo (ex.: "UPDATED").
-		status: data.status.toLowerCase()
-	};
+		status: string;
+	}>;
+	return data.map((item) => ({
+		id: item.id,
+		institutionName: item.connector.name,
+		institutionType: item.connector.type,
+		status: item.status.toLowerCase()
+	}));
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Contas
+// ────────────────────────────────────────────────────────────────────────────
 
 export interface PluggyAccount {
 	id: string;
@@ -106,72 +70,81 @@ export interface PluggyAccount {
 	balance: number;
 }
 
-// GET /accounts?itemId={id} — contas bancárias/cartão do item, paginado
-// (page/total/totalPages/results). Confirmado: docs.pluggy.ai/reference/accounts-list
-// — o campo `type` só aparece com os valores BANK/CREDIT (não existe um
-// INVESTMENT aqui): investimentos são um produto à parte na Pluggy, ver
-// fetchInvestments abaixo e ESCOPO.md §2.3 ("produto de Investments dedicado").
-export async function fetchAccounts(apiKey: string, itemId: string): Promise<PluggyAccount[]> {
-	const results = await fetchAllPages<{
+export async function fetchAccounts(token: string, itemIds: string[]): Promise<PluggyAccount[]> {
+	const params = itemIds.map((id) => `itemId=${id}`).join('&');
+	const res = await myApiFetch(`/accounts?${params}`, token);
+	const data = (await res.json()) as Array<{
 		id: string;
 		type: string;
+		subtype?: string;
 		name: string;
 		currencyCode: string;
 		balance: number;
-	}>(apiKey, `/accounts?itemId=${itemId}`);
-	return results.map((a) => ({
+	}>;
+	return data.map((a) => ({
 		id: a.id,
-		type: a.type === 'CREDIT' ? 'credit_card' : 'checking',
+		type: a.subtype === 'CREDIT_CARD' || a.type === 'CREDIT' ? 'credit_card' : 'checking',
 		name: a.name,
 		currency: a.currencyCode,
 		balance: a.balance
 	}));
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Transações
+// ────────────────────────────────────────────────────────────────────────────
+
 export interface PluggyTransaction {
 	id: string;
 	description: string;
+	// Valor na moeda da conta (amountInAccountCurrency quando a transação é
+	// estrangeira) — o que o dashboard soma. Pra Nubank/XP/Itaú é sempre BRL.
 	amount: number;
 	date: string; // ISO 8601
+	// Moeda ORIGINAL da transação (ex.: "USD" pra compra no exterior). Usada
+	// só pra exibição — a soma sempre usa `amount` (convertido).
 	currency: string;
+	category: string | null;
 }
 
-// GET /transactions?accountId={id}&from=&to= — paginação offset-based
-// (page/total/totalPages/results). Ignoramos de propósito o campo `category`
-// que a Pluggy retorna: o TabelaFin categoriza via IA em lote, nunca usa a
-// categorização própria da Pluggy (ESCOPO.md §2.2/§3.3).
-//
-// TODO(pluggy-verify): esse endpoint (GET /transactions) está marcado como
-// DEPRECATED na doc pública, com remoção prevista depois de 2026-12-31, a
-// favor de GET /v2/transactions (paginação por cursor, não por página). A
-// pesquisa não conseguiu confirmar com certeza o formato exato do cursor de
-// saída da v2 (nome do campo, se é só o valor do cursor ou uma query string
-// inteira) — por isso este cliente ficou no endpoint legado (ainda válido e
-// com a paginação que já foi possível confirmar). Migrar pra v2 antes de
-// 2026-12-31, conferindo esse detalhe com uma conta real.
 export async function fetchTransactions(
-	apiKey: string,
-	accountId: string,
-	opts?: { from?: string; to?: string }
+	token: string,
+	accountIds: string[]
 ): Promise<PluggyTransaction[]> {
-	const params = new URLSearchParams({ accountId });
-	if (opts?.from) params.set('from', opts.from);
-	if (opts?.to) params.set('to', opts.to);
-	const results = await fetchAllPages<{
-		id: string;
-		description: string;
-		amount: number;
-		date: string;
-		currencyCode: string;
-	}>(apiKey, `/transactions?${params}`);
-	return results.map((t) => ({
-		id: t.id,
-		description: t.description,
-		amount: t.amount,
-		date: t.date,
-		currency: t.currencyCode
-	}));
+	const all: PluggyTransaction[] = [];
+	// A API do Meu Pluggy aceita múltiplos accountIds via query params repetidos,
+	// mas pra simplificar e evitar URLs longas, buscamos uma conta por vez.
+	for (const accountId of accountIds) {
+		const res = await myApiFetch(`/transactions?accountId=${accountId}`, token);
+		const data = (await res.json()) as Array<{
+			id: string;
+			description: string;
+			amount: number;
+			date: string;
+			currencyCode: string;
+			category?: string | null;
+			amountInAccountCurrency?: number | null;
+		}>;
+		for (const t of data) {
+			all.push({
+				id: t.id,
+				description: t.description,
+				// Compra internacional: a API dá o valor convertido pra moeda da
+				// conta (ex.: USD 5,30 → R$ 28,06). Usa esse valor pra somar
+				// certo — senão uma compra em dólar seria contada como reais.
+				amount: t.amountInAccountCurrency ?? t.amount,
+				date: t.date,
+				currency: t.currencyCode,
+				category: t.category ?? null
+			});
+		}
+	}
+	return all;
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Investimentos
+// ────────────────────────────────────────────────────────────────────────────
 
 export interface PluggyInvestment {
 	id: string;
@@ -180,53 +153,28 @@ export interface PluggyInvestment {
 	currency: string;
 }
 
-// GET /investments?itemId={id} — produto dedicado de investimentos (cobre
-// XP/XP Wealth, ver ESCOPO.md §2.3), paginado do mesmo jeito que /accounts.
-// Confirmado que é necessário (não dá pra ignorar): docs.pluggy.ai/reference/accounts-list
-// não lista INVESTMENT como valor de `type`, então contas de investimento
-// NÃO aparecem em /accounts — só aqui. Confirmado:
-// docs.pluggy.ai/reference/investments-list, docs.pluggy.ai/docs/investments.
-// Cada investimento vira uma "conta" (accounts.type='investment') no sync —
-// ver src/lib/server/pluggy/sync.ts — sem transações associadas: o produto
-// de movimentações de investimento (investmentsTransactions) é separado e
-// está fora de escopo do MVP (ESCOPO.md só pede "saldo de investimentos").
 export async function fetchInvestments(
-	apiKey: string,
-	itemId: string
+	token: string,
+	itemIds: string[]
 ): Promise<PluggyInvestment[]> {
-	const results = await fetchAllPages<{
-		id: string;
-		name: string;
-		balance: number;
-		value: number;
-		currencyCode?: string;
-	}>(apiKey, `/investments?itemId=${itemId}`);
-	return results.map((i) => ({
-		id: i.id,
-		name: i.name,
-		balance: i.balance ?? i.value,
-		currency: i.currencyCode ?? 'BRL'
-	}));
-}
-
-interface PaginatedResponse<T> {
-	page: number;
-	totalPages: number;
-	results: T[];
-}
-
-async function fetchAllPages<T>(apiKey: string, pathWithQuery: string): Promise<T[]> {
-	const separator = pathWithQuery.includes('?') ? '&' : '?';
-	const all: T[] = [];
-	let page = 1;
-	for (;;) {
-		const res = await pluggyFetch(`${pathWithQuery}${separator}page=${page}`, {
-			headers: { 'X-API-KEY': apiKey }
-		});
-		const data = (await res.json()) as PaginatedResponse<T>;
-		all.push(...data.results);
-		if (page >= data.totalPages) break;
-		page++;
+	const all: PluggyInvestment[] = [];
+	for (const itemId of itemIds) {
+		const res = await myApiFetch(`/investments?itemId=${itemId}`, token);
+		const data = (await res.json()) as Array<{
+			id: string;
+			name: string;
+			balance: number;
+			value?: number;
+			currencyCode?: string;
+		}>;
+		for (const i of data) {
+			all.push({
+				id: i.id,
+				name: i.name,
+				balance: i.balance ?? i.value ?? 0,
+				currency: i.currencyCode ?? 'BRL'
+			});
+		}
 	}
 	return all;
 }
