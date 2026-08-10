@@ -6,10 +6,8 @@ type Db = ReturnType<typeof getDb>;
 
 export interface PluggyCredentialsInput {
 	userId: string;
-	clientIdEncrypted: string;
-	clientIdNonce: string;
-	clientSecretEncrypted: string;
-	clientSecretNonce: string;
+	tokenEncrypted: string;
+	tokenNonce: string;
 }
 
 export async function getPluggyCredentials(db: Db, userId: string) {
@@ -27,10 +25,8 @@ export async function upsertPluggyCredentials(db: Db, input: PluggyCredentialsIn
 		.onConflictDoUpdate({
 			target: pluggyCredentials.userId,
 			set: {
-				clientIdEncrypted: input.clientIdEncrypted,
-				clientIdNonce: input.clientIdNonce,
-				clientSecretEncrypted: input.clientSecretEncrypted,
-				clientSecretNonce: input.clientSecretNonce
+				tokenEncrypted: input.tokenEncrypted,
+				tokenNonce: input.tokenNonce
 			}
 		})
 		.returning();

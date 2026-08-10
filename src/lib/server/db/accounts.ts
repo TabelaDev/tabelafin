@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import type { getDb } from './index';
-import { accounts } from './schema';
+import { financeAccounts as accounts } from './schema';
 
 type Db = ReturnType<typeof getDb>;
 
