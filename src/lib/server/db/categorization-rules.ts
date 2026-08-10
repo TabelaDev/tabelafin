@@ -56,3 +56,19 @@ export async function deleteRule(db: Db, userId: string, id: string): Promise<vo
 		.delete(categorizationRules)
 		.where(and(eq(categorizationRules.userId, userId), eq(categorizationRules.id, id)));
 }
+
+// Deletes the rule that keys on a description, which is how the UI addresses
+// it: the detail page knows the transaction, not the rule's id. Without this,
+// clearing a category only lasted until the next sync re-applied the rule that
+// created it, so re-categorising was impossible.
+export async function deleteRuleForDescription(
+	db: Db,
+	userId: string,
+	description: string
+): Promise<void> {
+	await db
+		.delete(categorizationRules)
+		.where(
+			and(eq(categorizationRules.userId, userId), eq(categorizationRules.description, description))
+		);
+}

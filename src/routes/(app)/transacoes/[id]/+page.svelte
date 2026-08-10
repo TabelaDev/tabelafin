@@ -21,17 +21,13 @@
 	// Categoria atual da transação — controla se o card de categorizar está
 	// travado (já categorizada) ou ativo (escolher/limpar).
 	const hasCategory = $derived(!!data.transaction.category);
-	let selectedCategory = $state('');
 
-	$effect(() => {
-		// Pre-sincroniza o select com a categoria atual; também limpa os
-		// estados de feedback quando a página recarrega (invalidateAll).
-		selectedCategory = data.transaction.category ?? '';
-		categorizeDone = false;
-		categorizeError = '';
-		recurringDone = false;
-		recurringError = '';
-	});
+	// Follows the loaded category but stays writable so the Select can bind to
+	// it. This was a $state plus an $effect that also cleared all five feedback
+	// flags on any change to `data` — so one card's invalidateAll wiped the
+	// neighbouring card's message, the same coupling the per-form state was
+	// meant to remove. Each form resets its own now.
+	let selectedCategory = $derived(data.transaction.category ?? '');
 
 	const categoryOptions = $derived(data.categories.map((c) => ({ value: c.name, label: c.name })));
 	const isExpense = $derived(data.transaction.displayAmount < 0);
@@ -135,6 +131,13 @@
 			entram categorizadas.
 		</p>
 
+		<!-- Outside the branch on purpose: a successful categorize flips
+		     hasCategory, so a confirmation rendered inside the {:else} arm would
+		     be replaced by the badge before it could ever be seen. -->
+		{#if categorizeDone}
+			<p class="mt-3 text-sm text-ctp-green">Categoria salva e regra criada.</p>
+		{/if}
+
 		{#if hasCategory}
 			<!-- Já categorizada: mostra travado, com opção de remover pra
 			     re-categorizar. -->
@@ -154,13 +157,17 @@
 					method="POST"
 					action="?/removeCategory"
 					use:enhance={() => {
+						categorizeDone = false;
+						categorizeError = '';
 						return async ({ result }) => {
 							await applyAction(result);
 							if (result.type === 'success') await invalidateAll();
 						};
 					}}
 				>
-					<Button type="submit" variant="ghost" size="sm" class="text-destructive">Remover</Button>
+					<Button type="submit" variant="ghost" size="sm" class="text-destructive">
+						Remover categoria e regra
+					</Button>
 				</form>
 			</div>
 		{:else}
@@ -169,15 +176,18 @@
 				method="POST"
 				action="?/categorize"
 				use:enhance={() => {
+					categorizeError = '';
+					categorizeDone = false;
 					return async ({ result }) => {
 						await applyAction(result);
 						if (result.type === 'failure') {
 							categorizeError = String(result.data?.error ?? 'Não foi possível salvar.');
 							return;
 						}
-						// Sucesso: recarrega pra o badge/regra refletirem.
-						categorizeDone = true;
+						// Reload first so the badge reflects the save, then raise the
+						// confirmation — the other order had it cleared by the reload.
 						await invalidateAll();
+						categorizeDone = true;
 					};
 				}}
 				class="mt-3 flex flex-col gap-3"
@@ -192,9 +202,6 @@
 				/>
 				{#if categorizeError}
 					<p class="text-sm text-destructive">{categorizeError}</p>
-				{/if}
-				{#if categorizeDone}
-					<p class="text-sm text-ctp-green">Categoria salva e regra criada.</p>
 				{/if}
 				<Button type="submit" variant="primary" disabled={!selectedCategory.trim()}>
 					Salvar categoria
@@ -214,6 +221,8 @@
 			method="POST"
 			action="?/recurring"
 			use:enhance={() => {
+				recurringError = '';
+				recurringDone = false;
 				return async ({ result }) => {
 					await applyAction(result);
 					if (result.type === 'failure') {

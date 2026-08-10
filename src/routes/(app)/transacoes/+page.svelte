@@ -166,7 +166,10 @@
 			{#if tipo && visible.length > 0}
 				· total
 				<span class={tipo === 'receitas' ? 'text-ctp-green' : 'text-ctp-red'}>
-					{currency.format(visible.reduce((sum, t) => sum + Math.abs(t.displayAmount), 0))}
+					<!-- Sum first, then take the magnitude. Summing Math.abs of each
+					     row made a refund add to the expense total instead of
+					     reducing it. -->
+					{currency.format(Math.abs(visible.reduce((sum, t) => sum + t.displayAmount, 0)))}
 				</span>
 			{/if}
 			{#if data.future.length > 0}

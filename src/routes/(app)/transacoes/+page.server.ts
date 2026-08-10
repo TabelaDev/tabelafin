@@ -4,6 +4,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { financeAccounts as accounts, transactions } from '$lib/server/db/schema';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
 import {
 	INTERNAL_TRANSFER_CATEGORIES,
 	INTERNAL_TRANSFER_DESCRIPTIONS
@@ -59,16 +60,20 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	const userAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId));
 	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
 
+	// On a credit card the API reports a purchase as positive and a refund as
+	// negative — the opposite of a checking account. "receitas" used to reject
+	// every card row outright while "despesas" kept only the positive ones, so a
+	// card refund matched neither filter and existed only in the unfiltered view.
 	if (tipo === 'receitas') {
 		rows = rows.filter((t) => {
 			const accType = t.accountId ? accountTypeById.get(t.accountId) : undefined;
-			if (accType === 'credit_card') return false;
+			if (accType === 'credit_card') return t.amount < 0; // estorno
 			return t.amount >= 0;
 		});
 	} else if (tipo === 'despesas') {
 		rows = rows.filter((t) => {
 			const accType = t.accountId ? accountTypeById.get(t.accountId) : undefined;
-			if (accType === 'credit_card') return t.amount > 0;
+			if (accType === 'credit_card') return t.amount > 0; // compra
 			return t.amount < 0;
 		});
 	}
@@ -142,7 +147,11 @@ export const actions: Actions = {
 		// Busca as transações selecionadas pra validar pertença e não tocar em
 		// categorias manuais existentes.
 		const rows = await db
-			.select({ id: transactions.id, categorySource: transactions.categorySource })
+			.select({
+				id: transactions.id,
+				categorySource: transactions.categorySource,
+				description: transactions.description
+			})
 			.from(transactions)
 			.where(
 				and(
@@ -154,15 +163,28 @@ export const actions: Actions = {
 
 		if (rows.length === 0) return fail(400, { error: 'Nenhuma transação válida encontrada.' });
 
-		// Aplica em todas sem categoria manual. As que já têm categorySource
-		// 'user' são preservadas (escolha explícita do usuário).
+		// Picking categories by hand is a user decision, exactly like doing it one
+		// at a time on the detail page — so it is stored as 'user' and protected
+		// from later passes. It used to be written as 'rule', which both mislabelled
+		// it ("Categorizada por: Regra automática") and left it open to being
+		// overwritten by the next bulk action.
 		const toUpdate = rows.filter((r) => r.categorySource !== 'user').map((r) => r.id);
 
 		if (toUpdate.length > 0) {
 			await db
 				.update(transactions)
-				.set({ category, categorySource: 'rule' })
+				.set({ category, categorySource: 'user' })
 				.where(inArray(transactions.id, toUpdate));
+		}
+
+		// ...and the rule really is created, once per distinct description. The
+		// card promises "transações futuras com a mesma descrição já entram
+		// categorizadas", and in bulk that promise was not being kept: nothing
+		// called upsertCategorizationRule, so the next Uber charge still arrived
+		// uncategorised.
+		const descriptions = [...new Set(rows.map((r) => r.description))];
+		for (const description of descriptions) {
+			await upsertCategorizationRule(db, locals.userId, description, category);
 		}
 
 		return { success: true, count: toUpdate.length };

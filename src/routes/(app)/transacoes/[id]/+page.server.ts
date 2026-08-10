@@ -5,6 +5,7 @@ import { getDb } from '$lib/server/db';
 import { financeAccounts, transactions } from '$lib/server/db/schema';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { createRecurringExpense } from '$lib/server/db/recurring-expenses';
+import { deleteRuleForDescription } from '$lib/server/db/categorization-rules';
 import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
 
 export const load: PageServerLoad = async ({ locals, platform, params }) => {
@@ -129,6 +130,11 @@ export const actions: Actions = {
 			.update(transactions)
 			.set({ category: null, categorySource: null })
 			.where(eq(transactions.id, tx.id));
+
+		// The rule goes with it. Clearing only the transaction left the rule that
+		// had been created alongside it, and the next sync re-applied the same
+		// category — so "Remover" could not actually lead to re-categorising.
+		await deleteRuleForDescription(db, locals.userId, tx.description);
 
 		return { success: true };
 	}
