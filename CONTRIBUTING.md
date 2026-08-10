@@ -1,8 +1,7 @@
-# Contribuindo com o TabelaFin
+# Contribuindo com o Tabelafin
 
-Obrigado pelo interesse. Antes de abrir um PR de código, dá uma olhada em
-`ESCOPO.md` e `README.md` pra entender as decisões já tomadas (hospedagem,
-BYOK triplo, fluxo de sync via Pluggy).
+Obrigado pelo interesse. Antes de abrir um PR de código, dá uma olhada no
+`README.md` pra entender as decisões já tomadas.
 
 ## Reportando bugs / sugerindo features
 
@@ -12,12 +11,9 @@ Abra uma [issue](../../issues/new/choose) usando o template apropriado.
 
 1. Fork o repositório.
 2. Crie uma branch a partir de `main`.
-3. Rode lint/typecheck/testes localmente antes de abrir o PR (ver os comandos
-   em `README.md`, seção "Rodando localmente").
+3. Rode `go vet ./...`, `go test ./...` e `go build ./...` localmente antes
+   de abrir o PR.
 4. Abra o PR usando o template — descreva o quê e o porquê da mudança.
-5. PRs que tocam o fluxo de credenciais (Meu Pluggy, IA) ou a criptografia de
-   segredos recebem revisão extra — são as partes mais sensíveis do projeto em
-   termos de segurança e privacidade financeira.
 
 ## Licença
 

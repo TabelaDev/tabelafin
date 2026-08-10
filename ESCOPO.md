@@ -7,11 +7,11 @@
 > próprias credenciais (IA + Open Finance). Upload de PDF de fatura/extrato
 > existe só como fallback manual, não como fluxo principal.
 
-## Status de implementação (2026-08-01)
+## Status de implementação (2026-08-03)
 
-O scaffold e a maior parte do MVP (seção 4) já foram implementados — 7
-commits locais na `main`, ainda **não pushados** pro GitHub. Resumo pra
-continuar em outra sessão:
+O scaffold e todo o MVP (seção 4) já foram implementados — 8 commits locais na
+`main`, ainda **não pushados** pro GitHub. Resumo pra continuar em outra
+sessão:
 
 ### ✅ Implementado e validado (`bun run check/lint/test/build` passam)
 
@@ -39,29 +39,46 @@ continuar em outra sessão:
 - **Relatório mensal + push** (`src/lib/server/reports/generate.ts`, cron
   `0 7 1 * *`): narrativa via IA, comparação mês a mês, notificação Web Push
   quando fica pronto (`src/lib/PushSubscribe.svelte`).
+- **Upload de PDF como fallback** (seção 2.4): `src/lib/server/ai/extract.ts`
+  manda o PDF (base64) direto pro modelo do usuário via document understanding
+  (bloco `document` da Anthropic / `input_file` da OpenAI, formatos confirmados
+  contra a doc oficial) e extrai + categoriza num único request (tool-use
+  estruturado). Rota `POST /api/statement-upload` valida o PDF, grava em
+  `statement_uploads` e insere as transações com `source='pdf_upload'` e
+  `categorySource='ai'` — o arquivo é descartado (sem R2). Gating por
+  `supportsDocuments` desabilita o upload na UI (`src/lib/StatementUpload.svelte`)
+  quando o modelo escolhido não suporta documentos.
 - **Dashboard** (`src/routes/dashboard/`): contas, transações com categoria,
-  relatório mais recente.
+  relatório mais recente, upload de PDF.
 
 ### ⬜ Ainda não implementado
 
-- **Upload de PDF como fallback** (seção 2.4) — único item do MVP (seção 4)
-  que falta. O gating por `supportsDocuments` já existe em
-  `src/lib/ai-providers.ts`, só falta o fluxo de upload + extração
-  (document understanding) em si.
+Nada resta do MVP (seção 4). Fora do MVP, seguem de pé os itens da seção 4
+"v2" e "Fora de escopo" (e-mail, insights mais profundos, outros bancos,
+metas de orçamento, abrir o app pra outros usuários).
 
-### ⚠️ Conferir antes de testar com uma conta Meu Pluggy real
+### ✅ Pontos `TODO(pluggy-verify)` resolvidos (2026-08-03)
 
-Deixados como `TODO(pluggy-verify)` no código (commit `2ec093d`) — a doc
-pública da Pluggy não fechou 100% nestes pontos:
+Os três pontos que a doc pública não tinha fechado em 2026-08-01 foram
+re-conferidos contra as docs atuais e resolvidos no código:
 
-- `src/lib/server/pluggy/client.ts` (~linha 75-81): enum completo de
-  `status` de item — só UPDATED/UPDATING/LOGIN_ERROR confirmados;
-  OUTDATED/WAITING_USER_INPUT são suposição histórica.
-- `src/lib/server/pluggy/client.ts` (~linha 144-151): `GET /transactions`
-  está **deprecated** (remoção depois de 2026-12-31) a favor de
-  `GET /v2/transactions` (paginação por cursor) — migrar antes do prazo.
-- `src/lib/PluggyConnect.svelte` (~linha 12-18): CDN do widget pinado em
-  v2.8.2 — conferir se já existe versão mais nova.
+- **Enum de `status` de item**: confirmado completo em
+  `docs.pluggy.ai/docs/item-lifecycle` — UPDATED/UPDATING/LOGIN_ERROR/OUTDATED/
+  WAITING_USER_INPUT. Os dois últimos (antes suposição histórica) estão certos
+  e o comentário de `fetchItem` foi atualizado.
+- **`GET /transactions` (deprecated)** → **`GET /v2/transactions`**: migrado
+  no `fetchTransactions` (client.ts). Formato do cursor confirmado no OpenAPI
+  de `docs.pluggy.ai/reference/transactions-list-by-cursor`: a resposta traz
+  `results` + `next` (query string completa da próxima página, inclui o cursor
+  `after`; `null` quando acaba), filtros de data `dateFrom`/`dateTo`.
+- **Widget Pluggy Connect**: CDN subiu de v2.8.2 → **v2.11.0**, a build
+  versionada mais recente confirmada em `cdn.pluggy.ai` (`latest` aponta pro
+  mesmo bundle; a npm 2.14.1 ainda não tem build no CDN). API do widget
+  conferida contra os typings de `pluggy-connect-sdk@2.11.0`.
+
+O que falta agora não é mais dúvida de código, e sim o **teste ponta a ponta
+com uma conta Meu Pluggy real** (conectar via widget, rodar o sync e conferir
+os dados batendo com a conta do Ian).
 
 ### Recursos Cloudflare já criados (conta real, não placeholder)
 
@@ -95,37 +112,38 @@ de PDF (seção 2.4). O usuário paga sua própria inferência; sem custo
 compartilhado. Reaproveita **exatamente** o padrão já em produção no
 TabelaCal (`src/lib/ai-providers.ts`, `src/lib/server/ai/parse.ts`).
 
-### 2.3 Open Finance: BYO Meu Pluggy (padrão inspirado no BYO Google OAuth Client do TabelaCal)
+### 2.3 Open Finance: BYO Meu Pluggy (API interna, sem plano comercial)
 
-**A parte mais importante do design**, análoga à decisão do OAuth Client no
-TabelaCal: em vez de o TabelaFin ter uma conta Pluggy comercial paga
-compartilhada por todo mundo (planos a partir de R$2.500/mês), **cada usuário
-traz sua própria conexão**:
+**A parte mais importante do design**: em vez de o TabelaFin ter uma conta
+Pluggy comercial paga compartilhada por todo mundo (planos a partir de
+R$2.500/mês), **cada usuário traz sua própria conexão** via a API interna do
+Meu Pluggy (`my-api.pluggy.ai`), que é gratuita pra uso pessoal:
 
 1. Usuário cria conta no [Meu Pluggy](https://www.pluggy.ai/meu-pluggy) —
    gratuito por tempo indeterminado pra uso pessoal.
 2. Conecta suas próprias contas (mesmo CPF) — Nubank e XP — via Open Finance,
    dentro da própria UI do Meu Pluggy.
-3. Gera um **Client ID + Client Secret** ali mesmo.
-4. Cola essas credenciais no onboarding do TabelaFin.
-5. O TabelaFin usa essas credenciais (armazenadas criptografadas, mesmo
-   padrão de envelope encryption do TabelaCal) pra chamar a API da Pluggy e
-   sincronizar contas, transações e investimentos **daquele usuário
-   especificamente**.
+3. Faz login em meu.pluggy.ai e copia o **JWT access token** (via DevTools:
+   Network > qualquer chamada a `my-api.pluggy.ai` > header `Authorization`).
+4. Cola o token no onboarding do TabelaFin.
+5. O TabelaFin usa o token (armazenado criptografado com `MASTER_KEY`) pra
+   chamar a API interna do Meu Pluggy e sincronizar contas, transações e
+   investimentos **daquele usuário especificamente**.
+
+**Por que a API interna em vez da API comercial:** a API comercial
+(`api.pluggy.ai`) exige Client ID/Secret que só funcionam com plano pago
+(R$2.500/mês) ou demo app (sandbox only, sem item creation). A API interna
+(`my-api.pluggy.ai`) usa JWT (Auth0) e é a mesma que o portal do Meu Pluggy
+usa — gratuita, sem restrição de plano.
 
 Cobertura confirmada: contas/cartão e um produto de **Investments** dedicado
 que inclui XP/XP Wealth.
 
-**Zona cinzenta identificada, não bloqueante:** os termos do Meu Pluggy dizem
-"uso comercial exige plano pago" mas não definem o que conta como comercial.
-Pra uso pessoal (só o Ian, sua própria conta) isso não é um problema — é
-literalmente o caso de uso anunciado. Só vira pergunta real se o app abrir
-pra outras pessoas usarem (confirmar com o suporte da Pluggy antes, ver
-seção 4 "Fora de escopo").
-
-**Trade-off aceito:** onboarding com mais um passo manual (criar conta no Meu
-Pluggy) em vez de "conectar direto". Precisa de wizard guiado, mesmo estilo
-do wizard de GCP do TabelaCal.
+**Trade-off: token de curta duração (~24h).** O JWT access token expira em
+aproximadamente 24 horas. O sync diário (cron 6h) funciona se o usuário
+autenticou no máximo ~18h antes. Quando o token expira, o usuário precisa
+re-autenticar (copiar novo token do DevTools). Uma melhoria futura seria usar
+o refresh token do Auth0 pra renovar automaticamente.
 
 ### 2.4 Ingestão de PDF (fallback): manda o arquivo direto pro modelo do usuário
 
@@ -225,11 +243,10 @@ users                 (id, email, timezone, default_currency, created_at)
 ai_credentials         -- BYOK de IA, reaproveitado do TabelaCal sem mudança de forma
   user_id, provider, model, key_encrypted, nonce
 
-pluggy_credentials     -- Client ID/Secret DO PRÓPRIO usuário (seção 2.3)
-  user_id, client_id_encrypted, client_id_nonce, client_secret_encrypted,
-  client_secret_nonce, created_at
+pluggy_credentials     -- JWT access token do Meu Pluggy (seção 2.3)
+  user_id, token_encrypted, token_nonce, created_at
 
-pluggy_items           -- 1 Client ID/Secret pode conectar múltiplos logins bancários
+pluggy_items           -- 1 token pode ter múltiplas conexões bancárias
   id, user_id, pluggy_item_id, institution_name, institution_type, status,
   last_synced_at
 
@@ -287,4 +304,3 @@ query de dashboard/relatório filtra `superseded_by_transaction_id IS NULL`.
   coerente com ser serviço hospedado (não lib redistribuída).
 - **Releases**: GitHub Releases via tag (`vX.Y.Z`), changelog em
   `CHANGELOG.md` (formato [Keep a Changelog](https://keepachangelog.com/)).
-- **Contribuição**: ver `CONTRIBUTING.md`.

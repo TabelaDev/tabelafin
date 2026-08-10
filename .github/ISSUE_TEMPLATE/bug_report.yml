@@ -1,5 +1,5 @@
 name: Bug report
-description: Reportar um comportamento incorreto no TabelaFin
+description: Reportar um comportamento incorreto no tabelafin
 labels: ['bug']
 body:
   - type: textarea
@@ -14,8 +14,8 @@ body:
     attributes:
       label: Passos para reproduzir
       placeholder: |
-        1. Vá em '...'
-        2. Clique em '...'
+        1. Rode 'tabelafin ...'
+        2. Navegue até '...'
         3. Veja o erro
     validations:
       required: true
@@ -23,13 +23,13 @@ body:
     id: environment
     attributes:
       label: Ambiente
-      placeholder: navegador/versão, mobile/desktop, etc.
+      placeholder: SO, terminal/emulador, versão do tabelafin (ou do Go, se compilado do source)
     validations:
       required: false
   - type: textarea
     id: logs
     attributes:
       label: Logs / screenshots
-      description: Cole aqui logs relevantes ou screenshots. Nunca cole chaves de API, tokens ou credenciais do Meu Pluggy.
+      description: Cole aqui logs relevantes ou screenshots. Nunca cole chaves de API ou tokens.
     validations:
       required: false
