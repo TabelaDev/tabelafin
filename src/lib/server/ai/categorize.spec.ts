@@ -26,6 +26,7 @@ describe('categorizeTransactions', () => {
 			provider: 'anthropic',
 			model: 'claude-sonnet-5',
 			apiKey: 'key',
+			categories: ['Alimentação', 'Renda', 'Transferências', 'Investimentos', 'Outros'],
 			transactions: []
 		});
 		expect(result).toEqual([]);
@@ -52,6 +53,7 @@ describe('categorizeTransactions', () => {
 			provider: 'anthropic',
 			model: 'claude-sonnet-5',
 			apiKey: 'anthropic-key',
+			categories: ['Alimentação', 'Renda', 'Transferências', 'Investimentos', 'Outros'],
 			transactions: TRANSACTIONS
 		});
 
@@ -88,6 +90,7 @@ describe('categorizeTransactions', () => {
 			provider: 'openai',
 			model: 'gpt-5.1',
 			apiKey: 'openai-key',
+			categories: ['Alimentação', 'Renda', 'Transferências', 'Investimentos', 'Outros'],
 			transactions: [TRANSACTIONS[0]]
 		});
 
@@ -114,6 +117,7 @@ describe('categorizeTransactions', () => {
 			provider: 'anthropic',
 			model: 'claude-sonnet-5',
 			apiKey: 'key',
+			categories: ['Alimentação', 'Renda', 'Transferências', 'Investimentos', 'Outros'],
 			transactions: TRANSACTIONS
 		});
 
@@ -128,6 +132,7 @@ describe('categorizeTransactions', () => {
 				provider: 'anthropic',
 				model: 'claude-sonnet-5',
 				apiKey: 'bad-key',
+				categories: ['Alimentação', 'Renda', 'Transferências', 'Investimentos', 'Outros'],
 				transactions: TRANSACTIONS
 			})
 		).rejects.toThrow('Anthropic API error');

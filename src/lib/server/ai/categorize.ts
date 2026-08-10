@@ -4,7 +4,6 @@
 // dispatch fetch-based (Anthropic/OpenAI/DeepSeek) do TabelaCal
 // (server/ai/parse.ts): sem SDK, só fetch(), pra rodar em `workerd`.
 import type { AiProvider } from '$lib/ai-providers';
-import { TRANSACTION_CATEGORIES, type TransactionCategory } from '$lib/categories';
 
 export interface TransactionToCategorize {
 	id: string;
@@ -15,39 +14,46 @@ export interface TransactionToCategorize {
 
 export interface CategorizedTransaction {
 	id: string;
-	category: TransactionCategory;
+	category: string;
 }
 
 interface CategorizeInput {
 	provider: AiProvider;
 	model: string;
 	apiKey: string;
+	// Categorias do usuário (dinâmicas) — o prompt e o schema de tool calling
+	// usam essa lista, não uma taxonomia fixa.
+	categories: string[];
+	// Prompt customizado do usuário (ver /perfil/ia) — sobrescreve o system
+	// prompt default quando presente.
+	customPrompt?: string;
 	transactions: TransactionToCategorize[];
 }
 
-const CATEGORIZE_SCHEMA = {
-	type: 'object',
-	properties: {
-		results: {
-			type: 'array',
-			items: {
-				type: 'object',
-				properties: {
-					id: { type: 'string', description: 'O mesmo id da transação fornecida no contexto' },
-					category: { type: 'string', enum: TRANSACTION_CATEGORIES }
+function categorizeSchema(categories: string[]) {
+	return {
+		type: 'object',
+		properties: {
+			results: {
+				type: 'array',
+				items: {
+					type: 'object',
+					properties: {
+						id: { type: 'string', description: 'O mesmo id da transação fornecida no contexto' },
+						category: { type: 'string', enum: categories }
+					},
+					required: ['id', 'category']
 				},
-				required: ['id', 'category']
-			},
-			description: 'Uma entrada por transação fornecida no contexto, na mesma quantidade.'
-		}
-	},
-	required: ['results']
-};
+				description: 'Uma entrada por transação fornecida no contexto, na mesma quantidade.'
+			}
+		},
+		required: ['results']
+	};
+}
 
 const CATEGORIZE_TOOL = {
 	name: 'categorize_transactions',
-	description: 'Categoriza cada transação financeira fornecida em exatamente uma categoria',
-	schema: CATEGORIZE_SCHEMA
+	description: 'Categoriza cada transação financeira fornecida em exatamente uma categoria'
 };
 
 function formatTransactions(transactions: TransactionToCategorize[]): string {
@@ -56,10 +62,21 @@ function formatTransactions(transactions: TransactionToCategorize[]): string {
 		.join('\n');
 }
 
-function systemPrompt(transactions: TransactionToCategorize[]): string {
+function systemPrompt(
+	transactions: TransactionToCategorize[],
+	categories: string[],
+	customPrompt?: string
+): string {
+	if (customPrompt) {
+		return (
+			`${customPrompt}\n\nCategorias válidas: ${categories.join(', ')}.\n\n` +
+			`Transações a categorizar:\n${formatTransactions(transactions)}\n\n` +
+			`Chame a ferramenta categorize_transactions com um resultado por transação, na mesma quantidade recebida (um id pode não se repetir).`
+		);
+	}
 	return (
 		`Você categoriza transações financeiras pessoais (Brasil). Categorias válidas: ` +
-		`${TRANSACTION_CATEGORIES.join(', ')}.\n\n` +
+		`${categories.join(', ')}.\n\n` +
 		`Regras:\n` +
 		`- Valores negativos costumam ser gastos, positivos costumam ser entrada de dinheiro (ex: "Renda" ou "Transferências").\n` +
 		`- Use "Transferências" pra Pix/TED/DOC entre contas do próprio usuário ou pra terceiros sem contexto de compra.\n` +
@@ -91,13 +108,13 @@ async function categorizeWithAnthropic(input: CategorizeInput): Promise<Categori
 		body: JSON.stringify({
 			model: input.model,
 			max_tokens: 4096,
-			system: systemPrompt(input.transactions),
+			system: systemPrompt(input.transactions, input.categories, input.customPrompt),
 			messages: [{ role: 'user', content: 'Categorize as transações do contexto.' }],
 			tools: [
 				{
 					name: CATEGORIZE_TOOL.name,
 					description: CATEGORIZE_TOOL.description,
-					input_schema: CATEGORIZE_TOOL.schema
+					input_schema: categorizeSchema(input.categories)
 				}
 			],
 			tool_choice: { type: 'any' }
@@ -110,7 +127,7 @@ async function categorizeWithAnthropic(input: CategorizeInput): Promise<Categori
 	};
 	const toolUse = data.content.find((block) => block.type === 'tool_use');
 	if (!toolUse) throw new Error('IA não retornou uma categorização estruturada');
-	return toResults(toolUse.input);
+	return toResults(toolUse.input, input.categories);
 }
 
 // OpenAI e DeepSeek falam o mesmo formato de chat completions — ver
@@ -129,7 +146,10 @@ async function categorizeWithOpenAiCompatible(
 		body: JSON.stringify({
 			model: input.model,
 			messages: [
-				{ role: 'system', content: systemPrompt(input.transactions) },
+				{
+					role: 'system',
+					content: systemPrompt(input.transactions, input.categories, input.customPrompt)
+				},
 				{ role: 'user', content: 'Categorize as transações do contexto.' }
 			],
 			tools: [
@@ -138,7 +158,7 @@ async function categorizeWithOpenAiCompatible(
 					function: {
 						name: CATEGORIZE_TOOL.name,
 						description: CATEGORIZE_TOOL.description,
-						parameters: CATEGORIZE_TOOL.schema
+						parameters: categorizeSchema(input.categories)
 					}
 				}
 			],
@@ -154,7 +174,7 @@ async function categorizeWithOpenAiCompatible(
 	};
 	const toolCall = data.choices[0]?.message.tool_calls?.[0];
 	if (!toolCall) throw new Error('IA não retornou uma categorização estruturada');
-	return toResults(JSON.parse(toolCall.function.arguments));
+	return toResults(JSON.parse(toolCall.function.arguments), input.categories);
 }
 
 async function categorizeWithOpenAI(input: CategorizeInput): Promise<CategorizedTransaction[]> {
@@ -173,10 +193,8 @@ async function categorizeWithDeepSeek(input: CategorizeInput): Promise<Categoriz
 	);
 }
 
-function toResults(rawInput: unknown): CategorizedTransaction[] {
+function toResults(rawInput: unknown, categories: string[]): CategorizedTransaction[] {
 	const parsed = rawInput as { results?: Array<{ id: string; category: string }> };
 	if (!parsed.results) throw new Error('IA retornou uma categorização em formato inesperado');
-	return parsed.results.filter((r): r is CategorizedTransaction =>
-		(TRANSACTION_CATEGORIES as readonly string[]).includes(r.category)
-	) as CategorizedTransaction[];
+	return parsed.results.filter((r): r is CategorizedTransaction => categories.includes(r.category));
 }

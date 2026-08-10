@@ -87,11 +87,26 @@ async function generateReportForUser(
 
 	const transactions = await getTransactionsInRange(db, userId, range.from, range.to);
 	const accounts = await getAccountsByUser(db, userId);
+	const accountTypeById = new Map(accounts.map((a) => [a.id, a.type]));
 
 	let totalIncome = 0;
 	let totalExpense = 0;
 	const categoryTotals: CategoryTotals = {};
 	for (const tx of transactions) {
+		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
+
+		if (accType === 'credit_card') {
+			// Cartão de crédito: compra (positiva) é GASTO, não receita. O
+			// pagamento da fatura já é excluído pelo filtro de transferência
+			// interna em getTransactionsInRange.
+			if (tx.amount > 0) {
+				totalExpense += tx.amount;
+				const category = tx.category ?? 'Outros';
+				categoryTotals[category] = (categoryTotals[category] ?? 0) + tx.amount;
+			}
+			continue;
+		}
+
 		if (tx.amount >= 0) {
 			totalIncome += tx.amount;
 		} else {
