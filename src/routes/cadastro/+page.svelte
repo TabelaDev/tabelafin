@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<title>Entrar — TabelaFin</title>
+	<title>Criar conta — TabelaFin</title>
 </svelte:head>
 
 <div class="relative mx-auto flex min-h-svh max-w-md flex-col justify-center gap-6 p-6">
@@ -18,8 +18,13 @@
 	>
 		← tabelafin
 	</a>
-	<Card title="TabelaFin" description="Entre com sua conta para acessar suas finanças.">
+	<Card title="TabelaFin" description="Crie sua conta para começar a controlar suas finanças.">
 		<form method="POST" use:enhance class="flex flex-col gap-4">
+			<div class="flex flex-col gap-2">
+				<Label for="name">Nome</Label>
+				<Input id="name" name="name" type="text" placeholder="Seu nome" required />
+			</div>
+
 			<div class="flex flex-col gap-2">
 				<Label for="email">E-mail</Label>
 				<Input id="email" name="email" type="email" placeholder="seu@email.com" required />
@@ -31,7 +36,8 @@
 					id="password"
 					name="password"
 					type="password"
-					autocomplete="current-password"
+					autocomplete="new-password"
+					minlength={8}
 					required
 				/>
 			</div>
@@ -40,11 +46,11 @@
 				<p class="text-sm text-destructive">{form.error}</p>
 			{/if}
 
-			<Button type="submit">Entrar</Button>
+			<Button type="submit">Criar conta</Button>
 
 			<p class="text-center text-sm text-ink-soft">
-				Não tem uma conta?
-				<a href={resolve('/cadastro')} class="text-accent hover:underline">Cadastre-se</a>
+				Já tem uma conta?
+				<a href={resolve('/login')} class="text-accent hover:underline">Entrar</a>
 			</p>
 		</form>
 	</Card>

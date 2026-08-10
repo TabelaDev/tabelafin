@@ -11,25 +11,30 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	default: async ({ request, cookies, platform }) => {
 		const form = await request.formData();
+		const name = form.get('name');
 		const email = form.get('email');
 		const password = form.get('password');
 
-		if (typeof email !== 'string' || typeof password !== 'string') {
-			return fail(400, { error: 'Informe e-mail e senha.' });
+		if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+			return fail(400, { error: 'Preencha todos os campos.' });
+		}
+
+		if (password.length < 8) {
+			return fail(400, { error: 'A senha deve ter pelo menos 8 caracteres.' });
 		}
 
 		const auth = getAuth(platform!.env);
 
 		try {
-			const response = await auth.api.signInEmail({
-				body: { email, password },
+			const response = await auth.api.signUpEmail({
+				body: { name, email, password },
 				asResponse: true
 			});
 
 			if (!response.ok) {
 				const body = (await response.json()) as { message?: string };
-				const rawMessage = body?.message ?? 'Credenciais inválidas';
-				console.error('[auth/signin] falha no login', {
+				const rawMessage = body?.message ?? 'Erro ao criar conta';
+				console.error('[auth/signup] falha ao criar conta', {
 					status: response.status,
 					email,
 					message: rawMessage
@@ -69,7 +74,7 @@ export const actions: Actions = {
 				}
 			}
 		} catch (e) {
-			console.error('[auth/signin] erro no login', {
+			console.error('[auth/signup] erro ao criar conta', {
 				email,
 				error: e instanceof Error ? e.message : String(e)
 			});
