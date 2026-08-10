@@ -24,7 +24,7 @@ import {
 	updateTransactionCategory
 } from '$lib/server/db/transactions';
 import { financeAccounts, transactions } from '$lib/server/db/schema';
-import { and, eq, gte, inArray, isNull, notInArray } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNull, notInArray, or } from 'drizzle-orm';
 import { fetchAccounts, fetchInvestments, fetchItems, fetchTransactions } from './client';
 import { computeDedupeHash } from './dedupe';
 import { categorizeTransactions } from '$lib/server/ai/categorize';
@@ -127,6 +127,55 @@ export async function syncUserItems(
 	await categorizeNewTransactions(db, masterKey, userId);
 }
 
+// MIRROR_WINDOW_MS: interbank transfers land D+0/D+1, so the two legs can sit
+// up to two days apart.
+const MIRROR_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
+
+type MirrorRow = { id: string; accountId: string | null; amount: number; date: Date };
+
+// pairMirrors matches each credit against at most one debit of the same amount
+// in a different account, and returns the ids of the legs that paired.
+//
+// The previous version added both sides of every compatible pair, which is the
+// cross product, not a matching: three R$50 rows across three accounts within
+// the window marked all three, so a genuine expense that merely shared the
+// amount with a real transfer disappeared from the dashboard. Pairing greedily
+// by closest date consumes each leg exactly once, and anything left over stays
+// visible — which is the safe direction to be wrong in.
+export function pairMirrors(rows: MirrorRow[]): string[] {
+	const credits = rows
+		.filter((r) => r.amount > 0)
+		.sort((a, b) => a.date.getTime() - b.date.getTime());
+	const debits = rows
+		.filter((r) => r.amount < 0)
+		.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+	const paired: string[] = [];
+	const taken = new Set<string>();
+
+	for (const credit of credits) {
+		let best: MirrorRow | undefined;
+		let bestDistance = Infinity;
+
+		for (const debit of debits) {
+			if (taken.has(debit.id)) continue;
+			if (debit.accountId === credit.accountId) continue; // same account is not a mirror
+			const distance = Math.abs(credit.date.getTime() - debit.date.getTime());
+			if (distance <= MIRROR_WINDOW_MS && distance < bestDistance) {
+				best = debit;
+				bestDistance = distance;
+			}
+		}
+
+		if (best) {
+			taken.add(best.id);
+			paired.push(credit.id, best.id);
+		}
+	}
+
+	return paired;
+}
+
 // Detecta transferências internas por "espelho": uma transação de uma conta do
 // usuário com valor X que tem contraparte de valor -X (ou vice-versa) em OUTRA
 // conta do mesmo usuário, em datas próximas (até 2 dias). Quando encontra o
@@ -154,7 +203,16 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 				// interno — transação já marcada por categoria ou descrição não
 				// deve "casar" com outra (ex.: o pagamento de fatura -2000 não
 				// pode virar espelho da receita real +2000 da MEI).
-				notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES]),
+				//
+				// The isNull arms are load-bearing: in SQL `NULL NOT IN (...)`
+				// evaluates to NULL, which WHERE treats as false, so a plain
+				// notInArray silently dropped every row whose pluggy_category is
+				// null — and that column is nullable, so most rows never reached
+				// the matching at all.
+				or(
+					isNull(transactions.pluggyCategory),
+					notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES])
+				),
 				notInArray(transactions.description, [...INTERNAL_TRANSFER_DESCRIPTIONS])
 			)
 		);
@@ -189,22 +247,9 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 	}
 
 	const toMark = new Set<string>();
-	const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
 
 	for (const group of groups.values()) {
-		if (group.length < 2) continue;
-		const positives = group.filter((r) => r.amount > 0);
-		const negatives = group.filter((r) => r.amount < 0);
-		for (const pos of positives) {
-			for (const neg of negatives) {
-				if (pos.accountId === neg.accountId) continue; // não é espelho: mesma conta
-				const diff = Math.abs(pos.date.getTime() - neg.date.getTime());
-				if (diff <= TWO_DAYS) {
-					toMark.add(pos.id);
-					toMark.add(neg.id);
-				}
-			}
-		}
+		for (const id of pairMirrors(group)) toMark.add(id);
 	}
 
 	for (const id of toMark) {
