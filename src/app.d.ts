@@ -17,6 +17,10 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			userId: string | null;
+			session: {
+				user: { id: string; name: string; email: string; image?: string | null };
+				session: { id: string; token: string };
+			} | null;
 		}
 		interface PageData {
 			flash?: { type: ToastType; message: string };

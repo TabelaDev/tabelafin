@@ -27,3 +27,12 @@ vite.config.ts.timestamp-*
 
 # Claude Code local state (agent worktrees etc.)
 /.claude/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# scratch de debug
+tmp-*

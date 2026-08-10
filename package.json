@@ -19,7 +19,8 @@
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio"
+		"db:studio": "drizzle-kit studio",
+		"deploy": "bun run build && wrangler d1 migrations apply tabelafin-db --remote && wrangler deploy"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
@@ -55,9 +56,12 @@
 		"wrangler": "^4.97.0"
 	},
 	"dependencies": {
+		"@better-auth/drizzle-adapter": "^1.6.26",
 		"@block65/webcrypto-web-push": "^1.0.2",
+		"@myriaddreamin/typst.ts": "^0.7.0",
+		"@tabeladev/tabelawebui": "^0.14.2",
 		"apexcharts": "^6.7.0",
-		"sveltekit-flash-message": "^2.4.6",
-		"tabelawebui": "^0.6.0"
+		"better-auth": "^1.6.26",
+		"sveltekit-flash-message": "^2.4.6"
 	}
 }

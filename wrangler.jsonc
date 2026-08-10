@@ -4,7 +4,13 @@
 	"compatibility_date": "2026-08-01",
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "worker/entry.js",
-	"alias": { "$lib": "./src/lib" },
+	"alias": {
+		"$lib": "./src/lib",
+		// typst.ts WASM modules só rodam client-side (via CDN).
+		// No server, mapeamos pra módulos vazios pra evitar erro de resolução.
+		"@myriaddreamin/typst-ts-web-compiler": "./worker/empty-module.js",
+		"@myriaddreamin/typst-ts-renderer": "./worker/empty-module.js"
+	},
 	"assets": { "binding": "ASSETS", "directory": ".svelte-kit/cloudflare" },
 	"workers_dev": true,
 	"preview_urls": true,
@@ -12,9 +18,10 @@
 		"ORIGIN": "https://tabelafin.ianptkcs-023.workers.dev",
 		"VAPID_PUBLIC_KEY": "BLRtiZgDBYkAVW92C0WIfRmlehgF0g4vI7i6xC8VKYHziKVdcyxv3jtj0BIoin5LU255BX4pknqJENcPfswYAns",
 		"VAPID_SUBJECT": "https://tabelafin.ianptkcs-023.workers.dev",
-		// Único usuário da instância (ver src/lib/server/auth.ts) — TODO: trocar
-		// pelo e-mail real antes do primeiro deploy em produção.
-		"OWNER_EMAIL": "owner@tabelafin.local"
+		// Better Auth: URL base pra callbacks de sessão
+		"BETTER_AUTH_URL": "https://tabelafin.ianptkcs-023.workers.dev"
+		// Segredos (não commitados): BETTER_AUTH_SECRET, MASTER_KEY, VAPID_PRIVATE_KEY
+		// Configurados via `wrangler secret put <NOME>`
 	},
 	// Cron diário (sync Pluggy: accounts/transactions/investments) + cron
 	// mensal (dia 1, relatório do mês anterior + push) — ver ESCOPO.md §3.2/§3.6.

@@ -49,10 +49,16 @@ export default defineConfig({
 			},
 			workbox: {
 				// /api e /auth nunca devem ser servidos do cache (sessão/BYOK por request).
+				// Navegações (page routes) são server-rendered no Cloudflare Workers,
+				// não estáticas — sempre ir pra rede.
 				runtimeCaching: [
 					{
 						urlPattern: ({ url }) =>
 							url.pathname.startsWith('/api') || url.pathname.startsWith('/auth'),
+						handler: 'NetworkOnly'
+					},
+					{
+						urlPattern: ({ request }) => request.mode === 'navigate',
 						handler: 'NetworkOnly'
 					}
 				],
