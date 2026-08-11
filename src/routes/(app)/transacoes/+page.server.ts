@@ -128,12 +128,21 @@ export const actions: Actions = {
 	// e nunca sobrescreve categorias escolhidas manualmente (categorySource
 	// 'user' já existentes ficam como estão — aqui só as que ainda não têm
 	// categoria manual são tocadas).
+	//
+	// `create_rules=yes` adds the automatic rules on top; without it the action
+	// only categorises the selected transactions and teaches the app nothing
+	// about future ones.
 	bulkCategorize: async ({ request, locals, platform }) => {
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
 		const idsRaw = String(form.get('ids') ?? '');
 		const category = String(form.get('category') ?? '').trim();
+		// Creating rules is now an explicit choice, confirmed in a dialog before
+		// the request goes out. It used to happen unconditionally, so a one-off
+		// bulk tidy-up silently taught the app to categorise every future
+		// transaction with those descriptions the same way.
+		const createRules = form.get('create_rules') === 'yes';
 
 		const ids = idsRaw
 			.split(',')
@@ -168,13 +177,18 @@ export const actions: Actions = {
 		// from later passes. It used to be written as 'rule', which both mislabelled
 		// it ("Categorizada por: Regra automática") and left it open to being
 		// overwritten by the next bulk action.
-		const toUpdate = rows.filter((r) => r.categorySource !== 'user').map((r) => r.id);
+		const toUpdate = rows.filter((r) => r.categorySource !== 'user');
 
 		if (toUpdate.length > 0) {
 			await db
 				.update(transactions)
 				.set({ category, categorySource: 'user' })
-				.where(inArray(transactions.id, toUpdate));
+				.where(
+					inArray(
+						transactions.id,
+						toUpdate.map((r) => r.id)
+					)
+				);
 		}
 
 		// ...and the rule really is created, once per distinct description. The
@@ -182,11 +196,16 @@ export const actions: Actions = {
 		// categorizadas", and in bulk that promise was not being kept: nothing
 		// called upsertCategorizationRule, so the next Uber charge still arrived
 		// uncategorised.
-		const descriptions = [...new Set(rows.map((r) => r.description))];
+		//
+		// Derived from `toUpdate`, not from every selected row: a row skipped for
+		// already carrying a manual category keeps that category, so minting a
+		// rule from its description would leave the rule contradicting the very
+		// transaction it was read from.
+		const descriptions = createRules ? [...new Set(toUpdate.map((r) => r.description))] : [];
 		for (const description of descriptions) {
 			await upsertCategorizationRule(db, locals.userId, description, category);
 		}
 
-		return { success: true, count: toUpdate.length };
+		return { success: true, count: toUpdate.length, ruleCount: descriptions.length };
 	}
 };

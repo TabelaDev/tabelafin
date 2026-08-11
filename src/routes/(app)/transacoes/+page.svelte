@@ -4,7 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Table, Button, Select, DatePicker, Input } from '@tabeladev/tabelawebui';
+	import { Table, Button, Select, DatePicker, Input, Dialog } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -109,7 +109,10 @@
 			date: new Date(tx.date).getTime(),
 			description: tx.description,
 			category: tx.category,
-			amount: tx.displayAmount
+			amount: tx.displayAmount,
+			// Not a column — carried along so the dialog knows which rows the
+			// server will actually touch (it preserves manual categories).
+			categorySource: tx.categorySource
 		}))
 	);
 
@@ -134,14 +137,41 @@
 		bulkError = '';
 	}
 
-	async function submitBulkCategorize() {
+	// ── Automatic-rule confirmation ───────────────────────────────────────────
+	// Descriptions that would get a rule if the user confirms. Only the rows the
+	// server will actually recategorise count: a row already categorised by hand
+	// keeps its category, so minting a rule from it would leave the rule
+	// contradicting the very transaction it was read from.
+	let showRuleDialog = $state(false);
+
+	const pendingRuleDescriptions = $derived([
+		...new Set(
+			selected.filter((r) => r.categorySource !== 'user').map((r) => String(r.description ?? ''))
+		)
+	]);
+
+	function openBulkCategorize() {
 		if (selectedIds.length === 0 || !bulkCategory.trim()) return;
+		bulkError = '';
+		// With no description eligible for a rule there is no decision to make —
+		// the dialog would be asking about an empty list.
+		if (pendingRuleDescriptions.length === 0) {
+			submitBulkCategorize(false);
+			return;
+		}
+		showRuleDialog = true;
+	}
+
+	async function submitBulkCategorize(createRules: boolean) {
+		if (selectedIds.length === 0 || !bulkCategory.trim()) return;
+		showRuleDialog = false;
 		bulkSubmitting = true;
 		bulkError = '';
 		try {
 			const body = new FormData();
 			body.set('ids', selectedIds.join(','));
 			body.set('category', bulkCategory.trim());
+			if (createRules) body.set('create_rules', 'yes');
 			const res = await fetch('/transacoes?/bulkCategorize', {
 				method: 'POST',
 				body
@@ -247,7 +277,7 @@
 			<Button
 				variant="primary"
 				disabled={!bulkCategory.trim() || bulkSubmitting}
-				onclick={submitBulkCategorize}
+				onclick={openBulkCategorize}
 			>
 				{bulkSubmitting ? 'Aplicando…' : 'Aplicar'}
 			</Button>
@@ -315,3 +345,35 @@
 		</Table>
 	</div>
 </div>
+
+<!-- Closing by X/Esc/overlay leaves `showRuleDialog` false and submits nothing,
+     so dismissing the dialog cancels the whole action rather than falling
+     through to the categorise-only path. -->
+<Dialog bind:open={showRuleDialog} title="Criar regra automática?">
+	<div class="flex flex-col gap-3">
+		<p class="font-mono text-sm text-ink-soft">
+			Além de categorizar as {selectedIds.length} transações selecionadas, o app pode criar uma regra
+			por descrição — assim transações futuras com a mesma descrição já entram como
+			<span class="text-ink">{bulkCategory}</span>.
+		</p>
+		<div class="border border-rule bg-paper p-3">
+			<p class="font-mono text-xs text-ink-soft">
+				{pendingRuleDescriptions.length}
+				{pendingRuleDescriptions.length === 1 ? 'descrição' : 'descrições'}:
+			</p>
+			<ul class="mt-2 flex max-h-48 flex-col gap-1 overflow-y-auto">
+				{#each pendingRuleDescriptions as description (description)}
+					<li class="truncate font-mono text-xs">{description}</li>
+				{/each}
+			</ul>
+		</div>
+	</div>
+	{#snippet footer()}
+		<Button variant="ghost" disabled={bulkSubmitting} onclick={() => submitBulkCategorize(false)}>
+			Apenas categorizar
+		</Button>
+		<Button variant="primary" disabled={bulkSubmitting} onclick={() => submitBulkCategorize(true)}>
+			Categorizar e criar regra
+		</Button>
+	{/snippet}
+</Dialog>

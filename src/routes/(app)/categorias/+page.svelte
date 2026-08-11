@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Chart from '$lib/Chart.svelte';
+	import { resolve } from '$app/paths';
 	import { Card } from '@tabeladev/tabelawebui';
 	import { formatCurrencyLabel } from '$lib/format';
 	import type { PageData } from './$types';
@@ -39,11 +40,22 @@
 </svelte:head>
 
 <div class="flex flex-col gap-4">
-	<header>
-		<h1 class="font-mono text-2xl font-bold">Categorias</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span> Distribuição dos seus gastos por categoria
-		</p>
+	<header class="flex flex-wrap items-start justify-between gap-2">
+		<div>
+			<h1 class="font-mono text-2xl font-bold">Categorias</h1>
+			<p class="font-mono text-sm text-ink-soft">
+				<span class="text-ink-faint">//</span> Distribuição dos seus gastos por categoria
+			</p>
+		</div>
+		<div class="flex items-center gap-3">
+			<a
+				href={resolve('/perfil/categorias/regras')}
+				class="font-mono text-xs text-accent hover:underline">regras automáticas</a
+			>
+			<a href={resolve('/perfil/categorias')} class="font-mono text-xs text-accent hover:underline"
+				>gerenciar categorias</a
+			>
+		</div>
 	</header>
 
 	<Card>

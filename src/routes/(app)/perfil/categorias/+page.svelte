@@ -49,13 +49,21 @@
 </svelte:head>
 
 <div class="flex flex-col gap-6">
-	<header>
-		<a href={resolve('/perfil')} class="font-mono text-sm text-ink-soft hover:text-ink">← Perfil</a>
-		<h1 class="font-mono text-2xl font-bold">Categorias</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span> Suas categorias de transação — crie, renomeie, mude a cor.
-			As transações sem categoria aparecem como "Outros".
-		</p>
+	<header class="flex flex-wrap items-start justify-between gap-2">
+		<div>
+			<a href={resolve('/perfil')} class="font-mono text-sm text-ink-soft hover:text-ink"
+				>← Perfil</a
+			>
+			<h1 class="font-mono text-2xl font-bold">Categorias</h1>
+			<p class="font-mono text-sm text-ink-soft">
+				<span class="text-ink-faint">//</span> Suas categorias de transação — crie, renomeie, mude a cor.
+				As transações sem categoria aparecem como "Outros".
+			</p>
+		</div>
+		<a
+			href={resolve('/perfil/categorias/regras')}
+			class="font-mono text-xs text-accent hover:underline">regras automáticas</a
+		>
 	</header>
 
 	<!-- Nova categoria -->
