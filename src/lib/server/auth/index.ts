@@ -1,5 +1,4 @@
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { createAuth } from '$lib/auth';
 import { getDb } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 
@@ -12,29 +11,19 @@ const authSchema = {
 	account: schema.authAccounts
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let authInstance: any = null;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getAuth(env: Env): any {
-	if (authInstance) return authInstance;
-
-	const db = getDb(env.DB);
-
-	authInstance = betterAuth({
-		database: drizzleAdapter(db, {
-			provider: 'sqlite',
-			schema: authSchema
-		}),
-		emailAndPassword: {
-			enabled: true
-		},
-		secret: env.BETTER_AUTH_SECRET,
-		baseURL: env.BETTER_AUTH_URL || 'http://localhost:5173',
-		advanced: {
-			cookiePrefix: 'tabelafin'
-		}
+// This used to be a second, hand-written copy of what src/lib/auth/create.ts
+// already does. Two implementations of the same wiring meant the one carrying
+// the README saying "copy this folder into another project" was the one nobody
+// exercised — so its bugs went unnoticed. The app consumes the module now, and
+// this file is only the tabelafin-specific configuration.
+export function getAuth(env: unknown) {
+	const { DB, BETTER_AUTH_SECRET, BETTER_AUTH_URL } = env as Env;
+	return createAuth({
+		db: getDb(DB),
+		provider: 'sqlite',
+		secret: BETTER_AUTH_SECRET,
+		baseURL: BETTER_AUTH_URL,
+		cookiePrefix: 'tabelafin',
+		schema: authSchema as unknown as Parameters<typeof createAuth>[0]['schema']
 	});
-
-	return authInstance;
 }
