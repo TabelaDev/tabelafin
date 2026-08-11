@@ -14,10 +14,10 @@
 	let container: HTMLDivElement;
 	let chart: ApexCharts | null = null;
 
-	// Cores do design system (Catppuccin Latte/Mocha) — mesmas do portfolio.
-	// O accent vem do tema real (CSS var --twui-accent, definida via
-	// data-accent no <html>) e é a 1ª cor da palette; as seguintes usam cores
-	// bem distintas entre si e sem colidir com o accent.
+	// Design-system colours (Catppuccin Latte/Mocha) — the same as the portfolio.
+	// The accent comes from the real theme (CSS var --twui-accent, set through
+	// data-accent on <html>) and is the palette's first colour; the ones after it
+	// are well separated from each other and do not clash with the accent.
 	let accentColor = $state<string | null>(null);
 
 	$effect(() => {
@@ -41,8 +41,8 @@
 		};
 	});
 
-	// Merge profundo e simples: options por página sobrescrevem os defaults,
-	// mas flags de estrutura (toolbar/zoom/legend) nunca são reativadas.
+	// Simple deep merge: per-page options override the defaults, but structural
+	// flags (toolbar/zoom/legend) are never switched back on.
 	function deepMerge<T>(base: T, override: T): T {
 		if (Array.isArray(base) || Array.isArray(override)) return override ?? base;
 		if (base && override && typeof base === 'object' && typeof override === 'object') {
@@ -104,14 +104,14 @@
 			legend: { labels: { colors: c.text }, position: 'bottom' },
 			tooltip: {
 				theme: mode.current === 'dark' ? 'dark' : 'light',
-				// Sem fundo colorido no donut (o Apex pinta o tooltip inteiro com
-				// a cor do slice por padrão — fillSeriesColor:true). Com false,
-				// todos os gráficos ficam com fundo neutro + bolinha colorida.
+				// No coloured background on the donut (Apex paints the whole tooltip in
+				// the slice colour by default — fillSeriesColor:true). With false, every
+				// chart gets a neutral background plus a coloured dot.
 				fillSeriesColor: false,
 				style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '12px' },
 				y: {
-					// Formato BRL, igual aos cards/tabelas. O dashboard sobrescreve
-					// com currency.format no donut via deepMerge (mesmo resultado).
+					// BRL format, same as the cards and tables. The dashboard overrides it
+					// with currency.format on the donut via deepMerge (same result).
 					formatter: (value) =>
 						Number(value).toLocaleString('pt-BR', {
 							style: 'currency',
@@ -147,13 +147,13 @@
 <div bind:this={container} class="h-full w-full"></div>
 
 <style>
-	/* Legenda: afasta a bolinha do texto em todos os gráficos (o donut
+	/* Legend: pushes the dot away from the text on every chart (the donut
 	   cola sem isso). */
 	:global(.apexcharts-legend-marker) {
 		margin-right: 8px !important;
 	}
 
-	/* Tooltip: mono consistente em todos os gráficos, inclusive donut (que
+	/* Tooltip: consistent mono on every chart, including the donut (which
 	   tem layout próprio de tooltip). */
 	:global(.apexcharts-tooltip) {
 		font-family: var(--twui-font-mono, 'JetBrains Mono', monospace) !important;

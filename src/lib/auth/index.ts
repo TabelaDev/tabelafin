@@ -1,9 +1,9 @@
-// Módulo reutilizável de autenticação via Better Auth.
+// Reusable Better Auth authentication module.
 //
-// Copie a pasta `src/lib/auth/` inteira pra qualquer projeto
-// SvelteKit + Drizzle + Cloudflare Workers.
+// Copy the whole `src/lib/auth/` folder into any
+// SvelteKit + Drizzle + Cloudflare Workers project.
 //
-// Ver README.md pra instruções de uso.
+// See README.md for usage instructions.
 
 export { createAuth } from './create';
 export { friendlyAuthError } from './errors';

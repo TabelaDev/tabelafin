@@ -1,9 +1,9 @@
 <script lang="ts">
-	// Upload de PDF de fatura/extrato como fallback manual — ver ESCOPO.md §2.4.
-	// O arquivo é enviado direto pro modelo de IA do usuário (document
-	// understanding) e descartado depois da extração. Capability gating: se o
-	// modelo escolhido não suporta documentos, o upload é desabilitado com
-	// mensagem explícita (BYOK — nunca trocar de modelo por baixo dos panos).
+	// Statement/invoice PDF upload as a manual fallback — see ESCOPO.md §2.4.
+	// The file goes straight to the user's AI model (document understanding) and
+	// is discarded after the extraction. Capability gating: if the chosen model
+	// does not support documents the upload is disabled with an explicit message
+	// (BYOK — never swap the model out from under the user).
 	import { Button } from '@tabeladev/tabelawebui';
 	import { Input } from '@tabeladev/tabelawebui';
 	import { toast } from '@tabeladev/tabelawebui';
@@ -44,8 +44,8 @@
 			} else {
 				toast.success(`${body?.count} transação(ões) importada(s) de ${file.name}.`);
 			}
-			// Recarrega pra listar as transações recém-importadas (a extração
-			// acontece no servidor; a lista vem do load da página).
+			// Reload to list the freshly imported transactions (the extraction happens
+			// on the server; the list comes from the page load).
 			setTimeout(() => window.location.reload(), 1200);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : 'Falha ao processar o PDF.');

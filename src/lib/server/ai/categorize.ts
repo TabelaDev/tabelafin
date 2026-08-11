@@ -1,8 +1,8 @@
-// Categorização em lote via IA (ESCOPO.md §3.3): uma chamada por sync/upload
-// cobrindo todas as transações novas de uma vez — nunca uma chamada por
-// transação, nunca recorrente a cada view do dashboard. Mesmo padrão de
-// dispatch fetch-based (Anthropic/OpenAI/DeepSeek) do TabelaCal
-// (server/ai/parse.ts): sem SDK, só fetch(), pra rodar em `workerd`.
+// Batch AI categorisation (ESCOPO.md §3.3): one call per sync/upload covering
+// every new transaction at once — never one call per transaction, and never
+// recurring on each dashboard view. Same fetch-based dispatch pattern
+// (Anthropic/OpenAI/DeepSeek) as TabelaCal (server/ai/parse.ts): no SDK, only
+// fetch(), so it runs in `workerd`.
 import type { AiProvider } from '$lib/ai-providers';
 
 export interface TransactionToCategorize {
@@ -21,11 +21,11 @@ interface CategorizeInput {
 	provider: AiProvider;
 	model: string;
 	apiKey: string;
-	// Categorias do usuário (dinâmicas) — o prompt e o schema de tool calling
-	// usam essa lista, não uma taxonomia fixa.
+	// The user's own categories — both the prompt and the tool-calling schema use
+	// this list, not a fixed taxonomy.
 	categories: string[];
-	// Prompt customizado do usuário (ver /profile/ai) — sobrescreve o system
-	// prompt default quando presente.
+	// The user's custom prompt (see /profile/ai) — it replaces the default system
+	// prompt when present.
 	customPrompt?: string;
 	transactions: TransactionToCategorize[];
 }
@@ -130,8 +130,8 @@ async function categorizeWithAnthropic(input: CategorizeInput): Promise<Categori
 	return toResults(toolUse.input, input.categories);
 }
 
-// OpenAI e DeepSeek falam o mesmo formato de chat completions — ver
-// server/ai/parse.ts do TabelaCal pro mesmo padrão.
+// OpenAI and DeepSeek speak the same chat-completions format — see TabelaCal's
+// server/ai/parse.ts for the same pattern.
 async function categorizeWithOpenAiCompatible(
 	input: CategorizeInput,
 	apiUrl: string,

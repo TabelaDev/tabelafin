@@ -1,5 +1,5 @@
-// Cron mensal (dia 1, ESCOPO.md §3.6): gera monthly_reports do mês anterior
-// pra cada usuário e dispara push avisando que o relatório está pronto.
+// Monthly cron (the 1st, ESCOPO.md §3.6): writes the previous month's
+// monthly_reports for every user and fires a push saying the report is ready.
 import { buildPushPayload } from '@block65/webcrypto-web-push';
 import { getDb } from '$lib/server/db';
 import { decryptSecret } from '$lib/server/crypto';
@@ -23,9 +23,9 @@ interface MonthRange {
 	to: Date; // exclusivo
 }
 
-// Mês anterior ao dia em que o cron roda (dia 1 do mês corrente, ver
-// wrangler.jsonc `triggers.crons`) — usa UTC pra não depender do timezone do
-// runtime do Worker.
+// The month before the day the cron runs (the 1st of the current month, see
+// `triggers.crons` in wrangler.jsonc) — in UTC, so it does not depend on the
+// Worker runtime's time zone.
 function previousMonthRange(now: Date): MonthRange {
 	const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
 	const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -96,9 +96,9 @@ async function generateReportForUser(
 		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
 
 		if (accType === 'credit_card') {
-			// Cartão de crédito: compra (positiva) é GASTO, não receita. O
-			// pagamento da fatura já é excluído pelo filtro de transferência
-			// interna em getTransactionsInRange.
+			// Credit card: a purchase (positive) is SPENDING, not income. The invoice
+			// payment is already excluded by the internal-transfer filter in
+			// getTransactionsInRange.
 			if (tx.amount > 0) {
 				totalExpense += tx.amount;
 				const category = tx.category ?? 'Outros';
@@ -119,9 +119,9 @@ async function generateReportForUser(
 		.filter((a) => a.type === 'investment')
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 
-	// Mês anterior (se já existir) alimenta a comparação pedida no ESCOPO.md
-	// §3.5 ("comparação mês a mês") — vem do summaryJson já salvo, sem
-	// recalcular a partir das transações de novo.
+	// The previous month, when one exists, feeds the comparison asked for in
+	// ESCOPO.md §3.5 ("month-on-month comparison") — read from the summaryJson
+	// already stored, without recomputing it from the transactions.
 	const previousReport = await getMonthlyReport(db, userId, previousYearMonth(range.yearMonth));
 	const previousSummary = previousReport
 		? (JSON.parse(previousReport.summaryJson) as ReportSummary)
@@ -208,8 +208,8 @@ async function sendReportReadyPush(
 					vapid
 				);
 				const res = await fetch(sub.endpoint, payload as RequestInit);
-				// 404/410 = subscription morta (usuário desinstalou/revogou) — mesma
-				// limpeza feita pelo TabelaCal em server/push/reminders.ts.
+				// 404/410 = a dead subscription (uninstalled or revoked) — the same
+				// cleanup TabelaCal does in server/push/reminders.ts.
 				if (res.status === 404 || res.status === 410) {
 					await deletePushSubscriptionById(db, sub.id);
 				}

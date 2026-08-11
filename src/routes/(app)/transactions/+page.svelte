@@ -11,9 +11,9 @@
 
 	const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-	// Estado local iniciado dos filtros da URL — leitura one-shot proposital (não
-	// re-sincroniza se `data` mudar); o wrapper em função evita o aviso
-	// `state_referenced_locally` do compilador.
+	// Local state seeded from the URL filters — a deliberate one-shot read (it does
+	// not re-sync when `data` changes); the function wrapper avoids the compiler's
+	// `state_referenced_locally` warning.
 	const initialFilters = () => ({
 		search: data.filters.search ?? '',
 		category: data.filters.category ?? '',
@@ -27,7 +27,7 @@
 	let type = $state(initialFilters().type);
 	let showInternal = $state(initialFilters().internal === 'yes');
 
-	// Busca client-side — não recarrega a página a cada tecla (preserva o foco).
+	// Client-side search — no page reload per keystroke, so focus is preserved.
 	let visible = $derived(
 		searchQuery
 			? data.transactions.filter((t) =>
@@ -36,9 +36,9 @@
 			: data.transactions
 	);
 
-	// Sincroniza o estado local com os filtros da URL quando ela muda por
-	// navegação externa (botão "Limpar", voltar do browser, link). Lido com
-	// `untrack` pra só reagir a mudanças de URL, não aos próprios estados.
+	// Brings the local state back in line with the URL filters when the URL changes
+	// from outside (the "Limpar" button, the browser's back, a link). Read through
+	// `untrack` so this reacts to URL changes only, not to its own state.
 	$effect(() => {
 		const s = page.url.searchParams.get('q') ?? '';
 		const c = page.url.searchParams.get('category') ?? '';
@@ -54,8 +54,8 @@
 		});
 	});
 
-	// Categoria/mês/tipo: navegam full-page (filtros na URL), mas só quando o
-	// valor realmente mudou em relação ao que veio do servidor.
+	// Category/month/type navigate full-page (the filters live in the URL), but
+	// only when the value actually differs from what the server sent.
 	$effect(() => {
 		if (category !== (data.filters.category ?? '')) applyFilter('category', category);
 	});
@@ -84,14 +84,14 @@
 		const url = new URL(page.url);
 		if (value) url.searchParams.set(key, value);
 		else url.searchParams.delete(key);
-		// Navegação full-page (não client-side) preserva os filtros na URL.
+		// Full-page navigation (not client-side) is what keeps the filters in the URL.
 		window.location.href = `${url.pathname}${url.search}`;
 	}
 
-	// ── Categorização em massa ────────────────────────────────────────────────
-	// Linhas selecionadas na tabela (a Table do twui fornece `selection` +
-	// `selected`). As linhas mapeadas carregam `id` — é ele que mandamos pro
-	// servidor.
+	// ── Bulk categorisation ──────────────────────────────────────────────────
+	// Rows selected in the table (twui's Table provides `selection` +
+	// `selected`). The mapped rows carry `id`, and that is what goes to the
+	// server.
 	let selected = $state<Record<string, unknown>[]>([]);
 	let bulkCategory = $state('');
 	let bulkSubmitting = $state(false);
@@ -132,8 +132,8 @@
 		if (allVisibleSelected) {
 			selected = selected.filter((s) => !visibleRows.some((r) => r.id === s.id));
 		} else {
-			// Marca todas as visíveis preservando as já selecionadas de outras
-			// páginas/filtros.
+			// Ticks every visible row while keeping the ones already selected on other
+			// pages or under other filters.
 			const existing = selected.filter((s) => !visibleRows.some((r) => r.id === s.id));
 			selected = [...existing, ...visibleRows];
 		}
@@ -191,7 +191,7 @@
 				bulkError = result.data?.error ?? 'Não foi possível categorizar.';
 				return;
 			}
-			// Recarrega a página pra refletir as categorias novas.
+			// Reload so the page reflects the new categories.
 			await invalidateAll();
 			clearSelection();
 		} finally {

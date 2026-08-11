@@ -22,8 +22,9 @@
 		chatEnabled = data.toggles.chat;
 	});
 
-	// Prompts default expostos na UI (espelham os hardcoded em categorize.ts/
-	// report.ts/chat) — mostrados num <details> quando o campo está vazio.
+	// The default prompts surfaced in the UI (they mirror the hardcoded ones in
+	// categorize.ts/report.ts/chat) — shown in a <details> when the field is
+	// empty.
 	const DEFAULT_CATEGORIZATION_PROMPT = `Você categoriza transações financeiras pessoais (Brasil). Categorias válidas: [categorias do usuário].
 
 Regras:

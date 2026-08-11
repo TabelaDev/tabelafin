@@ -28,7 +28,7 @@
 			toast.warning(f.message);
 		}
 
-		// Limpa o flash após mostrar o toast pra evitar re-trigger
+		// Clear the flash after showing the toast so it does not fire again
 		$flash = undefined;
 	});
 </script>

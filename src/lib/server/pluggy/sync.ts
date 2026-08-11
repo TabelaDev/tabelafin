@@ -1,7 +1,7 @@
-// Sync diário via cron (ESCOPO.md §3.2): puxa accounts/transactions/investments
-// do Meu Pluggy (my-api.pluggy.ai) pra cada pluggy_item de cada usuário,
-// roda o dedupe (§5) e dispara a categorização em lote via IA (§3.3) uma
-// vez por usuário no final.
+// Daily cron sync (ESCOPO.md §3.2): pulls accounts/transactions/investments from
+// Meu Pluggy (my-api.pluggy.ai) for every pluggy_item of every user, runs the
+// dedupe (§5) and fires the batch AI categorisation (§3.3) once per user at the
+// end.
 import { getDb } from '$lib/server/db';
 import { decryptSecret } from '$lib/server/crypto';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
@@ -40,9 +40,9 @@ export async function syncAllUsers(env: Env): Promise<void> {
 	const db = getDb(env.DB);
 	const items = await getAllPluggyItems(db);
 
-	// Agrupa por usuário: o JWT token é por usuário (ESCOPO.md §2.3), não
-	// por item, e a categorização em lote (§3.3) precisa rodar 1x por usuário
-	// no final do sync — nunca por item nem por transação.
+	// Grouped by user: the JWT token is per user (ESCOPO.md §2.3), not per item,
+	// and the batch categorisation (§3.3) has to run once per user at the end of
+	// the sync — never per item and never per transaction.
 	const itemsByUser = new Map<string, PluggyItemRow[]>();
 	for (const item of items) {
 		const list = itemsByUser.get(item.userId) ?? [];
@@ -62,10 +62,10 @@ export async function syncAllUsers(env: Env): Promise<void> {
 	}
 }
 
-// Sincroniza um usuário específico (accounts/transactions/investments + dedupe
-// + categorização em lote). Usado pelo cron diário (via syncAllUsers) e logo
-// após conectar o Open Finance no onboarding, pra trazer os dados na hora em
-// vez de esperar a próxima rodada.
+// Syncs one specific user (accounts/transactions/investments + dedupe + batch
+// categorisation). Used by the daily cron (through syncAllUsers) and right after
+// connecting Open Finance during onboarding, so the data arrives immediately
+// instead of waiting for the next run.
 export async function syncUserItems(
 	db: Db,
 	masterKey: string,
@@ -87,10 +87,10 @@ export async function syncUserItems(
 		{ purpose: 'pluggy_credentials', userId }
 	);
 
-	// Sincroniza os items conectados no Meu Pluggy (fetchItems) com a tabela
-	// local: upserta novos (ex.: conta PJ/MEI, Itaú adicionados depois do
-	// onboarding) e mantém os existentes. Sem isso o sync nunca veria uma
-	// conexão nova — ele só processa pluggy_items já gravados.
+	// Reconciles the items connected in Meu Pluggy (fetchItems) with the local
+	// table: upserts new ones (a business account, an Itaú connection added after
+	// onboarding) and keeps the existing ones. Without this the sync would never
+	// see a new connection — it only processes pluggy_items already stored.
 	const pluggyItems = await fetchItems(token);
 	for (const pluggyItem of pluggyItems) {
 		await upsertPluggyItem(db, {
@@ -109,10 +109,10 @@ export async function syncUserItems(
 			await syncItem(db, token, item);
 			await updateLastSyncedAt(db, item.id, new Date());
 		} catch (err) {
-			// Um item com credencial bancária expirada/erro de login não pode
-			// travar o sync dos outros items do mesmo usuário — nunca logar token
-			// decifrado, só o suficiente pra debugar.
-			console.error('[pluggy/sync] falha ao sincronizar item', {
+			// An item with expired bank credentials or a login error must not block
+			// the sync of the user's other items — never log a decrypted token, only
+			// enough to debug with.
+			console.error('[pluggy/sync] failed to sync item', {
 				userId: item.userId,
 				itemId: item.id,
 				pluggyItemId: item.pluggyItemId,
@@ -121,10 +121,10 @@ export async function syncUserItems(
 		}
 	}
 
-	// Marca como transferência interna as transações que são espelho entre
-	// contas do próprio usuário (mesmo valor, datas próximas, contas diferentes
-	// e sinais opostos) — ex.: MEI → Nubank PF, Itaú → Nubank. Sem isso o mesmo
-	// dinheiro conta duas vezes como receita/gasto.
+	// Flags as internal transfers the transactions that mirror each other between
+	// the user's own accounts (same amount, close dates, different accounts and
+	// opposite signs) — a business account into a personal one, Itaú into Nubank.
+	// Without this the same money counts twice, as both income and spending.
 	await markInternalTransfers(db, userId);
 
 	await categorizeNewTransactions(db, masterKey, userId);
@@ -179,14 +179,14 @@ export function pairMirrors(rows: MirrorRow[]): string[] {
 	return paired;
 }
 
-// Detecta transferências internas por "espelho": uma transação de uma conta do
-// usuário com valor X que tem contraparte de valor -X (ou vice-versa) em OUTRA
-// conta do mesmo usuário, em datas próximas (até 2 dias). Quando encontra o
-// par, marca ambos com pluggyCategory='Internal transfer' pra que o dashboard
-// e o relatório ignorem (ver INTERNAL_TRANSFER_CATEGORIES).
+// Detects internal transfers by "mirroring": a transaction on one of the user's
+// accounts with amount X that has a counterpart of -X (or the other way round) on
+// ANOTHER account of the same user, within a couple of days. When the pair is
+// found, both are marked with pluggyCategory='Internal transfer' so the dashboard
+// and the report ignore them (see INTERNAL_TRANSFER_CATEGORIES).
 async function markInternalTransfers(db: Db, userId: string): Promise<void> {
-	// Janela generosa: transferências entre bancos podem cair com 1-2 dias de
-	// diferença (D+0/D+1). Limita em 60 dias pra não varrer histórico infinito.
+	// A generous window: transfers between banks can land 1-2 days apart
+	// (D+0/D+1). Capped at 60 days so this does not sweep the whole history.
 	const since = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
 
 	const rows = await db
@@ -202,10 +202,10 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 				eq(transactions.userId, userId),
 				isNull(transactions.supersededByTransactionId),
 				gte(transactions.date, since),
-				// Só participa do pareamento quem ainda não é reconhecido como
-				// interno — transação já marcada por categoria ou descrição não
-				// deve "casar" com outra (ex.: o pagamento de fatura -2000 não
-				// pode virar espelho da receita real +2000 da MEI).
+				// Only rows not already recognised as internal take part in the
+				// pairing — a transaction already flagged by category or description
+				// must not "match" another one (the -2000 invoice payment cannot
+				// become the mirror of a genuine +2000 of business income).
 				//
 				// The isNull arms are load-bearing: in SQL `NULL NOT IN (...)`
 				// evaluates to NULL, which WHERE treats as false, so a plain
@@ -234,10 +234,10 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 
 	const accountTypeById = new Map(accountRows.map((a) => [a.id, a.type]));
 
-	// Agrupa por valor absoluto (arredondado a centavos). Dentro do grupo,
-	// procura pares de contas DIFERENTES com sinais opostos e datas até 2 dias
-	// de distância — tolerância porque D+0/D+1 varia entre bancos. Ignora
-	// cartão de crédito (pagamento de fatura já é filtrado por categoria).
+	// Grouped by absolute amount (rounded to cents). Within a group, looks for
+	// pairs on DIFFERENT accounts with opposite signs and dates up to two days
+	// apart — the tolerance exists because D+0/D+1 varies between banks. Credit
+	// cards are skipped (the invoice payment is already filtered by category).
 	const groups = new Map<string, (typeof rows)[number][]>();
 	for (const row of rows) {
 		if (!row.accountId) continue;
@@ -265,20 +265,20 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 	}
 }
 
-// Uma chamada de IA em lote por usuário por rodada de sync (ESCOPO.md §3.3),
-// cobrindo todas as transações ainda sem categoria — nunca uma chamada por
-// transação. Se o usuário não tiver ai_credentials configurado ainda (só
-// completou o onboarding de Pluggy, não o de IA — improvável já que a ordem
-// do onboarding exige IA primeiro, mas o sync roda independente da sessão web
-// e não pode assumir isso), as transações ficam sem categoria até a próxima
-// rodada em vez de travar o sync.
+// One batch AI call per user per sync run (ESCOPO.md §3.3), covering every
+// transaction still without a category — never one call per transaction. If the
+// user has no ai_credentials configured yet (they finished the Pluggy onboarding
+// but not the AI one — unlikely, since the onboarding order requires AI first,
+// but the sync runs independently of the web session and cannot assume it), the
+// transactions stay uncategorised until the next run rather than blocking the
+// sync.
 async function categorizeNewTransactions(db: Db, masterKey: string, userId: string): Promise<void> {
 	const pending = await getUncategorizedTransactions(db, userId);
 	if (pending.length === 0) return;
 
-	// Primeiro aplica as regras automáticas do usuário (descrição → categoria):
-	// cobre transações antigas que entraram antes da regra existir e economiza
-	// chamada de IA. As que continuarem sem categoria vão pra IA.
+	// The user's automatic rules (description → category) go first: they cover old
+	// transactions that landed before the rule existed and they save an AI call.
+	// Whatever is still uncategorised afterwards goes to the AI.
 	const rules = await getRulesByUser(db, userId);
 	if (rules.length > 0) {
 		const ruleByDescription = new Map(rules.map((r) => [r.description, r.category]));
@@ -303,8 +303,8 @@ async function categorizeNewTransactions(db: Db, masterKey: string, userId: stri
 	const stillPending = await getUncategorizedTransactions(db, userId);
 	if (stillPending.length === 0) return;
 
-	// Toggle do usuário: categorização automática desligada → transações ficam
-	// sem categoria até ele ativar (as regras manuais já foram aplicadas acima).
+	// The user's toggle: automatic categorisation off → transactions stay
+	// uncategorised until they turn it on (the manual rules already ran above).
 	const user = await findUserById(db, userId);
 	if (user && !user.aiCategorizationEnabled) return;
 
@@ -327,9 +327,9 @@ async function categorizeNewTransactions(db: Db, masterKey: string, userId: stri
 		{ purpose: 'ai_credentials', userId }
 	);
 
-	// Categorias dinâmicas do usuário — a IA só pode escolher entre elas.
+	// The user's own categories — the AI may only choose from these.
 	const userCategories = await getCategoriesByUser(db, userId);
-	// Prompt customizado do usuário (se configurado em /profile/ai).
+	// The user's custom prompt (when configured in /profile/ai).
 	const prompts = await getUserAiPrompts(db, userId);
 
 	const results = await categorizeTransactions({
@@ -384,10 +384,10 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 		for (const tx of pluggyTransactions) {
 			const txDate = new Date(tx.date);
 
-			// Já sincronizada numa rodada anterior: ainda assim atualiza a
-			// `pluggyCategory` e o `amount` (o amount convertido pra BRL entrou
-			// depois — re-sync corrige transações estrangeiras gravadas antes) e
-			// pula o dedupe/supersede, que só faz sentido pra transação nova.
+			// Already synced on an earlier run: the `pluggyCategory` and `amount` are
+			// still refreshed (the BRL-converted amount arrived later — a re-sync
+			// fixes foreign transactions stored before that) and the dedupe/supersede
+			// is skipped, since it only makes sense for a brand new transaction.
 			const alreadySynced = await getTransactionByPluggyId(db, tx.id);
 			if (alreadySynced) {
 				await updatePluggyFields(db, tx.id, { category: tx.category, amount: tx.amount });
@@ -405,7 +405,7 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 				pluggyCategory: tx.category,
 				dedupeHash: computeDedupeHash(account.id, tx.amount, txDate)
 			});
-			// null = corrida com outra execução do cron que inseriu primeiro.
+			// null = a race with another cron run that inserted it first.
 			if (!inserted) continue;
 
 			const supersedeCandidate = await findSupersedeCandidate(
@@ -421,11 +421,12 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 		}
 	}
 
-	// Investimentos (XP Wealth etc, ESCOPO.md §2.3) não vêm de /accounts — são
-	// um produto à parte na Pluggy (ver fetchInvestments em client.ts). Viram
-	// uma "conta" com type='investment' pra aparecer no saldo do dashboard,
-	// sem transações associadas: o produto de movimentações de investimento
-	// (investmentsTransactions) é separado e fica fora do MVP.
+	// Investments (XP Wealth and friends, ESCOPO.md §2.3) do not come from
+	// /accounts — they are a separate product at Pluggy (see fetchInvestments in
+	// client.ts). They become an "account" with type='investment' so they show up
+	// in the dashboard balance, with no transactions attached: the investment
+	// movements product (investmentsTransactions) is separate and out of MVP
+	// scope.
 	const pluggyInvestments = await fetchInvestments(token, [item.pluggyItemId]);
 	for (const investment of pluggyInvestments) {
 		await upsertAccount(db, {

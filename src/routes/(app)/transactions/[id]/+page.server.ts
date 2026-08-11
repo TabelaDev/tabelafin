@@ -51,9 +51,9 @@ export const load: PageServerLoad = async ({ locals, platform, params }) => {
 			: null,
 		transaction: {
 			...tx,
-			// Pra exibição, inverte o sinal das transações de cartão de crédito:
-			// compra positiva na API = gasto (mostra negativo); estorno negativo
-			// na API = dinheiro de volta (mostra positivo). Inverte sempre.
+			// For display, credit card transactions have their sign flipped: a positive
+			// purchase in the API is spending (shown negative); a negative refund is
+			// money back (shown positive). Flipped unconditionally.
 			displayAmount: account?.type === 'credit_card' ? -tx.amount : tx.amount
 		},
 		account: account
@@ -81,11 +81,11 @@ export const actions: Actions = {
 			.set({ category, categorySource: 'user' })
 			.where(eq(transactions.id, tx.id));
 
-		// Retroativamente, aplica a mesma categoria a TODAS as transações
-		// passadas com a MESMA descrição que ainda estão sem categoria — o
-		// usuário ensinou o app e espera consistência no histórico (ex.:
-		// "Psicólogo" pra todas as consultas). A transação atual já foi setada
-		// como 'user'; as demais ficam como 'rule'.
+		// Retroactively applies the same category to EVERY past transaction with the
+		// SAME description that is still uncategorised — the user has just taught the
+		// app something and expects the history to agree ("Psicólogo" for all the
+		// appointments). The current transaction was already set to 'user'; the rest
+		// become 'rule'.
 		await db
 			.update(transactions)
 			.set({ category, categorySource: 'rule' })
@@ -98,16 +98,16 @@ export const actions: Actions = {
 				)
 			);
 
-		// Cria a regra automática: toda transação futura com a MESMA descrição
-		// nasce categorizada (aplicada no sync, categorySource='rule').
+		// Creates the automatic rule: every future transaction with the SAME
+		// description is born categorised (applied by the sync, categorySource='rule').
 		await upsertCategorizationRule(db, locals.userId, tx.description, category);
 
 		return { success: true };
 	},
 
-	// Converte a transação em recorrência: cria um gasto recorrente com a
-	// mesma descrição, valor absoluto e categoria. A frequência vem do form
-	// (default mensal).
+	// Turns the transaction into a recurrence: creates a recurring expense with the
+	// same description, the absolute amount and the category. The frequency comes
+	// from the form (monthly by default).
 	recurring: async ({ request, locals, platform, params }) => {
 		if (!locals.userId) redirect(303, '/login');
 
@@ -174,9 +174,9 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	// Remove a categoria da transação (fica sem categoria de novo). Usado pelo
-	// card de categorizar quando o usuário quer re-categorizar — precisa limpar
-	// antes de escolher outra.
+	// Clears the transaction's category (uncategorised again). Used by the
+	// categorise card when the user wants to recategorise — it has to be cleared
+	// before another one can be chosen.
 	removeCategory: async ({ locals, platform, params }) => {
 		if (!locals.userId) redirect(303, '/login');
 

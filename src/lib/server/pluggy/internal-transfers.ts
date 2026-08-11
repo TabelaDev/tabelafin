@@ -1,28 +1,30 @@
-// Categorias da API do Meu Pluggy que representam transferência interna de
-// dinheiro do próprio usuário — movimentação que NÃO é gasto nem receita:
-// aplicar/resgatar investimento, pagar a fatura do cartão (o gasto já entrou
-// pela compra no cartão), transferir entre contas do mesmo dono.
+// Meu Pluggy API categories that stand for the user moving their own money
+// around — movement that is NOT spending and NOT income: putting money into or
+// taking it out of an investment, paying the card invoice (the spending already
+// landed as the card purchase), transferring between accounts of the same owner.
 //
-// Vêm de `transactions.pluggy_category` (campo `category` bruto da API).
-// Confirmado contra my-api.pluggy.ai em 2026-08-09 (conta Nubank + XP real).
+// They come from `transactions.pluggy_category` (the API's raw `category`
+// field). Confirmed against my-api.pluggy.ai on 2026-08-09 (a real Nubank + XP
+// account).
 //
-// Atenção: `Transfers` genérico NÃO está aqui de propósito — no Nubank ele
-// engloba compras parceladas de verdade ("Dio 12/12", "Plano NuCel"), que são
-// gasto real e devem continuar no dashboard.
+// Note: the generic `Transfers` is deliberately NOT here — at Nubank it also
+// covers genuine instalment purchases ("Dio 12/12", "Plano NuCel"), which are
+// real spending and have to stay on the dashboard.
 export const INTERNAL_TRANSFER_CATEGORIES = new Set([
-	'Investments', // aplicação/resgate em investimento
-	'Fixed income', // aplicação em CDB/renda fixa
-	'Third party transfers', // resgate de investimento ("Valor recebido de Investimentos")
-	'Same person transfer', // transferência entre contas do mesmo dono
-	'Credit card payment', // pagamento de fatura (duplica o gasto da compra no cartão)
-	'Internal transfer' // marcada pelo app: espelho entre contas do próprio usuário
+	'Investments', // money into or out of an investment
+	'Fixed income', // money into a CDB/fixed-income product
+	'Third party transfers', // investment withdrawal ("Valor recebido de Investimentos")
+	'Same person transfer', // between accounts of the same owner
+	'Credit card payment', // invoice payment (would double-count the card purchase)
+	'Internal transfer' // flagged by the app: mirrored between the user's own accounts
 ]);
 
-// Descrições que indicam transferência interna mesmo quando a categoria da API
-// é a genérica "Transfers". O Nubank lança o pagamento da fatura com descrição
-// "Pagamento de fatura" na conta corrente (categoria "Transfers") e "Pagamento
-// recebido" no cartão (categoria "Credit card payment" — já excluída acima).
-// Sem isso o mesmo gasto entra duas vezes: na compra do cartão E no pagamento.
+// Descriptions that mark an internal transfer even when the API category is the
+// generic "Transfers". Nubank posts the invoice payment as "Pagamento de fatura"
+// on the checking account (category "Transfers") and as "Pagamento recebido" on
+// the card (category "Credit card payment", already excluded above). Without
+// this the same spending lands twice: once as the card purchase and once as the
+// payment.
 export const INTERNAL_TRANSFER_DESCRIPTIONS = new Set([
 	'Pagamento de fatura',
 	'Pagamento recebido'

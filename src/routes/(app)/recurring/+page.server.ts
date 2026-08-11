@@ -16,10 +16,10 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const db = getDb(platform!.env.DB);
 	const expenses = await getAllRecurringExpenses(db, locals.userId);
 
-	// Conta as ocorrências passadas de cada recorrência: transações com a
-	// MESMA descrição e valor (assinaaturas mudam pouco; o sync de cartão
-	// lança "Mp *Nave 8/12" etc — mas aqui casamos pelo nome fixo que o
-	// usuário cadastrou, usando substring pra pegar variações de parcela).
+	// Counts each recurrence's past occurrences: transactions with the SAME
+	// description and amount (subscriptions rarely change; the card sync posts
+	// "Mp *Nave 8/12" and the like — so the match is on the fixed name the user
+	// registered, by substring, to catch the instalment variants).
 	const activeExpenses = expenses.filter((e) => e.isActive);
 	const occurrenceCounts: Record<string, number> = {};
 	const lastOccurrences: Record<string, Date | null> = {};
@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 			.where(
 				and(
 					eq(transactions.userId, locals.userId),
-					// Só transações não superadas contam como ocorrência.
+					// Only transactions that have not been superseded count as occurrences.
 					isNull(transactions.supersededByTransactionId)
 				)
 			);

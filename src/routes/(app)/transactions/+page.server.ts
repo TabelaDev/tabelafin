@@ -32,9 +32,9 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	];
 	if (category) conditions.push(eq(transactions.category, category));
 
-	// Filtro de tipo (receitas/despesas) aplica a MESMA lógica do dashboard:
-	// exclui transferência interna e trata compra de cartão (positiva) como
-	// gasto. Assim a lista bate com os cards de resumo pra validar os números.
+	// The type filter (income/expenses) applies the SAME logic as the dashboard: it
+	// excludes internal transfers and treats a card purchase (positive) as
+	// spending. That is what makes this list reconcile with the summary cards.
 	//
 	// The type filter keeps excluding them even when the toggle is on: it exists
 	// precisely so the totals reconcile with the dashboard cards, and honouring
@@ -65,8 +65,8 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 			.orderBy(desc(transactions.date));
 	}
 
-	// O filtro de sinal depende do tipo da conta (cartão tem sinal invertido),
-	// então precisa do tipo de cada conta pra filtrar em memória.
+	// The sign filter depends on the account type (a card's sign is inverted), so
+	// each account's type is needed to filter in memory.
 	const userAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId));
 	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
 
@@ -93,32 +93,32 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 		rows = rows.filter((t) => t.description.toLowerCase().includes(q));
 	}
 
-	// Lançamentos futuros (ex.: parcelas de cartão que o Nubank pré-lança com
-	// data de fatura à frente) ficam numa lista à parte, como o app do Nubank
-	// mostra "próximas faturas". A lista principal só mostra data <= hoje.
+	// Future entries (card instalments Nubank posts ahead of time, dated to the
+	// invoice) live in a separate list, the way the Nubank app shows "próximas
+	// faturas". The main list only shows dates up to today.
 	const now = new Date();
 	const future = rows.filter((t) => t.date.getTime() > now.getTime());
 	const current = rows.filter((t) => t.date.getTime() <= now.getTime());
 
-	// Nome da conta pra agrupar as próximas faturas por cartão.
+	// The account name, for grouping the upcoming invoices by card.
 	const accountById = new Map(userAccounts.map((a) => [a.id, a]));
 
-	// Pra exibição, inverte o sinal das compras de cartão de crédito: na API
-	// elas vêm positivas (ex.: "MP *NAVE" +782,54), mas representam GASTO.
-	// Assim a cor (verde=receita/vermelho=gasto) e o total ficam consistentes
-	// com o dashboard.
+	// For display, credit card purchases have their sign flipped: the API reports
+	// them positive ("MP *NAVE" +782,54) but they are SPENDING. Flipping keeps the
+	// colour (green=income/red=spending) and the total consistent with the
+	// dashboard.
 	const withDisplayAmount = (tx: (typeof current)[number]) => {
 		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
-		// Pra exibição, inverte o sinal das transações de cartão de crédito:
-		// na API compras vêm positivas (ex.: "MP *NAVE" +782,54 = gasto) e
-		// estornos vêm negativos (ex.: "Estorno de Uber" -1,44 = dinheiro de
-		// volta). Invertendo sempre, compra fica negativa (vermelho) e estorno
-		// fica positivo (verde) — consistente com o dashboard.
+		// For display, credit card transactions have their sign flipped: the API
+		// reports purchases positive ("MP *NAVE" +782,54 = spending) and refunds
+		// negative ("Estorno de Uber" -1,44 = money back). Flipping unconditionally
+		// makes a purchase negative (red) and a refund positive (green) —
+		// consistent with the dashboard.
 		const displayAmount = accType === 'credit_card' ? -tx.amount : tx.amount;
 		return { ...tx, displayAmount };
 	};
 
-	// Categorias do usuário (nome + cor) — usadas nos badges e no filtro.
+	// The user's categories (name + colour) — used by the badges and the filter.
 	const userCategories = await getCategoriesByUser(db, userId);
 
 	return {
@@ -133,11 +133,10 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 };
 
 export const actions: Actions = {
-	// Categorização em massa: recebe uma lista de ids de transações (marcadas
-	// na tabela) + categoria e aplica em todas. Valida a pertença ao usuário
-	// e nunca sobrescreve categorias escolhidas manualmente (categorySource
-	// 'user' já existentes ficam como estão — aqui só as que ainda não têm
-	// categoria manual são tocadas).
+	// Bulk categorisation: takes a list of transaction ids (ticked in the table)
+	// plus a category and applies it to all of them. It checks ownership and never
+	// overwrites a hand-picked category (existing categorySource 'user' rows are
+	// left alone — only those without a manual category are touched).
 	//
 	// `create_rules=yes` adds the automatic rules on top; without it the action
 	// only categorises the selected transactions and teaches the app nothing
@@ -163,8 +162,8 @@ export const actions: Actions = {
 
 		const db = getDb(platform!.env.DB);
 
-		// Busca as transações selecionadas pra validar pertença e não tocar em
-		// categorias manuais existentes.
+		// Loads the selected transactions to check ownership and to avoid touching
+		// existing manual categories.
 		const rows = await db
 			.select({
 				id: transactions.id,
@@ -202,8 +201,8 @@ export const actions: Actions = {
 		}
 
 		// ...and the rule really is created, once per distinct description. The
-		// card promises "transações futuras com a mesma descrição já entram
-		// categorizadas", and in bulk that promise was not being kept: nothing
+		// card promises that future transactions with the same description arrive
+		// already categorised, and in bulk that promise was not being kept: nothing
 		// called upsertCategorizationRule, so the next Uber charge still arrived
 		// uncategorised.
 		//

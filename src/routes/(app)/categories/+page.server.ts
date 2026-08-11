@@ -11,10 +11,10 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
 
-	// Categorias do usuário (dinâmicas) — total por categoria calculado abaixo.
+	// The user's own categories — the per-category total is computed below.
 	const userCategories = await getCategoriesByUser(db, userId);
 
-	// Soma de gastos por categoria (valores negativos) de todos os tempos.
+	// All-time spending per category (the negative amounts).
 	const rows = await db
 		.select({ category: transactions.category, amount: transactions.amount })
 		.from(transactions)
@@ -27,8 +27,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		totals[cat] = (totals[cat] ?? 0) + Math.abs(r.amount);
 	}
 
-	// Lista as categorias do usuário com seus totais; "Outros" (gasto sem
-	// categoria) aparece no fim se tiver valor.
+	// Lists the user's categories with their totals; "Outros" (uncategorised
+	// spending) goes last when it has a value.
 	const categories = userCategories
 		.map((c) => ({
 			name: c.name,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	/* eslint-disable svelte/no-at-html-tags -- SVGs inline estáticos controlados */
+	/* eslint-disable svelte/no-at-html-tags -- controlled, static inline SVGs */
 	import { page } from '$app/state';
 	import { toggleMode, mode } from 'mode-watcher';
 	import { resolve } from '$app/paths';
@@ -41,8 +41,8 @@
 
 	const isActive = (href: string) => page.url.pathname === href;
 
-	// Ícones SVG inline com width/height explícito — `class` em string JS não
-	// é detectado pelo Tailwind, então o tamanho vem do atributo, não da classe.
+	// Inline SVG icons with explicit width/height — Tailwind does not see a `class`
+	// inside a JS string, so the size comes from the attribute, not the class.
 	const NAV_PATHS: Record<string, string> = {
 		grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
 		list: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',

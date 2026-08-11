@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
 
 	const db = getDb(platform!.env.DB);
-	// Usuário que ocultou IA não vê a configuração de prompts.
+	// A user who hid AI does not get the prompt configuration.
 	const user = await findUserById(db, locals.userId);
 	if (user?.hideAi) redirect(303, '/profile');
 

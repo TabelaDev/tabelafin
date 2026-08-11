@@ -1,12 +1,12 @@
-// Mapeamento de erros do Better Auth pra mensagens amigáveis ao usuário.
-// Reutilizável — copie pra qualquer projeto.
+// Maps Better Auth errors onto messages a user can act on.
+// Reusable — copy into any project.
 
 export function friendlyAuthError(e: unknown): string {
 	if (!(e instanceof Error)) return 'Ocorreu um erro inesperado.';
 
 	const msg = e.message.toLowerCase();
 
-	// Cadastro
+	// Signup
 	if (msg.includes('user already exists') || msg.includes('already registered')) {
 		return 'Já existe uma conta com este e-mail.';
 	}
@@ -19,7 +19,7 @@ export function friendlyAuthError(e: unknown): string {
 		return 'Nenhuma conta encontrada com este e-mail.';
 	}
 
-	// Validação
+	// Validation
 	if (msg.includes('invalid email')) {
 		return 'E-mail inválido.';
 	}
@@ -27,7 +27,7 @@ export function friendlyAuthError(e: unknown): string {
 		return 'A senha deve ter pelo menos 8 caracteres.';
 	}
 
-	// Sessão
+	// Session
 	if (msg.includes('email not verified')) {
 		return 'E-mail ainda não verificado.';
 	}
@@ -43,6 +43,6 @@ export function friendlyAuthError(e: unknown): string {
 		return 'Erro interno. Tente novamente em alguns instantes.';
 	}
 
-	// Fallback — nunca vazar erro interno
+	// Fallback — never leak an internal error
 	return 'Ocorreu um erro. Tente novamente.';
 }

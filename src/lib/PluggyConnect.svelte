@@ -3,20 +3,20 @@
 	import { resolve } from '$app/paths';
 	import { Button } from '@tabeladev/tabelawebui';
 
-	// Widget Pluggy Connect via CDN — expõe um `PluggyConnect` global depois de
-	// carregado, sem precisar de bundler/npm install (ver ESCOPO.md §2.3). Só
-	// roda no browser: o cliente REST em $lib/server/pluggy/client.ts é o que
-	// fica restrito a fetch() puro pra rodar no Worker, esse componente não
-	// tem essa restrição por não rodar em `workerd`.
+	// The Pluggy Connect widget over CDN — it exposes a global `PluggyConnect`
+	// once loaded, with no bundler or npm install needed (see ESCOPO.md §2.3).
+	// Browser-only: the REST client in $lib/server/pluggy/client.ts is the one
+	// restricted to plain fetch() so it can run in the Worker; this component has
+	// no such restriction because it never runs in `workerd`.
 	//
-	// CDN pinado em v2.11.0 — a build versionada mais recente confirmada
-	// servindo em cdn.pluggy.ai (verificado 2026-08-03: v2.10.0 e v2.11.0
-	// respondem 200; `latest` aponta pro mesmo bundle da v2.11.0). A API do
-	// widget (connectToken/includeSandbox/onSuccess/onError/onClose/init) é a
-	// mesma da v2.8.2 — conferido contra os typings publicados de
-	// pluggy-connect-sdk@2.11.0 (dist/main/pluggy-connect.d.ts). A versão npm
-	// mais nova (2.14.1) ainda não tem build correspondente no CDN.
-	// Exemplo oficial: github.com/pluggyai/quickstart/blob/master/frontend/html/index.html
+	// The CDN is pinned to v2.11.0 — the most recent versioned build confirmed to
+	// be served from cdn.pluggy.ai (checked 2026-08-03: v2.10.0 and v2.11.0 both
+	// answer 200; `latest` points at the same bundle as v2.11.0). The widget API
+	// (connectToken/includeSandbox/onSuccess/onError/onClose/init) is the same as
+	// v2.8.2 — checked against the published typings of
+	// pluggy-connect-sdk@2.11.0 (dist/main/pluggy-connect.d.ts). The newest npm
+	// version (2.14.1) has no matching CDN build yet.
+	// Official example: github.com/pluggyai/quickstart/blob/master/frontend/html/index.html
 	const PLUGGY_CONNECT_SCRIPT_URL =
 		'https://cdn.pluggy.ai/pluggy-connect/v2.11.0/pluggy-connect.js';
 
@@ -24,8 +24,8 @@
 		id: string;
 	}
 
-	// Shape confirmado via pluggy-connect-sdk (o mesmo widget, embalado como
-	// pacote npm) — dist/main/pluggy-connect.d.ts, versão 2.14.1.
+	// Shape confirmed through pluggy-connect-sdk (the same widget, packaged for
+	// npm) — dist/main/pluggy-connect.d.ts, version 2.14.1.
 	interface PluggyConnectOptions {
 		connectToken: string;
 		includeSandbox?: boolean;
@@ -59,8 +59,8 @@
 		});
 	}
 
-	// POSTa o itemId que o widget devolveu (data.item.id) pro endpoint que
-	// busca os detalhes reais na Pluggy e persiste conta(s)/item.
+	// POSTs the itemId the widget handed back (data.item.id) to the endpoint that
+	// fetches the real details from Pluggy and persists the account(s)/item.
 	async function saveItem(itemId: string): Promise<void> {
 		status = 'saving';
 		const res = await fetch('/api/pluggy/items', {

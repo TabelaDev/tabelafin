@@ -1,7 +1,7 @@
-// Hook do SvelteKit pra resolver sessão do Better Auth em cada request.
-// Copie pro seu hooks.server.ts.
+// SvelteKit hook that resolves the Better Auth session on every request.
+// Copy into your hooks.server.ts.
 //
-// Uso:
+// Usage:
 //   import { handleAuth } from '$lib/auth/hooks';
 //   export const handle = handleAuth(getAuth);
 
@@ -17,8 +17,8 @@ type AuthInstance = {
 };
 
 /**
- * Cria um handler do SvelteKit que resolve a sessão do Better Auth em cada request.
- * O userId fica disponível em event.locals.userId pra todas as rotas.
+ * Creates a SvelteKit handler that resolves the Better Auth session on every
+ * request. The userId is then available on event.locals.userId for every route.
  */
 export function handleAuth(getAuth: (env: unknown) => AuthInstance): Handle {
 	return async ({ event, resolve }) => {

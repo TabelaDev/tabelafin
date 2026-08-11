@@ -18,17 +18,17 @@
 	let submitting = $state(false);
 	let error = $state('');
 
-	// Formulário IA
+	// AI form
 	let provider = $state<AiProvider>('deepseek');
 	let model = $state<string>(AI_PROVIDERS.deepseek.models[0].id);
 	let apiKey = $state('');
 
-	// Formulário Pluggy
+	// Pluggy form
 	let token = $state('');
 	let showHelp = $state(false);
 
-	// Steps ficam desabilitados durante submissão pra não trocar de etapa
-	// enquanto a requisição está em andamento.
+	// Steps are disabled while submitting so the user cannot change step with a
+	// request in flight.
 	const stepperItems = $derived(ITEMS.map((item) => ({ ...item, disabled: submitting })));
 
 	$effect(() => {
@@ -36,7 +36,7 @@
 		if (!models.some((m) => m.id === model)) model = models[0].id;
 	});
 
-	// Sincroniza com a store (perfil abrindo o modal numa etapa específica).
+	// Kept in step with the store (profile opening the modal on a specific step).
 	$effect(() => {
 		const unsubscribe = onboarding.subscribe((s) => {
 			open = s.open;
@@ -49,9 +49,9 @@
 		return unsubscribe;
 	});
 
-	// Se o Dialog fechou por X/Esc/overlay (bind:open -> false), devolve o
-	// estado pra store pra não ficar dessincronizado ({ open: true } na store
-	// com o modal fechado na tela).
+	// If the Dialog closed through X/Esc/overlay (bind:open -> false), hand the
+	// state back to the store so the two do not disagree ({ open: true } in the
+	// store with the modal closed on screen).
 	$effect(() => {
 		if (!open) {
 			const current = get(onboarding);
@@ -59,7 +59,7 @@
 		}
 	});
 
-	// Primeiro acesso: abre sozinho.
+	// First visit: opens on its own.
 	onMount(() => {
 		if (autoOpen) onboarding.set({ open: true, step: 'ai' });
 	});

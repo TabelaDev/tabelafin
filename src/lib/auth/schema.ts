@@ -1,11 +1,11 @@
-// Schema Drizzle pra tabelas do Better Auth.
-// Copie estas definições pro seu schema.ts principal.
-// Adapte os nomes de tabela se necessário (ex: usePlural).
+// Drizzle schema for the Better Auth tables.
+// Copy these definitions into your main schema.ts.
+// Adapt the table names if needed (e.g. usePlural).
 
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
-// Tabela de usuários — Better Auth espera: id, name, email, emailVerified, createdAt, updatedAt
-// Adicione campos próprios do app depois destes (ex: timezone, defaultCurrency).
+// Users table — Better Auth expects: id, name, email, emailVerified, createdAt, updatedAt
+// Add the app's own fields after these (e.g. timezone, defaultCurrency).
 export const authUser = sqliteTable('user', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull().default(''),
@@ -20,7 +20,7 @@ export const authUser = sqliteTable('user', {
 		.$defaultFn(() => new Date())
 });
 
-// Tabela de sessões — Better Auth espera: id, userId, token, expiresAt, createdAt, updatedAt
+// Sessions table — Better Auth expects: id, userId, token, expiresAt, createdAt, updatedAt
 export const authSession = sqliteTable('session', {
 	id: text('id').primaryKey(),
 	userId: text('userId')
@@ -38,7 +38,7 @@ export const authSession = sqliteTable('session', {
 		.$defaultFn(() => new Date())
 });
 
-// Tabela de contas de auth — Better Auth espera: id, userId, accountId, providerId, password, createdAt, updatedAt
+// Auth accounts table — Better Auth expects: id, userId, accountId, providerId, password, createdAt, updatedAt
 export const authAccount = sqliteTable('account', {
 	id: text('id').primaryKey(),
 	userId: text('userId')

@@ -1,8 +1,7 @@
-// Narrativa do relatório mensal (ESCOPO.md §3.6) — mesmo padrão de dispatch
-// fetch-based de 3 providers do server/ai/categorize.ts e do
-// server/ai/parse.ts do TabelaCal, mas sem tool-use: a saída aqui é texto
-// livre (um parágrafo curto), não dado estruturado, então uma chamada de
-// completion simples basta.
+// The monthly report's narrative (ESCOPO.md §3.6) — the same three-provider
+// fetch-based dispatch as server/ai/categorize.ts and TabelaCal's
+// server/ai/parse.ts, but without tool use: the output here is free text (a short
+// paragraph), not structured data, so a plain completion call is enough.
 import type { AiProvider } from '$lib/ai-providers';
 
 export interface CategoryTotals {

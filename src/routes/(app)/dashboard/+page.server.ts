@@ -17,10 +17,10 @@ function startOfMonth(offset = 0): Date {
 	return new Date(now.getFullYear(), now.getMonth() + offset, 1);
 }
 
-// Transferência interna/movimentação de investimento não conta como gasto nem
-// receita — filtra em todas as queries de resumo do dashboard. Além da
-// categoria da API, também filtra por descrição ("Pagamento de fatura" vem com
-// categoria genérica "Transfers" na conta corrente, mas é movimento interno).
+// Internal transfers and investment movements are neither spending nor income —
+// filtered out of every dashboard summary query. Beyond the API's category, the
+// description is filtered too ("Pagamento de fatura" arrives with the generic
+// "Transfers" category on the checking account, but is internal movement).
 const isNotInternalTransfer = and(
 	notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES]),
 	notInArray(transactions.description, [...INTERNAL_TRANSFER_DESCRIPTIONS])
@@ -44,8 +44,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	// INTERNAL_TRANSFER_CATEGORIES e o tratamento de sinal no loop abaixo).
 	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
 
-	// "Recentes" = até hoje: transação de fatura com data futura (ex.: parcela
-	// que ainda vai cair na fatura) não é recente, mesmo vindo do banco antes.
+	// "Recent" means up to today: an invoice transaction dated in the future (an
+	// instalment yet to land) is not recent, even if the bank sent it earlier.
 	const now = new Date();
 	const recentTransactions = await db
 		.select()
@@ -61,9 +61,9 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.orderBy(desc(transactions.date))
 		.limit(10);
 
-	// Dados do mês atual pra cards de resumo e gráficos. Limitado ao mês: o
-	// cartão de crédito lança parcelas com data futura (ex.: "Nave 12/12" em
-	// 2027-01) que NÃO são gasto do mês atual — só as que vencem no mês.
+	// Current-month data for the summary cards and charts. Bounded to the month on
+	// purpose: the credit card posts instalments dated in the future ("Nave 12/12"
+	// in 2027-01) which are NOT this month's spending — only the ones due now.
 	const monthStart = startOfMonth(0);
 	const monthEnd = startOfMonth(1);
 	const monthStartPrev = startOfMonth(-1);
@@ -100,9 +100,9 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
 
 		if (accType === 'credit_card') {
-			// Cartão de crédito: compra (positiva) é GASTO, não receita. O
-			// pagamento da fatura já é filtrado por isNotInternalTransfer
-			// (categoria "Credit card payment").
+			// Credit card: a purchase (positive) is SPENDING, not income. The invoice
+			// payment is already filtered by isNotInternalTransfer (the "Credit card
+			// payment" category).
 			if (tx.amount > 0) {
 				monthExpense += tx.amount;
 				const cat = tx.category ?? 'Outros';
@@ -148,14 +148,14 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 
 	const totalBalance = checkingBalance + investmentBalance - creditCardBalance;
 
-	// Top 5 categorias de gasto do mês (só com valor > 0).
+	// The month's top 5 spending categories (only those above zero).
 	const topCategories = Object.entries(categoryTotals)
 		.filter(([, v]) => v > 0)
 		.sort(([, a], [, b]) => b - a)
 		.slice(0, 5)
 		.map(([name, value]) => ({ name, value }));
 
-	// Evolução mensal do saldo (últimos 6 meses) — soma por mês.
+	// Monthly balance trend (last 6 months) — summed per month.
 	const sixMonthsAgo = new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1);
 	const monthlyData = await db
 		.select({ yearMonth: sql`strftime('%Y-%m', date, 'unixepoch')`, amount: transactions.amount })

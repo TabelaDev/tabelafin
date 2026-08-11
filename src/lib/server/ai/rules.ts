@@ -1,6 +1,6 @@
-// Categorização por regras (keyword matching) — usada quando o usuário não tem
-// IA configurada. É uma alternativa simples e offline que não requer nenhuma
-// chamada externa. O usuário pode sempre sobrescrever a categoria manualmente.
+// Rule-based categorisation (keyword matching) — used when the user has no AI
+// configured. A simple offline fallback that needs no external call. The user can
+// always override the category by hand.
 import type { TransactionCategory } from '$lib/categories';
 
 interface Rule {
@@ -8,7 +8,7 @@ interface Rule {
 	category: TransactionCategory;
 }
 
-// Regras ordenadas por prioridade — a primeira regra que matchar vence.
+// Rules in priority order — the first one that matches wins.
 const RULES: Rule[] = [
 	// Investimentos
 	{
@@ -28,7 +28,7 @@ const RULES: Rule[] = [
 	// Transferências
 	{ keywords: ['pix', 'ted', 'doc', 'transferência', 'transferencia'], category: 'Transferências' },
 
-	// Alimentação
+	// Food
 	{
 		keywords: [
 			'ifood',
@@ -124,7 +124,7 @@ const RULES: Rule[] = [
 		category: 'Lazer'
 	},
 
-	// Educação
+	// Education
 	{
 		keywords: [
 			'escola',

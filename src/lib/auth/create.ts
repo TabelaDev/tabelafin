@@ -1,12 +1,12 @@
-// Módulo reutilizável de autenticação via Better Auth.
-// Copie esta pasta inteira pra qualquer projeto SvelteKit + Drizzle + Cloudflare Workers.
+// Reusable Better Auth authentication module.
+// Copy this whole folder into any SvelteKit + Drizzle + Cloudflare Workers project.
 //
-// Uso:
-//   1. Copie `src/lib/auth/` pro novo projeto
-//   2. Instale `better-auth` e `@better-auth/drizzle-adapter`
-//   3. Adicione as tabelas do schema no seu Drizzle schema (ver schema.ts)
-//   4. Configure BETTER_AUTH_SECRET e BETTER_AUTH_URL nas env vars
-//   5. Crie as rotas de login/signup usando os components
+// Usage:
+//   1. Copy `src/lib/auth/` into the new project
+//   2. Install `better-auth` and `@better-auth/drizzle-adapter`
+//   3. Add the schema's tables to your Drizzle schema (see schema.ts)
+//   4. Set BETTER_AUTH_SECRET and BETTER_AUTH_URL in the env vars
+//   5. Create the login/signup routes using the components
 
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -18,10 +18,10 @@ export interface AuthConfig {
 	secret: string;
 	baseURL?: string;
 	cookiePrefix?: string;
-	// Mapeamento dos modelos Better Auth ("user" | "session" | "account")
-	// para os objetos de tabela do Drizzle, se os nomes diferirem do padrão.
-	// As chaves são os nomes dos modelos; o nome real da tabela vem da própria
-	// definição Drizzle.
+	// Maps the Better Auth models ("user" | "session" | "account") onto the
+	// Drizzle table objects, for when the names differ from the defaults. The keys
+	// are the model names; the real table name comes from the Drizzle definition
+	// itself.
 	schema?: Partial<Record<'user' | 'session' | 'account', Record<string, unknown>>>;
 }
 
@@ -29,7 +29,7 @@ export interface AuthConfig {
 let authInstance: any = null;
 
 /**
- * Cria ou retorna a instância do Better Auth.
+ * Creates or returns the Better Auth instance.
  * Singleton — multiple calls return the same instance.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

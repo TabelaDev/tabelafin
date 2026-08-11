@@ -35,7 +35,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ error: 'Configure a IA antes de conectar o Open Finance.' }, { status: 400 });
 	}
 
-	// Valida o token e busca os itens (conexões bancárias) do usuário.
+	// Validates the token and fetches the user's items (bank connections).
 	let items;
 	try {
 		items = await fetchItems(trimmedToken);
@@ -68,7 +68,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
 	}
 
-	// Salva o token cifrado.
+	// Stores the token encrypted.
 	const encrypted = await encryptSecret(masterKey, trimmedToken, {
 		purpose: 'pluggy_credentials',
 		userId: locals.userId
@@ -80,9 +80,8 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		v: encrypted.v
 	});
 
-	// Cria/atualiza os pluggy_items (conexões bancárias) a partir dos itens
-	// retornados pela API do Meu Pluggy — o sync precisa deles pra saber
-	// quais items sincronizar.
+	// Creates/updates the pluggy_items (bank connections) from the items the Meu
+	// Pluggy API returned — the sync needs them to know which items to sync.
 	for (const item of items) {
 		await upsertPluggyItem(db, {
 			userId: locals.userId,
@@ -93,14 +92,14 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		});
 	}
 
-	// Concluiu o onboarding — marca como visto pra não reaparecer no próximo
+	// Onboarding finished — marked as seen so it does not reappear on the next
 	// login.
 	await setUserSeenOnboarding(db, locals.userId, true);
 
-	// Busca os dados logo de cara (accounts/transactions/investments + dedupe
-	// + categorização em lote) em vez de esperar o cron diário. Roda em
-	// background (waitUntil) pra não travar a resposta do modal; se falhar, o
-	// cron pega depois.
+	// Fetches the data straight away (accounts/transactions/investments + dedupe +
+	// batch categorisation) instead of waiting for the daily cron. Runs in the
+	// background (waitUntil) so it does not hold up the modal's response; if it
+	// fails, the cron picks it up later.
 	const syncPromise = syncUserItems(db, masterKey, locals.userId).catch((err) => {
 		console.error('[onboarding/pluggy] sync pós-conexão falhou', {
 			userId: locals.userId,

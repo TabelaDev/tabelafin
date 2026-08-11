@@ -45,7 +45,7 @@
 />
 
 <style>
-	/* Dentro do shell (app) o <main> já tem padding/fundo; o componente usa
+	/* Inside the (app) shell the <main> already has padding and a background; the
 	   min-h-svh sozinho, aqui só garante o fundo consistente. */
 	:global(.app-error) {
 		min-height: auto;

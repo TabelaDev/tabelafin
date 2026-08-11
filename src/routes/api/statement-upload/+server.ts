@@ -13,9 +13,9 @@ import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { extractTransactionsFromPdf } from '$lib/server/ai/extract';
 import { modelSupportsDocuments, type AiProvider } from '$lib/ai-providers';
 
-// Teto do upload: abaixo dos limites de documento dos providers (32 MB na
-// Anthropic, 50 MB por arquivo na OpenAI), mas seguro o bastante pra qualquer
-// fatura/extrato real (a maioria tem poucas centenas de KB).
+// Upload ceiling: below the providers' document limits (32 MB at Anthropic, 50 MB
+// per file at OpenAI), and comfortably above any real statement or invoice (most
+// are a few hundred KB).
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -33,10 +33,10 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 	return json({ completed: await getCompletedUploadFilenames(db, locals.userId) });
 };
 
-// Fallback manual de ingestão (ESCOPO.md §2.4): recebe o PDF, envia direto pro
-// modelo de IA do usuário (document understanding), salva as transações
-// extraídas + já categorizadas com source='pdf_upload' e descarta o arquivo —
-// nunca é persistido (sem R2 no MVP).
+// Manual ingestion fallback (ESCOPO.md §2.4): takes the PDF, sends it straight to
+// the user's AI model (document understanding), stores the extracted and
+// already-categorised transactions with source='pdf_upload', and discards the
+// file — it is never persisted (no R2 in the MVP).
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	if (!locals.userId) error(401, 'Não autenticado.');
 
@@ -54,8 +54,8 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	if (!aiCredentials) error(400, 'Configure sua IA antes de importar um PDF.');
 
 	const provider = aiCredentials.provider as AiProvider;
-	// Capability gating (ESCOPO.md §2.4): nunca trocar de modelo por baixo dos
-	// panos — BYOK significa que o usuário controla custo/provedor.
+	// Capability gating (ESCOPO.md §2.4): never swap the model out from under the
+	// user — BYOK means they control cost and provider.
 	if (!modelSupportsDocuments(provider, aiCredentials.model)) {
 		error(
 			400,
@@ -119,9 +119,9 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			extracted: extracted.length
 		});
 	} catch (err) {
-		// Falha no provider de IA ou no formato do PDF: não é erro do request
-		// (4xx), é falha do processamento (5xx) — registra no statement_uploads
-		// pra auditoria e devolve a mensagem pro usuário tentar de novo.
+		// A failure at the AI provider or in the PDF's format: not a request error
+		// (4xx) but a processing one (5xx) — recorded in statement_uploads for the
+		// audit trail, with the message handed back so the user can retry.
 		const message = err instanceof Error ? err.message : String(err);
 		await updateStatementUpload(db, upload.id, { status: 'failed', errorMessage: message });
 		error(502, message);

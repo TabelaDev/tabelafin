@@ -1,17 +1,16 @@
-// Fingerprint de dedupe (ESCOPO.md §5) — hash estável de (conta, valor, dia)
-// usado como candidato rápido de "essa transação já existe" (ex.: reprocessar
-// o mesmo sync duas vezes). A regra de dedupe cross-source de verdade
-// (transação Pluggy substituindo uma de PDF, tolerância de ±3 dias) NÃO pode
-// depender só da igualdade deste hash — duas datas a poucos dias de distância
-// dão hashes diferentes de propósito, já que o dia entra exato na string.
-// Essa comparação por range de data fica em findSupersedeCandidate
-// (src/lib/server/db/transactions.ts), que faz uma query por
-// conta+valor+intervalo de data em vez de comparar hashes.
+// Dedupe fingerprint (ESCOPO.md §5) — a stable hash of (account, amount, day)
+// used as a cheap "this transaction already exists" candidate (e.g. reprocessing
+// the same sync twice). The real cross-source dedupe rule (a Pluggy transaction
+// superseding a PDF one, with ±3 days of tolerance) can NOT rely on equality of
+// this hash alone — two dates a few days apart hash differently by design, since
+// the exact day goes into the string. That date-range comparison lives in
+// findSupersedeCandidate (src/lib/server/db/transactions.ts), which queries by
+// account + amount + date range instead of comparing hashes.
 //
-// Função pura e síncrona (sem WebCrypto) — só precisa ser um fingerprint
-// determinístico, não um hash criptográfico.
+// Pure and synchronous (no WebCrypto) — it only has to be a deterministic
+// fingerprint, not a cryptographic hash.
 export function computeDedupeHash(accountId: string, amount: number, date: Date): string {
-	const day = date.toISOString().slice(0, 10); // YYYY-MM-DD, ignora hora
+	const day = date.toISOString().slice(0, 10); // YYYY-MM-DD, time ignored
 	const input = `${accountId}:${amount.toFixed(2)}:${day}`;
 
 	// FNV-1a de 32 bits.

@@ -1,6 +1,6 @@
-// Uploads de PDF de fatura/extrato (fallback manual, ESCOPO.md §2.4/§4): o
-// arquivo em si nunca é persistido — só o registro do processamento e o
-// resultado estruturado nas transações vinculadas via statement_upload_id.
+// Statement/invoice PDF uploads (manual fallback, ESCOPO.md §2.4/§4): the file
+// itself is never persisted — only the record of the processing and the
+// structured result, on the transactions linked through statement_upload_id.
 import { and, eq } from 'drizzle-orm';
 import type { getDb } from './index';
 import { statementUploads } from './schema';

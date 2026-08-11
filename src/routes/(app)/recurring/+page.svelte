@@ -24,7 +24,7 @@
 		FREQUENCIES.map((f) => [f.value, f.label])
 	);
 
-	// Ordem de exibição das frequências.
+	// Display order of the frequencies.
 	const GROUP_ORDER = ['monthly', 'weekly', 'quarterly', 'yearly'];
 
 	// Agrupa as recorrências ativas por frequência, na ordem definida.

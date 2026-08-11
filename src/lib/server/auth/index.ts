@@ -2,9 +2,9 @@ import { createAuth } from '$lib/auth';
 import { getDb } from '$lib/server/db';
 import * as schema from '$lib/server/db/schema';
 
-// Better Auth espera os modelos "user", "session", "account" no schema (chaves
-// = nomes dos modelos, não das tabelas). O nome real da tabela vem do objeto
-// Drizzle: "user", "session" e "accounts".
+// Better Auth expects the models "user", "session" and "account" in the schema
+// (the keys are model names, not table names). The real table name comes from
+// the Drizzle object: "user", "session" and "accounts".
 const authSchema = {
 	user: schema.users,
 	session: schema.sessions,

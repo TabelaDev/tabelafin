@@ -9,11 +9,11 @@
 
 	const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-	// Só categorias com gasto entram no gráfico — as de R$ 0,00 só poluem.
+	// Only categories with spending make the chart — the R$ 0,00 ones are noise.
 	const withSpend = $derived(data.categories.filter((c) => c.total > 0));
 	const total = $derived(withSpend.reduce((sum, c) => sum + c.total, 0));
 
-	// Histograma horizontal: uma barra por categoria, ordenada decrescente.
+	// Horizontal histogram: one bar per category, in descending order.
 	const sorted = $derived([...withSpend].sort((a, b) => b.total - a.total));
 	const series = $derived([{ name: 'Gasto', data: sorted.map((c) => c.total) }]);
 	const options = $derived({
@@ -24,8 +24,8 @@
 		xaxis: { categories: sorted.map((c) => c.name) },
 		dataLabels: {
 			enabled: true,
-			// Desloca a label pra fora da barra (à direita) — evita o valor
-			// sobrepor a barra accent.
+			// Pushes the label outside the bar (to the right) so the value does not
+			// sit on top of the accent-coloured bar.
 			offsetX: 6,
 			textAnchor: 'start' as const,
 			formatter: formatCurrencyLabel,

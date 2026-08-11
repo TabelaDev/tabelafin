@@ -42,7 +42,7 @@ export const actions: Actions = {
 		const userCategories = await getCategoriesByUser(db, locals.userId);
 		const validCategories = userCategories.map((c) => c.name);
 
-		// Se o usuário não escolheu categoria, tenta categorizar por regras.
+		// When the user picked no category, fall back to the rule-based one.
 		const finalCategory: string | null =
 			typeof category === 'string' && validCategories.includes(category)
 				? category

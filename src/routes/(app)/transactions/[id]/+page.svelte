@@ -10,15 +10,15 @@
 
 	const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-	// Estado dos forms — separados por form pra não vazar sucesso/erro entre
-	// cards (o `form` global é compartilhado entre as actions da página).
+	// Form state — kept per form so success/error does not leak between cards (the
+	// global `form` is shared by every action on the page).
 	let categorizeError = $state('');
 	let categorizeDone = $state(false);
 	let recurringFrequency = $state('monthly');
 	let recurringError = $state('');
 
-	// Categoria atual da transação — controla se o card de categorizar está
-	// travado (já categorizada) ou ativo (escolher/limpar).
+	// The transaction's current category — decides whether the categorise card is
+	// locked (already categorised) or active (choose/clear).
 	const hasCategory = $derived(!!data.transaction.category);
 
 	// Same idea for the recurrence card. The lookup is by description, so this

@@ -1,7 +1,7 @@
 <script lang="ts">
-	// Opt-in de notificação de relatório mensal pronto — ver ESCOPO.md §3.6.
-	// Mesma convenção do TabelaCal (interagir via registration do próprio
-	// navigator, não virtual:pwa-register) e o padrão de toasts do
+	// Opt-in for the "monthly report ready" notification — see ESCOPO.md §3.6.
+	// Same convention as TabelaCal (talk to the navigator's own registration,
+	// not virtual:pwa-register) and the toast pattern from
 	// $lib/ReloadPrompt.svelte.
 	import { Button } from '@tabeladev/tabelawebui';
 	import { toast } from '@tabeladev/tabelawebui';
@@ -39,9 +39,8 @@
 				(await registration.pushManager.getSubscription()) ??
 				(await registration.pushManager.subscribe({
 					userVisibleOnly: true,
-					// cast: TS's lib.dom espera um ArrayBuffer "não-compartilhado" em
-					// BufferSource, mas o Uint8Array<ArrayBufferLike> daqui é compatível
-					// em runtime.
+					// cast: TS's lib.dom wants a "non-shared" ArrayBuffer in BufferSource,
+					// but the Uint8Array<ArrayBufferLike> here is compatible at runtime.
 					applicationServerKey: base64UrlToUint8Array(vapidPublicKey) as BufferSource
 				}));
 

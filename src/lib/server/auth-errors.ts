@@ -1,4 +1,4 @@
-// Mapeia erros do Better Auth pra mensagens amigáveis ao usuário.
+// Maps Better Auth errors onto messages a user can act on.
 // Erros internos (DB, network, etc.) viram mensagens genéricas.
 export function friendlyAuthError(e: unknown): string {
 	if (!(e instanceof Error)) return 'Ocorreu um erro inesperado.';

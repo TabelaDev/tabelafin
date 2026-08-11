@@ -10,8 +10,8 @@ import {
 } from '$lib/server/db/user-categories';
 import { transactions } from '$lib/server/db/schema';
 
-// Paleta de cores disponíveis — mesmas classes Catppuccin usadas em badges,
-// com label em PT-BR pro dropdown.
+// The available colour palette — the same Catppuccin classes used in badges, with
+// a Portuguese label for the dropdown.
 const COLOR_OPTIONS: { value: string; label: string }[] = [
 	{ value: 'ctp-peach', label: 'Pêssego' },
 	{ value: 'ctp-sky', label: 'Céu' },
@@ -67,7 +67,7 @@ export const actions: Actions = {
 		const db = getDb(platform!.env.DB);
 		await updateCategory(db, locals.userId, oldName, { name: newName, color });
 
-		// Renomeou: re-aponta as transações que usavam o nome antigo.
+		// Renamed: repoints the transactions that carried the old name.
 		if (newName !== oldName) {
 			await db
 				.update(transactions)
@@ -84,7 +84,7 @@ export const actions: Actions = {
 		if (!name) return { error: 'Categoria inválida.' };
 
 		const db = getDb(platform!.env.DB);
-		// Transações sem categoria (null) são tratadas como "Outros" nas telas.
+		// Uncategorised transactions (null) are shown as "Outros" on the screens.
 		await deleteCategory(db, locals.userId, name);
 		return { success: true };
 	}

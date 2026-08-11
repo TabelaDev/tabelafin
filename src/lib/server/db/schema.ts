@@ -1,28 +1,28 @@
 import { sqliteTable, text, integer, real, primaryKey, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
-// Tabela `user` — formato Better Auth + campos próprios do TabelaFin.
-// Better Auth gerencia autenticação (email/senha, sessões); campos extras
-// (timezone, default_currency) são do app.
+// The `user` table — Better Auth's shape plus TabelaFin's own fields.
+// Better Auth owns authentication (email/password, sessions); the extra fields
+// (timezone, default_currency) belong to the app.
 export const users = sqliteTable('user', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull().default(''),
 	email: text('email').notNull().unique(),
 	emailVerified: integer('emailVerified', { mode: 'boolean' }).notNull().default(false),
 	image: text('image'),
-	// Campos próprios do TabelaFin
+	// TabelaFin's own fields
 	timezone: text('timezone').notNull().default('UTC'),
 	defaultCurrency: text('default_currency').notNull().default('BRL'),
-	// Ocultar qualquer menção/feature de IA na UI do usuário.
+	// Hide every mention of and feature around AI in the user's UI.
 	hideAi: integer('hide_ai', { mode: 'boolean' }).notNull().default(false),
-	// Toggles por funcionalidade de IA — o `hideAi` é o master (esconde tudo);
-	// estes controlam cada feature individualmente.
+	// Per-feature AI toggles — `hideAi` is the master switch (hides everything);
+	// these control each feature individually.
 	aiCategorizationEnabled: integer('ai_categorization_enabled', { mode: 'boolean' })
 		.notNull()
 		.default(true),
 	aiReportEnabled: integer('ai_report_enabled', { mode: 'boolean' }).notNull().default(true),
 	aiChatEnabled: integer('ai_chat_enabled', { mode: 'boolean' }).notNull().default(true),
-	// Já viu o onboarding? Quando false, o primeiro acesso ao app
-	// mostra o modal de configuração (ver OnboardingModal.svelte).
+	// Has the onboarding been seen? When false, the first visit to the app opens
+	// the configuration modal (see OnboardingModal.svelte).
 	seenOnboarding: integer('seen_onboarding', { mode: 'boolean' }).notNull().default(false),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
@@ -32,7 +32,7 @@ export const users = sqliteTable('user', {
 		.$defaultFn(() => new Date())
 });
 
-// Sessões do Better Auth — cada login gera uma sessão com token e expiration.
+// Better Auth sessions — each login creates one, with a token and an expiry.
 export const sessions = sqliteTable('session', {
 	id: text('id').primaryKey(),
 	userId: text('userId')
@@ -50,9 +50,9 @@ export const sessions = sqliteTable('session', {
 		.$defaultFn(() => new Date())
 });
 
-// Contas de autenticação do Better Auth — cada provider (email/senha, OAuth)
-// gera uma entrada aqui. Nome "accounts" (plural) porque Better Auth com
-// usePlural: true procura esse nome.
+// Better Auth's auth accounts — each provider (email/password, OAuth) gets an
+// entry here. Named "accounts" (plural) because that is the name Better Auth
+// looks for with usePlural: true.
 export const authAccounts = sqliteTable('accounts', {
 	id: text('id').primaryKey(),
 	userId: text('userId')
@@ -69,7 +69,7 @@ export const authAccounts = sqliteTable('accounts', {
 		.$defaultFn(() => new Date())
 });
 
-// BYOK de IA — ver ESCOPO.md §2.2.
+// AI BYOK — see ESCOPO.md §2.2.
 export const aiCredentials = sqliteTable('ai_credentials', {
 	userId: text('user_id')
 		.primaryKey()
@@ -83,7 +83,7 @@ export const aiCredentials = sqliteTable('ai_credentials', {
 	v: integer('v')
 });
 
-// Sessão do Meu Pluggy (JWT access token) — ver ESCOPO.md §2.3.
+// The Meu Pluggy session (JWT access token) — see ESCOPO.md §2.3.
 export const pluggyCredentials = sqliteTable('pluggy_credentials', {
 	userId: text('user_id')
 		.primaryKey()
@@ -111,8 +111,8 @@ export const pluggyItems = sqliteTable('pluggy_items', {
 	lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' })
 });
 
-// Contas financeiras (Nubank, XP...) puxadas da Pluggy.
-// Nome "finance_accounts" pra evitar colisão com a tabela Better Auth "accounts".
+// Financial accounts (Nubank, XP...) pulled from Pluggy.
+// Named "finance_accounts" to avoid colliding with Better Auth's "accounts".
 export const financeAccounts = sqliteTable('finance_accounts', {
 	id: text('id')
 		.primaryKey()
@@ -150,11 +150,11 @@ export const transactions = sqliteTable('transactions', {
 	amount: real('amount').notNull(),
 	currency: text('currency').notNull().default('BRL'),
 	source: text('source').notNull(),
-	// Categoria bruta que vem da API do Meu Pluggy (ex: "Investments",
-	// "Same person transfer", "Credit card payment"). Usada pra detectar
-	// transferência interna/movimentação de investimento que NÃO conta como
-	// gasto/receita no dashboard — diferente de `category` (a categorização
-	// do TabelaFin, por IA/regras).
+	// The raw category as it comes from the Meu Pluggy API (e.g. "Investments",
+	// "Same person transfer", "Credit card payment"). Used to spot internal
+	// transfers and investment movements, which do NOT count as spending or
+	// income on the dashboard — distinct from `category`, which is TabelaFin's
+	// own categorisation by AI/rules.
 	pluggyCategory: text('pluggy_category'),
 	category: text('category'),
 	categorySource: text('category_source'),
@@ -208,9 +208,9 @@ export const pushSubscriptions = sqliteTable('push_subscriptions', {
 		.$defaultFn(() => new Date())
 });
 
-// Prompts customizáveis de IA por usuário — controla como a IA categoriza,
-// gera relatórios e responde no chat. Cada campo tem um default hardcoded
-// usado quando o usuário não customizou.
+// Per-user customisable AI prompts — they control how the AI categorises,
+// writes reports and answers in the chat. Each field has a hardcoded default
+// used when the user has not customised it.
 export const userAiPrompts = sqliteTable('user_ai_prompts', {
 	userId: text('user_id')
 		.primaryKey()
@@ -226,8 +226,8 @@ export const userAiPrompts = sqliteTable('user_ai_prompts', {
 		.$defaultFn(() => new Date())
 });
 
-// Gastos recorrentes — assinaturas e despesas fixas que se repetem.
-// Adicionados manualmente pelo usuário.
+// Recurring expenses — subscriptions and fixed costs that repeat.
+// Added by the user, by hand.
 export const recurringExpenses = sqliteTable('recurring_expenses', {
 	id: text('id')
 		.primaryKey()
@@ -250,7 +250,7 @@ export const recurringExpenses = sqliteTable('recurring_expenses', {
 		.$defaultFn(() => new Date())
 });
 
-// Conversas do chat IA — cada conversa agrupa mensagens.
+// AI chat conversations — each one groups a set of messages.
 export const chatConversations = sqliteTable('chat_conversations', {
 	id: text('id')
 		.primaryKey()
@@ -267,7 +267,7 @@ export const chatConversations = sqliteTable('chat_conversations', {
 		.$defaultFn(() => new Date())
 });
 
-// Mensagens do chat IA — cada mensagem pertence a uma conversa.
+// AI chat messages — each one belongs to a conversation.
 export const chatMessages = sqliteTable('chat_messages', {
 	id: text('id')
 		.primaryKey()
@@ -282,10 +282,10 @@ export const chatMessages = sqliteTable('chat_messages', {
 		.$defaultFn(() => new Date())
 });
 
-// Categorias de transação do usuário — substitui a lista fixa de
-// TRANSACTION_CATEGORIES: cada usuário tem suas próprias categorias (nome +
-// cor Catppuccin), podendo adicionar/renomear/excluir. Usuários novos
-// recebem as 12 categorias padrão ao se cadastrar.
+// The user's transaction categories — these replace the fixed
+// TRANSACTION_CATEGORIES list: every user has their own (name + Catppuccin
+// colour) and can add, rename or delete them. New users are seeded with the 12
+// defaults on signup.
 export const userCategories = sqliteTable(
 	'user_categories',
 	{
@@ -301,10 +301,10 @@ export const userCategories = sqliteTable(
 	(table) => [primaryKey({ columns: [table.userId, table.name] })]
 );
 
-// Regras de categorização automática — quando o usuário categoriza uma
-// transação manualmente, uma regra é criada ligando a descrição exata à
-// categoria. Toda transação futura com a mesma descrição nasce já
-// categorizada (categorySource='rule').
+// Automatic categorisation rules — when the user categorises a transaction by
+// hand, a rule is created tying that exact description to the category. Every
+// future transaction with the same description is born already categorised
+// (categorySource='rule').
 export const categorizationRules = sqliteTable(
 	'categorization_rules',
 	{
@@ -321,7 +321,7 @@ export const categorizationRules = sqliteTable(
 			.$defaultFn(() => new Date())
 	},
 	(table) => [
-		// Uma regra por descrição por usuário — categorizar de novo sobrescreve.
+		// One rule per description per user — categorising again overwrites it.
 		uniqueIndex('categorization_rules_user_description').on(table.userId, table.description)
 	]
 );

@@ -16,8 +16,8 @@ export async function getRulesByUser(db: Db, userId: string): Promise<Categoriza
 	return db.select().from(categorizationRules).where(eq(categorizationRules.userId, userId));
 }
 
-// Busca a regra de uma descrição exata (ou null). Usada no sync pra
-// categorizar transações novas automaticamente.
+// Looks up the rule for an exact description (or null). Used by the sync to
+// categorise new transactions automatically.
 export async function getRuleForDescription(
 	db: Db,
 	userId: string,
@@ -32,8 +32,8 @@ export async function getRuleForDescription(
 	return row ?? null;
 }
 
-// Cria ou sobrescreve a regra de uma descrição (uma regra por descrição por
-// usuário — unique index em user_id + description). Retorna a regra salva.
+// Creates or overwrites the rule for a description (one rule per description
+// per user — unique index on user_id + description). Returns the saved rule.
 export async function upsertCategorizationRule(
 	db: Db,
 	userId: string,

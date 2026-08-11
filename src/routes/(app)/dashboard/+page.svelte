@@ -15,15 +15,15 @@
 		currency: 'BRL'
 	});
 
-	// Mês atual no formato YYYY-MM — usada nos links dos cards de gastos/
-	// receitas que abrem a página de transações com os filtros aplicados.
+	// The current month as YYYY-MM — used by the spending/income card links that
+	// open the transactions page with the filters already applied.
 	const currentMonth = $derived(
 		`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
 	);
 
 	const monthName = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-	// Variação % vs mês anterior.
+	// Percentage change against the previous month.
 	const expenseDelta = $derived.by(() => {
 		if (data.summary.prevExpense === 0) return null;
 		return (
@@ -55,8 +55,8 @@
 		stroke: { curve: 'smooth', width: 2 }
 	});
 
-	// Donut: só as maiores categorias com valor > 0 (top 7) — as de R$ 0,00
-	// poluem a composição.
+	// Donut: only the largest categories above zero (top 7) — the R$ 0,00 ones
+	// just clutter the composition.
 	const positiveCategories = $derived(
 		Object.entries(data.summary.categoryTotals)
 			.filter(([, v]) => v > 0)
@@ -68,8 +68,8 @@
 		labels: donutLabels,
 		legend: { position: 'bottom', horizontalAlign: 'center' },
 		// Tooltip igual aos outros gráficos: valor em moeda, mono (o estilo vem
-		// do base do Chart). `tooltip.y.formatter` só mostra o valor; o Apex
-		// já adiciona o % do slice no donut.
+		// from Chart's base). `tooltip.y.formatter` only renders the value; Apex
+		// already appends the slice's percentage on a donut.
 		tooltip: {
 			y: {
 				formatter: (value) => currency.format(Number(value))
@@ -77,8 +77,8 @@
 		}
 	});
 
-	// Se os gráficos laterais (top categorias / composição) não tiverem dados
-	// pra renderizar, a evolução do saldo ocupa a largura toda.
+	// When the side charts (top categories / composition) have nothing to render,
+	// the balance trend takes the full width.
 	const hasSideCharts = $derived(data.summary.topCategories.length > 0 || donutSeries.length > 0);
 	const evolutionClass = $derived(hasSideCharts ? 'lg:col-span-2 lg:row-span-2' : 'lg:col-span-3');
 

@@ -1,9 +1,9 @@
-// Formatação de moeda em BRL com compactação opcional: valores grandes ficam
-// legíveis ("R$ 2,5 mil", "R$ 1,2 M") em vez de uma linha de dígitos.
+// BRL currency formatting with optional compaction: large values stay readable
+// ("R$ 2,5 mil", "R$ 1,2 M") instead of turning into a row of digits.
 //
-// Usa Intl.NumberFormat com notation:'compact' do próprio runtime — nada de
-// tabela manual de sufixos — e `maximumFractionDigits` pra não virar
-// "R$ 2,53 mil" quando não precisa.
+// Uses the runtime's own Intl.NumberFormat with notation:'compact' — no manual
+// suffix table — and `maximumFractionDigits` so it does not read
+// "R$ 2,53 mil" when it does not need to.
 
 const compactBRL = new Intl.NumberFormat('pt-BR', {
 	style: 'currency',
@@ -36,8 +36,8 @@ export function formatCurrencyLabel(value: unknown): string {
 	return labelBRL.format(n);
 }
 
-// Formato compacto "cru" (sem moeda), pra eixos de gráfico e tooltips: ex.
-// "2,5 mil", "1,2 M". Usado quando o prefixo "R$" já aparece no contexto.
+// Bare compact format (no currency), for chart axes and tooltips: "2,5 mil",
+// "1,2 M". Used where the "R$" prefix already appears in the surrounding text.
 export function formatCompactNumber(value: number, threshold = 100_000): string {
 	if (Math.abs(value) < threshold) return value.toLocaleString('pt-BR');
 	return new Intl.NumberFormat('pt-BR', {

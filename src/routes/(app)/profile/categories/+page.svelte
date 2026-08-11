@@ -10,7 +10,7 @@
 	let newName = $state('');
 	let newColor = $state('ctp-overlay1');
 
-	// Formulário de edição por categoria — uma linha ativa por vez.
+	// One edit form per category — a single active row at a time.
 	let editingName = $state<string | null>(null);
 	let editName = $state('');
 	let editColor = $state('ctp-overlay1');
@@ -25,15 +25,15 @@
 		editingName = null;
 	}
 
-	// Cores vêm do server já com label PT-BR ({ value, label }).
+	// Colours arrive from the server already labelled for the dropdown ({ value, label }).
 	const colorOptions = data.colorOptions;
-	// Bolinha com a cor real: usa a CSS variable global do Catppuccin via
-	// style inline (classe Tailwind dinâmica `bg-${color}` não é compilada
-	// pelo JIT). `color` vem como "ctp-peach" → --catppuccin-peach.
+	// The dot in its real colour: uses Catppuccin's global CSS variable through an
+	// inline style (a dynamic Tailwind class `bg-${color}` is not compiled by the
+	// JIT). `color` arrives as "ctp-peach" → --catppuccin-peach.
 	const swatchStyle = (color: string) =>
 		`background-color: var(--catppuccin-${color.replace('ctp-', '')});`;
 
-	// Busca client-side na lista de categorias.
+	// Client-side search over the category list.
 	let searchQuery = $state('');
 	const filteredCategories = $derived(
 		searchQuery.trim()

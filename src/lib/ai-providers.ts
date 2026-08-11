@@ -1,12 +1,12 @@
-// Lista curada de providers/modelos pro dropdown de onboarding (ESCOPO.md §2.2).
-// IDs de modelo mudam com o tempo — confirmar contra a documentação oficial do
-// provider antes de atualizar esta lista.
+// Curated provider/model list for the onboarding dropdown (ESCOPO.md §2.2).
+// Model ids change over time — check them against the provider's own docs
+// before updating this list.
 //
-// `supportsDocuments` gateia o upload de PDF (ESCOPO.md §2.4): só modelos com
-// document understanding nativo aparecem como elegíveis pro fallback de
-// fatura/extrato. Nunca trocar de modelo por baixo dos panos quando o
-// escolhido não suporta — a UI deve desabilitar o upload com mensagem
-// explícita (BYOK: o usuário controla custo/provedor).
+// `supportsDocuments` gates the PDF upload (ESCOPO.md §2.4): only models with
+// native document understanding show up as eligible for the statement/invoice
+// fallback. Never swap the model out from under the user when the chosen one
+// does not support it — the UI has to disable the upload with an explicit
+// message (BYOK: the user controls cost and provider).
 export const AI_PROVIDERS = {
 	deepseek: {
 		label: 'DeepSeek',

@@ -1,13 +1,13 @@
-// Cliente fetch-based pra API interna do Meu Pluggy (my-api.pluggy.ai) —
-// ver ESCOPO.md §2.3. Substitui o cliente anterior que usava api.pluggy.ai
-// com Client ID/Secret do Pluggy Dashboard (que só funciona em sandbox).
+// fetch-based client for the internal Meu Pluggy API (my-api.pluggy.ai) — see
+// ESCOPO.md §2.3. It replaces the earlier client that used api.pluggy.ai with a
+// Client ID/Secret from the Pluggy Dashboard (which only works in sandbox).
 //
-// A API do Meu Pluggy usa JWT (Auth0) em vez de API key. O token é obtido
-// quando o usuário faz login no Meu Pluggy e é armazenado cifrado em
-// pluggy_credentials.token_encrypted. A API retorna arrays simples (sem
-// paginação offset/cursor) — mais simples que a API comercial da Pluggy.
+// The Meu Pluggy API uses a JWT (Auth0) rather than an API key. The token is
+// obtained when the user logs in to Meu Pluggy and is stored encrypted in
+// pluggy_credentials.token_encrypted. The API returns plain arrays (no
+// offset/cursor pagination) — simpler than Pluggy's commercial API.
 //
-// Confirmado contra my-api.pluggy.ai em 2026-08-04 via MCP/DevTools.
+// Confirmed against my-api.pluggy.ai on 2026-08-04 through MCP/DevTools.
 
 const MY_API_URL = 'https://my-api.pluggy.ai';
 
@@ -91,18 +91,19 @@ export async function fetchAccounts(token: string, itemIds: string[]): Promise<P
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Transações
+// Transactions
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface PluggyTransaction {
 	id: string;
 	description: string;
-	// Valor na moeda da conta (amountInAccountCurrency quando a transação é
-	// estrangeira) — o que o dashboard soma. Pra Nubank/XP/Itaú é sempre BRL.
+	// The amount in the account's currency (amountInAccountCurrency when the
+	// transaction is foreign) — this is what the dashboard sums. For
+	// Nubank/XP/Itaú it is always BRL.
 	amount: number;
 	date: string; // ISO 8601
-	// Moeda ORIGINAL da transação (ex.: "USD" pra compra no exterior). Usada
-	// só pra exibição — a soma sempre usa `amount` (convertido).
+	// The transaction's ORIGINAL currency (e.g. "USD" for a purchase abroad). Used
+	// for display only — the sums always use `amount`, which is converted.
 	currency: string;
 	category: string | null;
 }
@@ -121,8 +122,8 @@ export async function fetchTransactions(
 	from?: Date
 ): Promise<PluggyTransaction[]> {
 	const all: PluggyTransaction[] = [];
-	// A API do Meu Pluggy aceita múltiplos accountIds via query params repetidos,
-	// mas pra simplificar e evitar URLs longas, buscamos uma conta por vez.
+	// The Meu Pluggy API accepts several accountIds through repeated query params,
+	// but to keep things simple and the URLs short we fetch one account at a time.
 	for (const accountId of accountIds) {
 		const params = new URLSearchParams({ accountId });
 		if (from) params.set('from', from.toISOString().slice(0, 10));
@@ -140,9 +141,10 @@ export async function fetchTransactions(
 			all.push({
 				id: t.id,
 				description: t.description,
-				// Compra internacional: a API dá o valor convertido pra moeda da
-				// conta (ex.: USD 5,30 → R$ 28,06). Usa esse valor pra somar
-				// certo — senão uma compra em dólar seria contada como reais.
+				// International purchase: the API gives the amount converted into the
+				// account's currency (USD 5.30 → R$ 28.06). Using that value is what
+				// makes the sums right — otherwise a purchase in dollars would be
+				// counted as reais.
 				amount: t.amountInAccountCurrency ?? t.amount,
 				date: t.date,
 				currency: t.currencyCode,

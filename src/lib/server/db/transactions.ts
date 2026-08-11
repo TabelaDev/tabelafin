@@ -30,8 +30,8 @@ export async function getTransactionByPluggyId(db: Db, pluggyTransactionId: stri
 	return row ?? null;
 }
 
-// Atualiza só a `pluggyCategory` de uma transação já existente (usado no
-// re-sync pra popular o campo em transações que entraram antes dele existir).
+// Updates only the `pluggyCategory` of an existing transaction (used by the
+// re-sync to backfill the field on transactions that predate it).
 // Refreshes the fields the source still owns on an already-synced transaction.
 // This was two separate UPDATEs on the same row, run per transaction on every
 // sync — the single most repeated round trip in the job.
@@ -46,16 +46,17 @@ export async function updatePluggyFields(
 		.where(eq(transactions.pluggyTransactionId, pluggyTransactionId));
 }
 
-// Insere uma transação vinda do sync da Pluggy. Aplica regra automática do
-// usuário (descrição → categoria) quando existe — transação já nasce
-// categorizada (categorySource='rule'). `onConflictDoUpdate` preenche o
-// `pluggyCategory` quando a transação já existe (ex.: re-sync após o campo ter
-// sido adicionado ao schema) — a categoria da API muda pouco, então
-// sobrescrever é seguro. O retorno só é usado pra saber se foi insert novo
-// (null = já existia), pra não rodar o dedupe/supersede de novo.
+// Inserts a transaction coming from the Pluggy sync. Applies the user's own
+// rule (description → category) when one exists, so the row is born already
+// categorised (categorySource='rule'). `onConflictDoUpdate` fills in
+// `pluggyCategory` when the transaction already exists (e.g. a re-sync after
+// the field was added to the schema) — the API's category rarely changes, so
+// overwriting is safe. The return value is only read to tell whether this was
+// a fresh insert (null = it already existed), to avoid running the
+// dedupe/supersede again.
 export async function insertPluggyTransaction(db: Db, input: NewPluggyTransactionInput) {
-	// Regra do usuário (criada quando ele categoriza manualmente uma descrição)
-	// tem prioridade sobre a categorização por IA/regras offline.
+	// The user's rule (created when they categorise a description by hand) takes
+	// priority over AI/offline-rule categorisation.
 	const rule = await getRuleForDescription(db, input.userId, input.description);
 
 	const [saved] = await db
@@ -70,8 +71,8 @@ export async function insertPluggyTransaction(db: Db, input: NewPluggyTransactio
 			currency: input.currency,
 			source: 'pluggy',
 			pluggyCategory: input.pluggyCategory,
-			// Aplicada a regra automática na inserção; caso contrário fica pra
-			// categorização em lote (IA/regras offline) no final do sync.
+			// The automatic rule is applied on insert; otherwise this is left to the
+			// batch categorisation (AI/offline rules) at the end of the sync.
 			category: rule?.category ?? null,
 			categorySource: rule ? 'rule' : null,
 			dedupeHash: input.dedupeHash
@@ -96,13 +97,13 @@ export interface NewPdfTransactionInput {
 	category: TransactionCategory;
 }
 
-// Insere uma transação extraída de um upload de PDF (fallback manual). Já vem
-// categorizada de fábrica — a extração e a categorização acontecem no mesmo
-// request de IA (ESCOPO.md §2.4), então categorySource='ai' aqui e nenhuma
-// rodada futura de categorização em lote re-toca (lote só olha linhas com
-// category IS NULL). dedupeHash fica null: sem conta vinculada não há chave
-// de dedupe válida, e a regra de supersede (findSupersedeCandidate) compara
-// conta/valor/data direto, sem usar o hash.
+// Inserts a transaction extracted from a PDF upload (manual fallback). It
+// arrives already categorised — extraction and categorisation happen in the
+// same AI request (ESCOPO.md §2.4) — so categorySource='ai' here and no later
+// batch pass touches it again (the batch only looks at rows with category IS
+// NULL). dedupeHash stays null: with no account linked there is no valid
+// dedupe key, and the supersede rule (findSupersedeCandidate) compares
+// account/amount/date directly, without the hash.
 export async function insertPdfTransaction(db: Db, input: NewPdfTransactionInput) {
 	// A statement almost always overlaps what the sync already has, so the row
 	// is checked against existing transactions before it lands and is born
@@ -138,10 +139,10 @@ export interface NewManualTransactionInput {
 	category: TransactionCategory | null;
 }
 
-// Insere uma transação digitada manualmente pelo usuário. Pode vir com
-// categoria (digitada ou sugerida por regras) ou sem (fica NULL até
-// categorização futura). categorySource='user' quando o usuário escolheu,
-// null quando ficou sem categoria.
+// Inserts a transaction typed in by the user. It may arrive with a category
+// (typed or suggested by rules) or without one (NULL until a later
+// categorisation). categorySource='user' when the user chose it, null when it
+// was left uncategorised.
 export async function insertManualTransaction(db: Db, input: NewManualTransactionInput) {
 	const [saved] = await db
 		.insert(transactions)
@@ -160,11 +161,11 @@ export async function insertManualTransaction(db: Db, input: NewManualTransactio
 	return saved;
 }
 
-// ESCOPO.md §5 — regra de dedupe: uma transação vinda de PDF (ainda não
-// superada por nenhuma outra) é candidata a duplicata de uma transação nova
-// da Pluggy quando: mesmo valor, data dentro de ±3 dias, e (mesma conta OU a
-// linha de PDF ainda não tinha conta vinculada — accountId é nullable em
-// transactions justamente pra esse caso, ver schema.ts).
+// ESCOPO.md §5 — the dedupe rule: a transaction that came from a PDF (and has
+// not been superseded yet) is a duplicate candidate for a new Pluggy transaction
+// when the amount matches, the date is within ±3 days, and either the account
+// matches or the PDF row had no account linked — accountId is nullable on
+// transactions for exactly this case, see schema.ts.
 const SUPERSEDE_TOLERANCE_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -253,9 +254,9 @@ export async function markSuperseded(
 		.where(eq(transactions.id, oldTransactionId));
 }
 
-// Transações prontas pra entrar num lote de categorização (ESCOPO.md §3.3):
-// sem categoria ainda e não superadas (uma linha de PDF substituída nunca
-// precisa de categoria própria, ela some das telas mesmo assim).
+// Transactions ready for a categorisation batch (ESCOPO.md §3.3): no category
+// yet and not superseded (a replaced PDF row never needs its own category — it
+// disappears from the screens either way).
 export async function getUncategorizedTransactions(db: Db, userId: string) {
 	return db
 		.select()
@@ -269,11 +270,11 @@ export async function getUncategorizedTransactions(db: Db, userId: string) {
 		);
 }
 
-// Transações de um usuário num intervalo [from, to) — usado pelo relatório
-// mensal (server/reports/generate.ts). `to` é exclusivo de propósito (ver
-// chamador: passa o primeiro dia do mês seguinte). Exclui transferência
-// interna/movimentação de investimento — não são gasto nem receita (categoria
-// da API + descrição, ex.: "Pagamento de fatura").
+// A user's transactions in the interval [from, to) — used by the monthly report
+// (server/reports/generate.ts). `to` is exclusive on purpose (see
+// the caller: it passes the first day of the following month). Excludes
+// internal transfers and investment movements — neither spending nor income
+// (the API category plus the description, e.g. "Pagamento de fatura").
 export async function getTransactionsInRange(db: Db, userId: string, from: Date, to: Date) {
 	return db
 		.select()

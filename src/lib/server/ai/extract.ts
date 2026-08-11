@@ -1,14 +1,14 @@
-// Extração estruturada de transações de um PDF de fatura/extrato (ESCOPO.md
-// §2.4): o arquivo (base64) é enviado direto pra API do modelo do usuário via
-// suporte nativo de "document understanding" (bloco `document` da Messages API
-// da Anthropic; `input_file` da Responses API da OpenAI) — nunca lib de
-// parsing, que não roda em `workerd`. Extração + categorização acontecem num
-// único request (tool-use estruturado), seguindo o mesmo padrão de dispatch
-// fetch-based de server/ai/categorize.ts.
+// Structured extraction of transactions from a statement/invoice PDF (ESCOPO.md
+// §2.4): the file (base64) goes straight to the user's model API through native
+// "document understanding" support (Anthropic's Messages API `document` block;
+// OpenAI's Responses API `input_file`) — never a parsing library, which does not
+// run in `workerd`. Extraction and categorisation happen in a single request
+// (structured tool use), following the same fetch-based dispatch pattern as
+// server/ai/categorize.ts.
 //
-// Providers sem `supportsDocuments` (ex.: DeepSeek) não chegam aqui: o gating
-// é feito na UI e na rota de upload antes da chamada. Por defesa, o dispatch
-// ainda lança erro se for chamado com um desses providers.
+// Providers without `supportsDocuments` (DeepSeek, for one) never reach here: the
+// gating happens in the UI and in the upload route before the call. As a
+// safeguard, the dispatch still throws if it is called with one of them.
 import type { AiProvider } from '$lib/ai-providers';
 
 export interface ExtractedTransaction {
@@ -22,7 +22,7 @@ interface ExtractInput {
 	provider: AiProvider;
 	model: string;
 	apiKey: string;
-	// Categorias do usuário (dinâmicas) — prompt e schema usam essa lista.
+	// The user's own categories — both the prompt and the schema use this list.
 	categories: string[];
 	pdfBase64: string;
 	fileName: string;
@@ -181,10 +181,10 @@ async function extractWithOpenAI(input: ExtractInput): Promise<ExtractedTransact
 	return parseExtraction(JSON.parse(functionCall.arguments), input.categories);
 }
 
-// Aceita entradas com ruído (data inválida, categoria inventada, descrição
-// vazia) descartando linha por linha — nunca derruba o upload inteiro por uma
-// transação mal formatada. A moeda não entra no schema: fatura/extrato do
-// TabelaFin é sempre BRL, gravado no insert.
+// Tolerates noisy entries (an invalid date, an invented category, an empty
+// description) by discarding them row by row — one badly formed transaction never
+// brings down the whole upload. Currency is not part of the schema: a TabelaFin
+// statement or invoice is always BRL, written at insert time.
 function parseExtraction(rawInput: unknown, categories: string[]): ExtractedTransaction[] {
 	const parsed = rawInput as { transactions?: Array<Record<string, unknown>> };
 	if (!parsed || !Array.isArray(parsed.transactions)) return [];
