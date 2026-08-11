@@ -77,7 +77,10 @@ export const aiCredentials = sqliteTable('ai_credentials', {
 	provider: text('provider').notNull(),
 	model: text('model').notNull(),
 	keyEncrypted: text('key_encrypted').notNull(),
-	nonce: text('nonce').notNull()
+	nonce: text('nonce').notNull(),
+	// Encryption scheme version — see server/crypto.ts. Null means v1, written
+	// before the field existed.
+	v: integer('v')
 });
 
 // Sessão do Meu Pluggy (JWT access token) — ver ESCOPO.md §2.3.
@@ -87,6 +90,8 @@ export const pluggyCredentials = sqliteTable('pluggy_credentials', {
 		.references(() => users.id, { onDelete: 'cascade' }),
 	tokenEncrypted: text('token_encrypted').notNull(),
 	tokenNonce: text('token_nonce').notNull(),
+	// Encryption scheme version — see server/crypto.ts.
+	v: integer('v'),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
 		.$defaultFn(() => new Date())

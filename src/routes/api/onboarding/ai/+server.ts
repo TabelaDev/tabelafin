@@ -39,14 +39,18 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
 	}
 
-	const encrypted = await encryptSecret(masterKey, apiKey.trim());
+	const encrypted = await encryptSecret(masterKey, apiKey.trim(), {
+		purpose: 'ai_credentials',
+		userId: locals.userId
+	});
 	const db = getDb(platform!.env.DB);
 	await upsertAiCredentials(db, {
 		userId: locals.userId,
 		provider,
 		model,
 		keyEncrypted: encrypted.ciphertext,
-		nonce: encrypted.nonce
+		nonce: encrypted.nonce,
+		v: encrypted.v
 	});
 
 	return json({ ok: true });

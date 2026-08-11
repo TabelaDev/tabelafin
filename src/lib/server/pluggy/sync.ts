@@ -79,10 +79,15 @@ export async function syncUserItems(
 		console.error('[pluggy/sync] usuário sem pluggy_credentials salvas, pulando', { userId });
 		return;
 	}
-	const token = await decryptSecret(masterKey, {
-		ciphertext: credentials.tokenEncrypted,
-		nonce: credentials.tokenNonce
-	});
+	const token = await decryptSecret(
+		masterKey,
+		{
+			ciphertext: credentials.tokenEncrypted,
+			nonce: credentials.tokenNonce,
+			v: credentials.v ?? undefined
+		},
+		{ purpose: 'pluggy_credentials', userId }
+	);
 
 	// Sincroniza os items conectados no Meu Pluggy (fetchItems) com a tabela
 	// local: upserta novos (ex.: conta PJ/MEI, Itaú adicionados depois do
@@ -302,10 +307,15 @@ async function categorizeNewTransactions(db: Db, masterKey: string, userId: stri
 		return;
 	}
 
-	const apiKey = await decryptSecret(masterKey, {
-		ciphertext: aiCredentials.keyEncrypted,
-		nonce: aiCredentials.nonce
-	});
+	const apiKey = await decryptSecret(
+		masterKey,
+		{
+			ciphertext: aiCredentials.keyEncrypted,
+			nonce: aiCredentials.nonce,
+			v: aiCredentials.v ?? undefined
+		},
+		{ purpose: 'ai_credentials', userId }
+	);
 
 	// Categorias dinâmicas do usuário — a IA só pode escolher entre elas.
 	const userCategories = await getCategoriesByUser(db, userId);

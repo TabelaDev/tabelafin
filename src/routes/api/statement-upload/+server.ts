@@ -51,10 +51,15 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		);
 	}
 
-	const apiKey = await decryptSecret(platform!.env.MASTER_KEY, {
-		ciphertext: aiCredentials.keyEncrypted,
-		nonce: aiCredentials.nonce
-	});
+	const apiKey = await decryptSecret(
+		platform!.env.MASTER_KEY,
+		{
+			ciphertext: aiCredentials.keyEncrypted,
+			nonce: aiCredentials.nonce,
+			v: aiCredentials.v ?? undefined
+		},
+		{ purpose: 'ai_credentials', userId: locals.userId }
+	);
 
 	const upload = await insertStatementUpload(db, { userId: locals.userId, filename: file.name });
 

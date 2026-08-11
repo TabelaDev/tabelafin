@@ -127,10 +127,15 @@ async function generateReportForUser(
 		? (JSON.parse(previousReport.summaryJson) as ReportSummary)
 		: null;
 
-	const apiKey = await decryptSecret(env.MASTER_KEY, {
-		ciphertext: aiCredentials.keyEncrypted,
-		nonce: aiCredentials.nonce
-	});
+	const apiKey = await decryptSecret(
+		env.MASTER_KEY,
+		{
+			ciphertext: aiCredentials.keyEncrypted,
+			nonce: aiCredentials.nonce,
+			v: aiCredentials.v ?? undefined
+		},
+		{ purpose: 'ai_credentials', userId }
+	);
 
 	const narrative = await generateMonthlySummary({
 		provider: aiCredentials.provider as AiProvider,

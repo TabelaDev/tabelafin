@@ -69,11 +69,15 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	}
 
 	// Salva o token cifrado.
-	const encrypted = await encryptSecret(masterKey, trimmedToken);
+	const encrypted = await encryptSecret(masterKey, trimmedToken, {
+		purpose: 'pluggy_credentials',
+		userId: locals.userId
+	});
 	await upsertPluggyCredentials(db, {
 		userId: locals.userId,
 		tokenEncrypted: encrypted.ciphertext,
-		tokenNonce: encrypted.nonce
+		tokenNonce: encrypted.nonce,
+		v: encrypted.v
 	});
 
 	// Cria/atualiza os pluggy_items (conexões bancárias) a partir dos itens

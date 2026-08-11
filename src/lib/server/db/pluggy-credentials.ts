@@ -8,6 +8,8 @@ export interface PluggyCredentialsInput {
 	userId: string;
 	tokenEncrypted: string;
 	tokenNonce: string;
+	/** Encryption scheme version — see server/crypto.ts. */
+	v?: number;
 }
 
 export async function getPluggyCredentials(db: Db, userId: string) {
@@ -26,7 +28,8 @@ export async function upsertPluggyCredentials(db: Db, input: PluggyCredentialsIn
 			target: pluggyCredentials.userId,
 			set: {
 				tokenEncrypted: input.tokenEncrypted,
-				tokenNonce: input.tokenNonce
+				tokenNonce: input.tokenNonce,
+				v: input.v
 			}
 		})
 		.returning();

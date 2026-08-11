@@ -11,6 +11,8 @@ export interface AiCredentialsInput {
 	model: string;
 	keyEncrypted: string;
 	nonce: string;
+	/** Encryption scheme version — see server/crypto.ts. */
+	v?: number;
 }
 
 export async function getAiCredentials(db: Db, userId: string) {
@@ -28,7 +30,8 @@ export async function upsertAiCredentials(db: Db, input: AiCredentialsInput) {
 				provider: input.provider,
 				model: input.model,
 				keyEncrypted: input.keyEncrypted,
-				nonce: input.nonce
+				nonce: input.nonce,
+				v: input.v
 			}
 		})
 		.returning();

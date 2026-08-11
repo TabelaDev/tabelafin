@@ -131,10 +131,11 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	// Decrypt AI API key
 	let apiKey: string;
 	try {
-		apiKey = await decryptSecret(platform!.env.MASTER_KEY, {
-			ciphertext: aiCreds.keyEncrypted,
-			nonce: aiCreds.nonce
-		});
+		apiKey = await decryptSecret(
+			platform!.env.MASTER_KEY,
+			{ ciphertext: aiCreds.keyEncrypted, nonce: aiCreds.nonce, v: aiCreds.v ?? undefined },
+			{ purpose: 'ai_credentials', userId: locals.userId }
+		);
 	} catch {
 		return json({ error: 'Erro ao descriptografar chave de IA' }, { status: 500 });
 	}
