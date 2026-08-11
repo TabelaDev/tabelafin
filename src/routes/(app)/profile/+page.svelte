@@ -119,7 +119,7 @@
 		</Card>
 
 		<!-- Configuração de IA (prompts) -->
-		<a href={resolve('/perfil/ia')} class="block">
+		<a href={resolve('/profile/ai')} class="block">
 			<Card>
 				<div class="flex items-center justify-between">
 					<div>
@@ -135,7 +135,7 @@
 	{/if}
 
 	<!-- Categorias -->
-	<a href={resolve('/perfil/categorias')} class="block">
+	<a href={resolve('/profile/categories')} class="block">
 		<Card>
 			<div class="flex items-center justify-between">
 				<div>

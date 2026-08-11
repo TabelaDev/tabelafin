@@ -16,15 +16,15 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
 
-	const category = url.searchParams.get('categoria');
-	const month = url.searchParams.get('mes');
+	const category = url.searchParams.get('category');
+	const month = url.searchParams.get('month');
 	const search = url.searchParams.get('q');
-	const tipo = url.searchParams.get('tipo');
+	const type = url.searchParams.get('type');
 	// Internal transfers (moving your own money: paying the card invoice,
 	// investing, transferring between own accounts) are hidden by default, the
 	// same as on the dashboard. This list used to include them while the
 	// dashboard did not, so the two never agreed on what a month cost.
-	const showInternal = url.searchParams.get('internas') === 'sim';
+	const showInternal = url.searchParams.get('internal') === 'yes';
 
 	const conditions = [
 		eq(transactions.userId, userId),
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	// The type filter keeps excluding them even when the toggle is on: it exists
 	// precisely so the totals reconcile with the dashboard cards, and honouring
 	// the toggle there would quietly break that promise.
-	const isTypeFiltered = tipo === 'receitas' || tipo === 'despesas';
+	const isTypeFiltered = type === 'income' || type === 'expenses';
 	if (!showInternal || isTypeFiltered) {
 		conditions.push(
 			notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES]),
@@ -74,13 +74,13 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	// negative — the opposite of a checking account. "receitas" used to reject
 	// every card row outright while "despesas" kept only the positive ones, so a
 	// card refund matched neither filter and existed only in the unfiltered view.
-	if (tipo === 'receitas') {
+	if (type === 'income') {
 		rows = rows.filter((t) => {
 			const accType = t.accountId ? accountTypeById.get(t.accountId) : undefined;
 			if (accType === 'credit_card') return t.amount < 0; // estorno
 			return t.amount >= 0;
 		});
-	} else if (tipo === 'despesas') {
+	} else if (type === 'expenses') {
 		rows = rows.filter((t) => {
 			const accType = t.accountId ? accountTypeById.get(t.accountId) : undefined;
 			if (accType === 'credit_card') return t.amount > 0; // compra
@@ -128,7 +128,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 			accountName: tx.accountId ? (accountById.get(tx.accountId)?.name ?? null) : null
 		})),
 		categories: userCategories,
-		filters: { category, month, search, tipo, internas: showInternal ? 'sim' : '' }
+		filters: { category, month, search, type, internal: showInternal ? 'yes' : '' }
 	};
 };
 

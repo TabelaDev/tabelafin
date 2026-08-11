@@ -6,7 +6,7 @@
 //   2. Instale `better-auth` e `@better-auth/drizzle-adapter`
 //   3. Adicione as tabelas do schema no seu Drizzle schema (ver schema.ts)
 //   4. Configure BETTER_AUTH_SECRET e BETTER_AUTH_URL nas env vars
-//   5. Crie as rotas de login/cadastro usando os components
+//   5. Crie as rotas de login/signup usando os components
 
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';

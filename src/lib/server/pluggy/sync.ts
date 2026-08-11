@@ -329,7 +329,7 @@ async function categorizeNewTransactions(db: Db, masterKey: string, userId: stri
 
 	// Categorias dinâmicas do usuário — a IA só pode escolher entre elas.
 	const userCategories = await getCategoriesByUser(db, userId);
-	// Prompt customizado do usuário (se configurado em /perfil/ia).
+	// Prompt customizado do usuário (se configurado em /profile/ai).
 	const prompts = await getUserAiPrompts(db, userId);
 
 	const results = await categorizeTransactions({

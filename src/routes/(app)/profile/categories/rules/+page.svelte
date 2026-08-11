@@ -62,7 +62,7 @@
 
 <div class="flex flex-col gap-6">
 	<header>
-		<a href={resolve('/perfil/categorias')} class="font-mono text-sm text-ink-soft hover:text-ink"
+		<a href={resolve('/profile/categories')} class="font-mono text-sm text-ink-soft hover:text-ink"
 			>← Categorias</a
 		>
 		<h1 class="font-mono text-2xl font-bold">Regras automáticas</h1>

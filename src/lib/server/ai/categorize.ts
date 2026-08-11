@@ -24,7 +24,7 @@ interface CategorizeInput {
 	// Categorias do usuário (dinâmicas) — o prompt e o schema de tool calling
 	// usam essa lista, não uma taxonomia fixa.
 	categories: string[];
-	// Prompt customizado do usuário (ver /perfil/ia) — sobrescreve o system
+	// Prompt customizado do usuário (ver /profile/ai) — sobrescreve o system
 	// prompt default quando presente.
 	customPrompt?: string;
 	transactions: TransactionToCategorize[];

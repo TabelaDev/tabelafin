@@ -44,7 +44,7 @@
 
 			<p class="text-center text-sm text-ink-soft">
 				Não tem uma conta?
-				<a href={resolve('/cadastro')} class="text-accent hover:underline">Cadastre-se</a>
+				<a href={resolve('/signup')} class="text-accent hover:underline">Cadastre-se</a>
 			</p>
 		</form>
 	</Card>

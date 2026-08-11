@@ -1,7 +1,7 @@
 // Forwards Better Auth's Set-Cookie headers onto the SvelteKit response.
 // Reusable — copy into any project.
 //
-// Uso nas actions de login/cadastro:
+// Uso nas actions de login/signup:
 //   import { forwardCookies } from '$lib/auth/cookies';
 //   const response = await auth.api.signInEmail({ body, asResponse: true });
 //   forwardCookies(response, cookies);

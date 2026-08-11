@@ -40,7 +40,7 @@ Regras:
 <div class="flex flex-col gap-6">
 	<header>
 		<div class="flex items-center gap-3">
-			<a href={resolve('/perfil')} class="font-mono text-sm text-ink-soft hover:text-ink">
+			<a href={resolve('/profile')} class="font-mono text-sm text-ink-soft hover:text-ink">
 				← Perfil
 			</a>
 		</div>

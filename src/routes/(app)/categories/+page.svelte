@@ -49,10 +49,10 @@
 		</div>
 		<div class="flex items-center gap-3">
 			<a
-				href={resolve('/perfil/categorias/regras')}
+				href={resolve('/profile/categories/rules')}
 				class="font-mono text-xs text-accent hover:underline">regras automáticas</a
 			>
-			<a href={resolve('/perfil/categorias')} class="font-mono text-xs text-accent hover:underline"
+			<a href={resolve('/profile/categories')} class="font-mono text-xs text-accent hover:underline"
 				>gerenciar categorias</a
 			>
 		</div>

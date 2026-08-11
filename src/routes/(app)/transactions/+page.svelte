@@ -18,14 +18,14 @@
 		search: data.filters.search ?? '',
 		category: data.filters.category ?? '',
 		month: data.filters.month ?? '',
-		tipo: data.filters.tipo ?? '',
-		internas: data.filters.internas ?? ''
+		type: data.filters.type ?? '',
+		internal: data.filters.internal ?? ''
 	});
 	let searchQuery = $state(initialFilters().search);
 	let category = $state(initialFilters().category);
 	let month = $state(initialFilters().month);
-	let tipo = $state(initialFilters().tipo);
-	let showInternal = $state(initialFilters().internas === 'sim');
+	let type = $state(initialFilters().type);
+	let showInternal = $state(initialFilters().internal === 'yes');
 
 	// Busca client-side — não recarrega a página a cada tecla (preserva o foco).
 	let visible = $derived(
@@ -41,15 +41,15 @@
 	// `untrack` pra só reagir a mudanças de URL, não aos próprios estados.
 	$effect(() => {
 		const s = page.url.searchParams.get('q') ?? '';
-		const c = page.url.searchParams.get('categoria') ?? '';
-		const m = page.url.searchParams.get('mes') ?? '';
-		const t = page.url.searchParams.get('tipo') ?? '';
-		const i = (page.url.searchParams.get('internas') ?? '') === 'sim';
+		const c = page.url.searchParams.get('category') ?? '';
+		const m = page.url.searchParams.get('month') ?? '';
+		const t = page.url.searchParams.get('type') ?? '';
+		const i = (page.url.searchParams.get('internal') ?? '') === 'yes';
 		untrack(() => {
 			if (s !== searchQuery) searchQuery = s;
 			if (c !== category) category = c;
 			if (m !== month) month = m;
-			if (t !== tipo) tipo = t;
+			if (t !== type) type = t;
 			if (i !== showInternal) showInternal = i;
 		});
 	});
@@ -57,17 +57,17 @@
 	// Categoria/mês/tipo: navegam full-page (filtros na URL), mas só quando o
 	// valor realmente mudou em relação ao que veio do servidor.
 	$effect(() => {
-		if (category !== (data.filters.category ?? '')) applyFilter('categoria', category);
+		if (category !== (data.filters.category ?? '')) applyFilter('category', category);
 	});
 	$effect(() => {
-		if (month !== (data.filters.month ?? '')) applyFilter('mes', month);
+		if (month !== (data.filters.month ?? '')) applyFilter('month', month);
 	});
 	$effect(() => {
-		if (tipo !== (data.filters.tipo ?? '')) applyFilter('tipo', tipo);
+		if (type !== (data.filters.type ?? '')) applyFilter('type', type);
 	});
 	$effect(() => {
-		const current = (data.filters.internas ?? '') === 'sim';
-		if (showInternal !== current) applyFilter('internas', showInternal ? 'sim' : '');
+		const current = (data.filters.internal ?? '') === 'yes';
+		if (showInternal !== current) applyFilter('internal', showInternal ? 'yes' : '');
 	});
 
 	const categoryColor = (cat: string | null) => {
@@ -180,7 +180,7 @@
 			body.set('ids', selectedIds.join(','));
 			body.set('category', bulkCategory.trim());
 			if (createRules) body.set('create_rules', 'yes');
-			const res = await fetch('/transacoes?/bulkCategorize', {
+			const res = await fetch('/transactions?/bulkCategorize', {
 				method: 'POST',
 				body
 			});
@@ -210,9 +210,9 @@
 		<p class="font-mono text-sm text-ink-soft">
 			<span class="text-ink-faint">//</span>
 			{visible.length} registros
-			{#if tipo && visible.length > 0}
+			{#if type && visible.length > 0}
 				· total
-				<span class={tipo === 'receitas' ? 'text-ctp-green' : 'text-ctp-red'}>
+				<span class={type === 'income' ? 'text-ctp-green' : 'text-ctp-red'}>
 					<!-- Sum first, then take the magnitude. Summing Math.abs of each
 					     row made a refund add to the expense total instead of
 					     reducing it. -->
@@ -220,7 +220,7 @@
 				</span>
 			{/if}
 			{#if data.future.length > 0}
-				· <a href={resolve('/proximas')} class="text-accent hover:underline"
+				· <a href={resolve('/upcoming')} class="text-accent hover:underline"
 					>{data.future.length} lançamento{data.future.length === 1 ? '' : 's'} futuro{data.future
 						.length === 1
 						? ''
@@ -251,18 +251,18 @@
 			class="w-44"
 			options={[
 				{ value: '', label: 'Todos os tipos' },
-				{ value: 'receitas', label: 'Receitas' },
-				{ value: 'despesas', label: 'Despesas' }
+				{ value: 'income', label: 'Receitas' },
+				{ value: 'expenses', label: 'Despesas' }
 			]}
-			bind:value={tipo}
+			bind:value={type}
 		/>
 		<DatePicker class="w-44" mode="month" placeholder="Todos os meses" bind:value={month} />
 		<Toggle
 			bind:checked={showInternal}
 			label="Exibir transações internas"
-			disabled={tipo === 'receitas' || tipo === 'despesas'}
+			disabled={type === 'income' || type === 'expenses'}
 		/>
-		<a href={resolve('/transacoes')} class="ml-auto">
+		<a href={resolve('/transactions')} class="ml-auto">
 			<Button variant="ghost">Limpar</Button>
 		</a>
 	</div>
@@ -339,7 +339,7 @@
 					<!-- Ação explícita de abrir o detalhe — clicar na linha seleciona,
 					     clicar no botão navega (sem conflito). -->
 					<a
-						href={resolve(`/transacoes/${row.id}`)}
+						href={resolve(`/transactions/${row.id}`)}
 						class="inline-flex items-center justify-center text-accent transition-colors hover:opacity-70"
 						aria-label="Ver detalhes"
 						onclick={(e) => e.stopPropagation()}

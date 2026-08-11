@@ -30,13 +30,13 @@
 
 	const NAV_ITEMS = [
 		{ href: resolve('/dashboard'), label: 'Dashboard', icon: 'grid' },
-		{ href: resolve('/transacoes'), label: 'Transações', icon: 'list' },
-		{ href: resolve('/proximas'), label: 'Próximas', icon: 'calendar' },
-		{ href: resolve('/contas'), label: 'Contas', icon: 'wallet' },
-		{ href: resolve('/categorias'), label: 'Categorias', icon: 'tag' },
-		{ href: resolve('/recorrencias'), label: 'Recorrências', icon: 'repeat' },
-		{ href: resolve('/relatorios'), label: 'Relatórios', icon: 'file-text' },
-		{ href: resolve('/perfil'), label: 'Perfil', icon: 'user' }
+		{ href: resolve('/transactions'), label: 'Transações', icon: 'list' },
+		{ href: resolve('/upcoming'), label: 'Próximas', icon: 'calendar' },
+		{ href: resolve('/accounts'), label: 'Contas', icon: 'wallet' },
+		{ href: resolve('/categories'), label: 'Categorias', icon: 'tag' },
+		{ href: resolve('/recurring'), label: 'Recorrências', icon: 'repeat' },
+		{ href: resolve('/reports'), label: 'Relatórios', icon: 'file-text' },
+		{ href: resolve('/profile'), label: 'Perfil', icon: 'user' }
 	];
 
 	const isActive = (href: string) => page.url.pathname === href;
@@ -180,7 +180,7 @@
 			{#if data.aiConfigured}
 				<Status kind="success">configurada</Status>
 			{:else}
-				<a href={resolve('/perfil')} class="text-danger hover:text-danger hover:underline"
+				<a href={resolve('/profile')} class="text-danger hover:text-danger hover:underline"
 					>não configurada</a
 				>
 			{/if}
@@ -190,7 +190,7 @@
 		{#if data.pluggyConfigured}
 			<Status kind="success">conectado</Status>
 		{:else}
-			<a href={resolve('/perfil')} class="text-danger hover:text-danger hover:underline"
+			<a href={resolve('/profile')} class="text-danger hover:text-danger hover:underline"
 				>não conectado</a
 			>
 		{/if}

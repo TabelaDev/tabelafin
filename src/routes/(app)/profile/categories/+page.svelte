@@ -51,7 +51,7 @@
 <div class="flex flex-col gap-6">
 	<header class="flex flex-wrap items-start justify-between gap-2">
 		<div>
-			<a href={resolve('/perfil')} class="font-mono text-sm text-ink-soft hover:text-ink"
+			<a href={resolve('/profile')} class="font-mono text-sm text-ink-soft hover:text-ink"
 				>← Perfil</a
 			>
 			<h1 class="font-mono text-2xl font-bold">Categorias</h1>
@@ -61,7 +61,7 @@
 			</p>
 		</div>
 		<a
-			href={resolve('/perfil/categorias/regras')}
+			href={resolve('/profile/categories/rules')}
 			class="font-mono text-xs text-accent hover:underline">regras automáticas</a
 		>
 	</header>

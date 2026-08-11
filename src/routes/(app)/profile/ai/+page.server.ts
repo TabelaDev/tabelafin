@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const db = getDb(platform!.env.DB);
 	// Usuário que ocultou IA não vê a configuração de prompts.
 	const user = await findUserById(db, locals.userId);
-	if (user?.hideAi) redirect(303, '/perfil');
+	if (user?.hideAi) redirect(303, '/profile');
 
 	const prompts = await getUserAiPrompts(db, locals.userId);
 

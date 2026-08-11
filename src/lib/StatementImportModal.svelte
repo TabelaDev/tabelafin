@@ -186,7 +186,7 @@
 			);
 		} else {
 			toast.success(`${imported} transação(ões) importada(s) de ${chosen.length} extrato(s).`, {
-				action: { label: 'Ver transações', onClick: () => (window.location.href = '/transacoes') }
+				action: { label: 'Ver transações', onClick: () => (window.location.href = '/transactions') }
 			});
 		}
 		await invalidateAll();

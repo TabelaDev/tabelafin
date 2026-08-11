@@ -122,7 +122,7 @@
 				{monthName}
 			</p>
 		</div>
-		<a href={resolve('/nova')}>
+		<a href={resolve('/new')}>
 			<Button variant="primary">+ Nova transação</Button>
 		</a>
 	</header>
@@ -137,7 +137,7 @@
 		</Card>
 		<Card>
 			<a
-				href={resolve(`/transacoes?mes=${currentMonth}&tipo=despesas`)}
+				href={resolve(`/transactions?month=${currentMonth}&type=expenses`)}
 				class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
 			>
 				Gastos do mês →
@@ -154,7 +154,7 @@
 		</Card>
 		<Card>
 			<a
-				href={resolve(`/transacoes?mes=${currentMonth}&tipo=receitas`)}
+				href={resolve(`/transactions?month=${currentMonth}&type=income`)}
 				class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
 			>
 				Receitas do mês →
@@ -195,7 +195,7 @@
 							<h2 class="font-mono text-sm font-semibold">Top categorias</h2>
 							<p class="font-mono text-xs text-ink-soft">maiores gastos do mês</p>
 						</div>
-						<a href={resolve('/categorias')} class="font-mono text-xs text-accent hover:underline"
+						<a href={resolve('/categories')} class="font-mono text-xs text-accent hover:underline"
 							>ver todas</a
 						>
 					</div>
@@ -225,7 +225,7 @@
 			<div class="flex items-center justify-between">
 				<h2 class="font-mono text-sm font-semibold">Contas</h2>
 				{#if data.accounts.length > 0}
-					<a href={resolve('/contas')} class="font-mono text-xs text-accent hover:underline"
+					<a href={resolve('/accounts')} class="font-mono text-xs text-accent hover:underline"
 						>ver todas</a
 					>
 				{/if}
@@ -240,7 +240,7 @@
 			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 				{#each topAccounts as account (account.id)}
 					<a
-						href={resolve('/contas')}
+						href={resolve('/accounts')}
 						class="block border border-rule bg-paper p-3 transition-colors hover:border-accent"
 					>
 						<p class="truncate font-mono text-sm font-medium">{account.name}</p>
@@ -259,7 +259,7 @@
 		{#snippet header()}
 			<div class="flex items-center justify-between">
 				<h2 class="font-mono text-sm font-semibold">Transações recentes</h2>
-				<a href={resolve('/transacoes')} class="font-mono text-xs text-accent hover:underline"
+				<a href={resolve('/transactions')} class="font-mono text-xs text-accent hover:underline"
 					>ver todas</a
 				>
 			</div>

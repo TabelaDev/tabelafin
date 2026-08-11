@@ -75,7 +75,7 @@
 
 <div class="flex flex-col gap-6">
 	<header>
-		<a href={resolve('/transacoes')} class="font-mono text-sm text-ink-soft hover:text-ink"
+		<a href={resolve('/transactions')} class="font-mono text-sm text-ink-soft hover:text-ink"
 			>← Transações</a
 		>
 		<h1 class="font-mono text-2xl font-bold">{data.transaction.description}</h1>
@@ -240,7 +240,7 @@
 				<div class="flex flex-wrap items-center gap-2">
 					<Badge>[{frequencyLabel[data.recurrence.frequency] ?? data.recurrence.frequency}]</Badge>
 					<span class="font-mono text-sm">{currency.format(data.recurrence.amount)}</span>
-					<a href={resolve('/recorrencias')} class="font-mono text-xs text-accent hover:underline">
+					<a href={resolve('/recurring')} class="font-mono text-xs text-accent hover:underline">
 						ver recorrências
 					</a>
 				</div>

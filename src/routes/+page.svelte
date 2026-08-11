@@ -113,7 +113,7 @@
 				<a href={resolve('/')} class="font-mono text-sm font-semibold tracking-tight">tabelafin</a>
 				<div class="flex items-center gap-2">
 					<ThemeToggle />
-					<Button href={resolve('/cadastro')} size="sm">Começar</Button>
+					<Button href={resolve('/signup')} size="sm">Começar</Button>
 				</div>
 			</div>
 		</header>
@@ -135,7 +135,7 @@
 				</p>
 				<div class="flex flex-col items-start gap-2">
 					<div class="flex flex-wrap gap-3">
-						<Button href={resolve('/cadastro')} variant="primary" size="lg" class="shadow-glow"
+						<Button href={resolve('/signup')} variant="primary" size="lg" class="shadow-glow"
 							>Começar</Button
 						>
 						<Button href={REPO_URL} target="_blank" rel="noreferrer" variant="outline" size="lg">
