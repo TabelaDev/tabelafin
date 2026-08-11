@@ -2,7 +2,9 @@
 
 # TabelaFin
 
-**Finanças pessoais com sync automático via Open Finance e categorização com IA — BYOK, sem assinatura.**
+**Personal finance with automatic Open Finance sync and AI categorisation — BYOK, no subscription.**
+
+**English** · [Português](README.pt-BR.md)
 
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-Svelte-ff3e00?style=flat-square&logo=svelte&logoColor=white)](https://kit.svelte.dev)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
@@ -15,96 +17,104 @@
 
 ---
 
-## O que é
+## What it is
 
-App de finanças pessoais que puxa sozinho os dados do Nubank (conta + cartão)
-e da XP (conta digital + investimentos) via Open Finance, categoriza gastos
-com IA e gera um relatório mensal de onde dá pra melhorar — sem lançamento
-manual.
+A personal finance app that pulls its own data from Nubank (checking + credit
+card) and XP (digital account + investments) over Open Finance, categorises
+spending with AI and writes a monthly report on where there is room to improve —
+with no manual bookkeeping.
 
-## Como funciona
+Brazilian Open Finance is the domain here, so the interface is in Portuguese.
+The code is in English; see [CONTRIBUTING.md](CONTRIBUTING.md#language) for the
+convention.
 
-1. Você conecta suas contas ao **Meu Pluggy** (o produto pessoal e gratuito da
-   Pluggy) e cola o token de acesso da sua sessão no onboarding do TabelaFin.
-2. Um cron diário sincroniza accounts, transactions e investments via a API do
-   Meu Pluggy.
-3. As transações novas são categorizadas em lote pela sua própria IA (BYOK),
-   ou por regras simples se a IA não estiver configurada.
-4. No dia 1 de cada mês, um relatório do mês anterior é gerado e você recebe
-   um push avisando que está pronto.
-5. Upload de PDF de fatura/extrato existe como fallback manual — o arquivo
-   é enviado direto pro modelo de IA escolhido (document understanding), sem
-   lib de parsing.
+## How it works
 
-Também funciona como PWA: você pode "instalar" no celular ou no desktop e usar
-como um app nativo, com atualização automática.
+1. You connect your accounts to **Meu Pluggy** (Pluggy's free personal product)
+   and paste your session access token into TabelaFin's onboarding.
+2. A daily cron syncs accounts, transactions and investments through the Meu
+   Pluggy API.
+3. New transactions are categorised in batch by your own AI (BYOK), or by simple
+   rules when no AI is configured.
+4. On the first of each month a report for the previous month is generated, and a
+   push notification tells you it is ready.
+5. Uploading a statement or invoice PDF exists as a manual fallback — the file
+   goes straight to the AI model you chose (document understanding), with no
+   parsing library involved.
 
-IA e conexão Open Finance são **opcionais** — o app funciona sem nenhuma das
-duas: você lança transações manualmente e a categorização por regras cobre o
-básico.
+There is also a bulk importer for statements that arrived by email: it reads a
+Google Takeout export in the browser, pulls the PDFs out of the `.mbox` and feeds
+them through the same extraction one at a time.
 
-## Traga suas próprias credenciais
+It works as a PWA too: you can install it on a phone or desktop and use it like a
+native app, with automatic updates.
 
-Mesmo padrão BYOK do [TabelaCal](https://github.com/TabelaDev/tabelacal), em
-dobro:
+Both AI and the Open Finance connection are **optional** — the app works with
+neither: you enter transactions by hand and rule-based categorisation covers the
+basics.
 
-- **IA**: cole sua própria API key (Anthropic, OpenAI ou DeepSeek) e escolha o
-  modelo. Você paga sua própria inferência.
-- **Open Finance**: cada usuário traz sua própria conexão via
-  [Meu Pluggy](https://www.pluggy.ai/meu-pluggy) (gratuito pra uso pessoal),
-  em vez do TabelaFin manter uma conta Pluggy comercial paga compartilhada.
+## Bring your own credentials
 
-Ver `ESCOPO.md` pra decisões de produto com mais detalhe.
+The same BYOK pattern as [TabelaCal](https://github.com/TabelaDev/tabelacal),
+twice over:
 
-## Rodando localmente
+- **AI**: paste your own API key (Anthropic, OpenAI or DeepSeek) and pick the
+  model. You pay for your own inference.
+- **Open Finance**: every user brings their own connection through
+  [Meu Pluggy](https://www.pluggy.ai/meu-pluggy) (free for personal use), rather
+  than TabelaFin maintaining one shared paid commercial Pluggy account.
 
-Stack: SvelteKit + Cloudflare Workers (D1 + KV), Bun como package manager.
+See `ESCOPO.md` for the product decisions in more detail.
+
+## Running locally
+
+Stack: SvelteKit + Cloudflare Workers (D1 + KV), Bun as the package manager.
 
 ```sh
 bun install
 
-# aplica as migrations no D1 local
+# apply the migrations to the local D1
 bunx wrangler d1 migrations apply tabelafin-db --local
 
 bun run dev
 ```
 
-Outros comandos úteis:
+Other useful commands:
 
 ```sh
 bun run check     # typecheck
 bun run lint      # prettier + eslint
-bun run test      # testes unitários
-bun run test:e2e  # testes E2E (Playwright)
-bun run build     # build de produção
-bun run deploy    # build + migrations remotas + deploy
+bun run test      # unit tests
+bun run test:e2e  # E2E tests (Playwright)
+bun run build     # production build
+bun run deploy    # build + remote migrations + deploy
 ```
 
-`MASTER_KEY` pra criptografia das credenciais, `BETTER_AUTH_SECRET` pra
-autenticação (email/senha via Better Auth) e `VAPID_PRIVATE_KEY` pro push
-do relatório mensal.
+`MASTER_KEY` encrypts the stored credentials, `BETTER_AUTH_SECRET` is for
+authentication (email/password via Better Auth) and `VAPID_PRIVATE_KEY` is for
+the monthly report push.
 
-## Desenvolvimento
+## Development
 
-Stack e comandos: veja a seção _Rodando localmente_ acima. Testes:
+Stack and commands: see _Running locally_ above. Tests:
 
 ```sh
-bun run test      # testes unitários
-bun run test:e2e  # testes E2E (Playwright)
+bun run test      # unit tests
+bun run test:e2e  # E2E tests (Playwright)
 ```
 
 ## Changelog
 
-Veja [CHANGELOG.md](CHANGELOG.md) para o histórico de versões.
+See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
-## Apoie o projeto
+## Support the project
 
 - **Global**: [ko-fi.com/ianptkcs](https://ko-fi.com/ianptkcs)
-- **Brasil (Pix)**: escaneie o QR abaixo ou copie o código
+- **Brazil (Pix)**: scan the QR below or copy the code
 
   <img src="pix-qr.png" alt="Pix QR" width="200" />
 
-  <details><summary>Código Pix (copiar)</summary>
+  <details><summary>Pix code (copy)</summary>
 
   ```
   00020126580014BR.GOV.BCB.PIX01365ad933b0-dcdc-4525-a736-0759902aeec65204000053039865802BR5925Ian Patrick da Costa Soar6009SAO PAULO62140510tQA85x6Dov63041FB6
@@ -112,9 +122,8 @@ Veja [CHANGELOG.md](CHANGELOG.md) para o histórico de versões.
 
   </details>
 
-## Licença
+## License
 
-[AGPL-3.0](LICENSE) — copyleft forte: você pode usar, modificar e até
-hospedar o TabelaFin comercialmente, mas qualquer versão modificada, inclusive
-rodando como serviço via rede (SaaS), precisa continuar open source sob a
-mesma licença.
+[AGPL-3.0](LICENSE) — strong copyleft: you may use, modify and even host
+TabelaFin commercially, but any modified version, including one running as a
+network service (SaaS), has to stay open source under the same license.
