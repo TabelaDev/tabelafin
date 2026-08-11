@@ -1,0 +1,10 @@
+# Nomes das secrets que o `wrangler types` precisa conhecer pra gerar o Env.
+# Os valores aqui são placeholders e nunca são usados: secrets são tipadas como
+# `string`, não como literal. O `check` aponta pra este arquivo, então o
+# worker-configuration.d.ts sai igual na sua máquina e no CI — onde .dev.vars
+# não existe, por ser gitignored.
+MASTER_KEY=placeholder
+VAPID_PRIVATE_KEY=placeholder
+BETTER_AUTH_SECRET=placeholder
+BETTER_AUTH_URL=http://localhost:5173
+DEEPSEEK_API_KEY=placeholder

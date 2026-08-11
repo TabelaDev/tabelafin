@@ -3,7 +3,11 @@
 	"compilerOptions": {
 		"rewriteRelativeImportExtensions": true,
 		"allowJs": true,
-		"checkJs": true,
+		// There is no hand-written .js under src/, so checkJs bought nothing —
+		// but it made svelte-check type-check the generated worker bundle once a
+		// build had run, reporting ~2200 errors from build output and burying the
+		// real ones. CI never saw it because check runs before build there.
+		"checkJs": false,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
