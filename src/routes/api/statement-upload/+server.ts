@@ -3,7 +3,11 @@ import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { decryptSecret } from '$lib/server/crypto';
-import { insertStatementUpload, updateStatementUpload } from '$lib/server/db/statement-uploads';
+import {
+	getCompletedUploadFilenames,
+	insertStatementUpload,
+	updateStatementUpload
+} from '$lib/server/db/statement-uploads';
 import { insertPdfTransaction } from '$lib/server/db/transactions';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { extractTransactionsFromPdf } from '$lib/server/ai/extract';
@@ -20,6 +24,14 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 	for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
 	return btoa(binary);
 }
+
+// Which statements already went through, so the bulk Takeout import can resume
+// instead of re-running extractions the user has already paid for.
+export const GET: RequestHandler = async ({ locals, platform }) => {
+	if (!locals.userId) error(401, 'Não autenticado.');
+	const db = getDb(platform!.env.DB);
+	return json({ completed: await getCompletedUploadFilenames(db, locals.userId) });
+};
 
 // Fallback manual de ingestão (ESCOPO.md §2.4): recebe o PDF, envia direto pro
 // modelo de IA do usuário (document understanding), salva as transações
@@ -74,8 +86,13 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			fileName: file.name
 		});
 
+		// Rows the sync already covers are inserted already superseded, so they
+		// stay auditable without double-counting. Counted apart from `count` so
+		// importing a month that was already synced reads as "nothing new" rather
+		// than as a failure.
+		let duplicates = 0;
 		for (const tx of extracted) {
-			await insertPdfTransaction(db, {
+			const { supersededBy } = await insertPdfTransaction(db, {
 				userId: locals.userId,
 				statementUploadId: upload.id,
 				date: new Date(`${tx.date}T00:00:00.000Z`),
@@ -84,14 +101,23 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 				currency: 'BRL',
 				category: tx.category
 			});
+			if (supersededBy) duplicates += 1;
 		}
+
+		const imported = extracted.length - duplicates;
 
 		await updateStatementUpload(db, upload.id, {
 			status: 'completed',
-			transactionCount: extracted.length
+			transactionCount: imported
 		});
 
-		return json({ success: true, uploadId: upload.id, count: extracted.length });
+		return json({
+			success: true,
+			uploadId: upload.id,
+			count: imported,
+			duplicates,
+			extracted: extracted.length
+		});
 	} catch (err) {
 		// Falha no provider de IA ou no formato do PDF: não é erro do request
 		// (4xx), é falha do processamento (5xx) — registra no statement_uploads

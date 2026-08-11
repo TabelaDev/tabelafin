@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, lte, notInArray, or } from 'drizzle-orm';
+import { and, eq, gte, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
 import type { getDb } from './index';
 import { transactions } from './schema';
 import type { TransactionCategory } from '$lib/categories';
@@ -104,6 +104,13 @@ export interface NewPdfTransactionInput {
 // de dedupe válida, e a regra de supersede (findSupersedeCandidate) compara
 // conta/valor/data direto, sem usar o hash.
 export async function insertPdfTransaction(db: Db, input: NewPdfTransactionInput) {
+	// A statement almost always overlaps what the sync already has, so the row
+	// is checked against existing transactions before it lands and is born
+	// superseded when one already covers it. It is still written — the upload
+	// stays auditable through statement_upload_id — but every list filters on
+	// supersededByTransactionId IS NULL, so it does not double-count.
+	const covering = await findTransactionCoveringPdfRow(db, input.userId, input.amount, input.date);
+
 	const [saved] = await db
 		.insert(transactions)
 		.values({
@@ -116,10 +123,11 @@ export async function insertPdfTransaction(db: Db, input: NewPdfTransactionInput
 			source: 'pdf_upload',
 			category: input.category,
 			categorySource: 'ai',
-			dedupeHash: null
+			dedupeHash: null,
+			supersededByTransactionId: covering?.id ?? null
 		})
 		.returning();
-	return saved;
+	return { transaction: saved, supersededBy: covering?.id ?? null };
 }
 
 export interface NewManualTransactionInput {
@@ -184,6 +192,54 @@ export async function findSupersedeCandidate(
 			)
 		);
 	return row ?? null;
+}
+
+// Same window and amount rule as findSupersedeCandidate, as pure predicates so
+// the ingestion path can be tested without a database.
+//
+// Amounts are compared on magnitude because the two sides disagree on sign: the
+// PDF extractor reports an expense as negative (checking-account convention),
+// while the API reports a credit card purchase as positive. Matching the exact
+// value would therefore have missed every card duplicate — which is most of
+// them, since card invoices are what arrives as a statement.
+export function amountsMatchForDedupe(a: number, b: number): boolean {
+	return Math.abs(a) === Math.abs(b);
+}
+
+export function isWithinSupersedeWindow(a: Date, b: Date): boolean {
+	return Math.abs(a.getTime() - b.getTime()) <= SUPERSEDE_TOLERANCE_DAYS * DAY_MS;
+}
+
+// The mirror of findSupersedeCandidate: given a row about to be inserted from a
+// PDF, is it already covered by something the user has?
+//
+// findSupersedeCandidate only ever runs forward — a new API transaction looks
+// back for a PDF row it supersedes — so importing statements for a period the
+// sync had already covered inserted a second copy of everything, silently and
+// with nothing to run afterwards to clean it up.
+export async function findTransactionCoveringPdfRow(
+	db: Db,
+	userId: string,
+	amount: number,
+	date: Date
+) {
+	const from = new Date(date.getTime() - SUPERSEDE_TOLERANCE_DAYS * DAY_MS);
+	const to = new Date(date.getTime() + SUPERSEDE_TOLERANCE_DAYS * DAY_MS);
+	const candidates = await db
+		.select()
+		.from(transactions)
+		.where(
+			and(
+				eq(transactions.userId, userId),
+				// Only rows the user already has from elsewhere count as coverage —
+				// matching another PDF row would chain uploads together.
+				ne(transactions.source, 'pdf_upload'),
+				isNull(transactions.supersededByTransactionId),
+				gte(transactions.date, from),
+				lte(transactions.date, to)
+			)
+		);
+	return candidates.find((row) => amountsMatchForDedupe(row.amount, amount)) ?? null;
 }
 
 export async function markSuperseded(

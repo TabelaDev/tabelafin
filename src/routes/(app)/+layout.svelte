@@ -7,6 +7,7 @@
 	import { onMount } from 'svelte';
 	import ChatWidget from '$lib/ChatWidget.svelte';
 	import OnboardingModal from '$lib/OnboardingModal.svelte';
+	import StatementImportModal from '$lib/StatementImportModal.svelte';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
@@ -197,4 +198,8 @@
 
 	<!-- Onboarding de primeiro acesso — abre sozinho pra quem nunca viu -->
 	<OnboardingModal autoOpen={!data.seenOnboarding} />
+
+	<!-- Importação em massa de extratos: montada no layout, e não na página que a
+	     abre, porque a fila segue rodando depois de fechar o modal e navegar. -->
+	<StatementImportModal />
 </div>

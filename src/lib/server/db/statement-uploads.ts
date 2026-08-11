@@ -1,7 +1,7 @@
 // Uploads de PDF de fatura/extrato (fallback manual, ESCOPO.md §2.4/§4): o
 // arquivo em si nunca é persistido — só o registro do processamento e o
 // resultado estruturado nas transações vinculadas via statement_upload_id.
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { getDb } from './index';
 import { statementUploads } from './schema';
 
@@ -18,6 +18,18 @@ export async function insertStatementUpload(db: Db, input: NewStatementUploadInp
 		.values({ userId: input.userId, filename: input.filename, status: 'processing' })
 		.returning();
 	return saved;
+}
+
+// Filenames already imported, so a bulk import can pick up where it left off.
+// A queue of statements takes tens of minutes — one AI extraction per file —
+// and a reload in the middle would otherwise mean starting over and paying for
+// every extraction a second time.
+export async function getCompletedUploadFilenames(db: Db, userId: string): Promise<string[]> {
+	const rows = await db
+		.select({ filename: statementUploads.filename })
+		.from(statementUploads)
+		.where(and(eq(statementUploads.userId, userId), eq(statementUploads.status, 'completed')));
+	return [...new Set(rows.map((r) => r.filename))];
 }
 
 export interface UpdateStatementUploadInput {

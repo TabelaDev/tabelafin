@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { Button, Card } from '@tabeladev/tabelawebui';
 	import { openOnboarding } from '$lib/onboarding-store';
+	import { openStatementImport } from '$lib/statement-import-store';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -147,6 +148,20 @@
 			</div>
 		</Card>
 	</a>
+
+	<!-- Importar extratos do Gmail via Takeout -->
+	<Card>
+		<div class="flex items-center justify-between gap-4">
+			<div>
+				<h2 class="font-mono text-sm font-semibold">Importar extratos</h2>
+				<p class="mt-1 font-mono text-xs text-ink-soft">
+					Traz o histórico de extratos que chegaram por email, a partir de um export do Google
+					Takeout. Cada extrato é lido pelo seu modelo de IA.
+				</p>
+			</div>
+			<Button variant="outline" onclick={() => openStatementImport()}>Importar</Button>
+		</div>
+	</Card>
 
 	<!-- Open Finance -->
 	<Card>
