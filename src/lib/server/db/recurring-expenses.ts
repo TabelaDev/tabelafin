@@ -28,6 +28,29 @@ export async function getAllRecurringExpenses(db: Db, userId: string) {
 		.orderBy(recurringExpenses.description);
 }
 
+// The active recurrence for a description, or null. Matching on description
+// alone is deliberate: it is how the rest of the app keys learned behaviour
+// (getRuleForDescription, deleteRuleForDescription), it survives a recurrence
+// whose amount moves month to month (a utility bill), and it avoids comparing
+// two `real` columns for equality.
+export async function getActiveRecurringExpenseByDescription(
+	db: Db,
+	userId: string,
+	description: string
+) {
+	const [row] = await db
+		.select()
+		.from(recurringExpenses)
+		.where(
+			and(
+				eq(recurringExpenses.userId, userId),
+				eq(recurringExpenses.description, description),
+				eq(recurringExpenses.isActive, true)
+			)
+		);
+	return row ?? null;
+}
+
 export async function createRecurringExpense(db: Db, userId: string, input: RecurringExpenseInput) {
 	const [created] = await db
 		.insert(recurringExpenses)

@@ -3,7 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import CategoryBadge from '$lib/CategoryBadge.svelte';
-	import { Button, Card, Select } from '@tabeladev/tabelawebui';
+	import { Badge, Button, Card, Select } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -15,12 +15,23 @@
 	let categorizeError = $state('');
 	let categorizeDone = $state(false);
 	let recurringFrequency = $state('monthly');
-	let recurringDone = $state(false);
 	let recurringError = $state('');
 
 	// Categoria atual da transação — controla se o card de categorizar está
 	// travado (já categorizada) ou ativo (escolher/limpar).
 	const hasCategory = $derived(!!data.transaction.category);
+
+	// Same idea for the recurrence card. The lookup is by description, so this
+	// reads true on every transaction sharing it — the recurrence describes the
+	// charge, not one occurrence of it.
+	const hasRecurrence = $derived(!!data.recurrence);
+
+	const frequencyLabel: Record<string, string> = {
+		weekly: 'Semanal',
+		monthly: 'Mensal',
+		quarterly: 'Trimestral',
+		yearly: 'Anual'
+	};
 
 	// Follows the loaded category but stays writable so the Select can bind to
 	// it. This was a $state plus an $effect that also cleared all five feedback
@@ -210,48 +221,91 @@
 		{/if}
 	</Card>
 
-	<!-- Criar recorrência a partir da transação -->
+	<!-- Recorrência a partir da transação: espelha o card de categorizar —
+	     formulário enquanto não existe, estado travado depois de criada. -->
 	<Card>
-		<h2 class="font-mono text-sm font-semibold">Criar recorrência</h2>
+		<h2 class="font-mono text-sm font-semibold">Recorrência</h2>
 		<p class="mt-1 font-mono text-xs text-ink-soft">
-			Cria um gasto recorrente com a mesma descrição e valor desta transação — útil pra assinaturas
-			e despesas fixas que se repetem.
+			{#if hasRecurrence}
+				Esta descrição já é acompanhada como gasto recorrente. A recorrência vale pra descrição
+				inteira, não só pra esta transação — removê-la aqui remove pra todas.
+			{:else}
+				Cria um gasto recorrente com a mesma descrição e valor desta transação — útil pra
+				assinaturas e despesas fixas que se repetem.
+			{/if}
 		</p>
-		<form
-			method="POST"
-			action="?/recurring"
-			use:enhance={() => {
-				recurringError = '';
-				recurringDone = false;
-				return async ({ result }) => {
-					await applyAction(result);
-					if (result.type === 'failure') {
-						recurringError = String(result.data?.error ?? 'Não foi possível criar a recorrência.');
-						return;
-					}
-					await invalidateAll();
-					recurringDone = true;
-				};
-			}}
-			class="mt-3 flex flex-col gap-3"
-		>
-			<Select
-				name="frequency"
-				options={[
-					{ value: 'weekly', label: 'Semanal' },
-					{ value: 'monthly', label: 'Mensal' },
-					{ value: 'quarterly', label: 'Trimestral' },
-					{ value: 'yearly', label: 'Anual' }
-				]}
-				bind:value={recurringFrequency}
-			/>
+
+		{#if hasRecurrence && data.recurrence}
+			<div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+				<div class="flex flex-wrap items-center gap-2">
+					<Badge>[{frequencyLabel[data.recurrence.frequency] ?? data.recurrence.frequency}]</Badge>
+					<span class="font-mono text-sm">{currency.format(data.recurrence.amount)}</span>
+					<a href={resolve('/recorrencias')} class="font-mono text-xs text-accent hover:underline">
+						ver recorrências
+					</a>
+				</div>
+				<form
+					method="POST"
+					action="?/removeRecurrence"
+					use:enhance={() => {
+						recurringError = '';
+						return async ({ result }) => {
+							await applyAction(result);
+							if (result.type === 'failure') {
+								recurringError = String(
+									result.data?.error ?? 'Não foi possível remover a recorrência.'
+								);
+								return;
+							}
+							await invalidateAll();
+						};
+					}}
+				>
+					<Button type="submit" variant="ghost" size="sm" class="text-destructive">
+						Remover recorrência
+					</Button>
+				</form>
+			</div>
 			{#if recurringError}
-				<p class="text-sm text-destructive">{recurringError}</p>
+				<p class="mt-2 text-sm text-destructive">{recurringError}</p>
 			{/if}
-			{#if recurringDone}
-				<p class="text-sm text-ctp-green">Recorrência criada.</p>
-			{/if}
-			<Button type="submit" variant="outline">Adicionar recorrência</Button>
-		</form>
+		{:else}
+			<form
+				method="POST"
+				action="?/recurring"
+				use:enhance={() => {
+					recurringError = '';
+					return async ({ result }) => {
+						await applyAction(result);
+						if (result.type === 'failure') {
+							recurringError = String(
+								result.data?.error ?? 'Não foi possível criar a recorrência.'
+							);
+							return;
+						}
+						// No success message here: the reload flips the card to the
+						// "already created" state, which replaces this whole branch —
+						// a confirmation rendered inside it could never be read.
+						await invalidateAll();
+					};
+				}}
+				class="mt-3 flex flex-col gap-3"
+			>
+				<Select
+					name="frequency"
+					options={[
+						{ value: 'weekly', label: 'Semanal' },
+						{ value: 'monthly', label: 'Mensal' },
+						{ value: 'quarterly', label: 'Trimestral' },
+						{ value: 'yearly', label: 'Anual' }
+					]}
+					bind:value={recurringFrequency}
+				/>
+				{#if recurringError}
+					<p class="text-sm text-destructive">{recurringError}</p>
+				{/if}
+				<Button type="submit" variant="outline">Adicionar recorrência</Button>
+			</form>
+		{/if}
 	</Card>
 </div>

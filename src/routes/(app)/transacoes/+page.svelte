@@ -4,7 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Table, Button, Select, DatePicker, Input, Dialog } from '@tabeladev/tabelawebui';
+	import { Table, Button, Select, DatePicker, Input, Dialog, Toggle } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -18,12 +18,14 @@
 		search: data.filters.search ?? '',
 		category: data.filters.category ?? '',
 		month: data.filters.month ?? '',
-		tipo: data.filters.tipo ?? ''
+		tipo: data.filters.tipo ?? '',
+		internas: data.filters.internas ?? ''
 	});
 	let searchQuery = $state(initialFilters().search);
 	let category = $state(initialFilters().category);
 	let month = $state(initialFilters().month);
 	let tipo = $state(initialFilters().tipo);
+	let showInternal = $state(initialFilters().internas === 'sim');
 
 	// Busca client-side — não recarrega a página a cada tecla (preserva o foco).
 	let visible = $derived(
@@ -42,11 +44,13 @@
 		const c = page.url.searchParams.get('categoria') ?? '';
 		const m = page.url.searchParams.get('mes') ?? '';
 		const t = page.url.searchParams.get('tipo') ?? '';
+		const i = (page.url.searchParams.get('internas') ?? '') === 'sim';
 		untrack(() => {
 			if (s !== searchQuery) searchQuery = s;
 			if (c !== category) category = c;
 			if (m !== month) month = m;
 			if (t !== tipo) tipo = t;
+			if (i !== showInternal) showInternal = i;
 		});
 	});
 
@@ -60,6 +64,10 @@
 	});
 	$effect(() => {
 		if (tipo !== (data.filters.tipo ?? '')) applyFilter('tipo', tipo);
+	});
+	$effect(() => {
+		const current = (data.filters.internas ?? '') === 'sim';
+		if (showInternal !== current) applyFilter('internas', showInternal ? 'sim' : '');
 	});
 
 	const categoryColor = (cat: string | null) => {
@@ -249,6 +257,11 @@
 			bind:value={tipo}
 		/>
 		<DatePicker class="w-44" mode="month" placeholder="Todos os meses" bind:value={month} />
+		<Toggle
+			bind:checked={showInternal}
+			label="Exibir transações internas"
+			disabled={tipo === 'receitas' || tipo === 'despesas'}
+		/>
 		<a href={resolve('/transacoes')} class="ml-auto">
 			<Button variant="ghost">Limpar</Button>
 		</a>

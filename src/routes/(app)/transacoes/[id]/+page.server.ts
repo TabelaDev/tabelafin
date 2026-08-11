@@ -1,10 +1,14 @@
 import { and, eq, isNull, ne } from 'drizzle-orm';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { financeAccounts, transactions } from '$lib/server/db/schema';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
-import { createRecurringExpense } from '$lib/server/db/recurring-expenses';
+import {
+	createRecurringExpense,
+	getActiveRecurringExpenseByDescription,
+	updateRecurringExpense
+} from '$lib/server/db/recurring-expenses';
 import { deleteRuleForDescription } from '$lib/server/db/categorization-rules';
 import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
 
@@ -26,7 +30,25 @@ export const load: PageServerLoad = async ({ locals, platform, params }) => {
 
 	const categories = await getCategoriesByUser(db, locals.userId);
 
+	// Drives the recurrence card's state. Because it matches on description, the
+	// card reads "already created" on every transaction sharing that
+	// description — which is the point: the recurrence describes the charge, not
+	// this one occurrence of it.
+	const recurrence = await getActiveRecurringExpenseByDescription(
+		db,
+		locals.userId,
+		tx.description
+	);
+
 	return {
+		recurrence: recurrence
+			? {
+					id: recurrence.id,
+					frequency: recurrence.frequency,
+					amount: recurrence.amount,
+					createdAt: recurrence.createdAt
+				}
+			: null,
 		transaction: {
 			...tx,
 			// Pra exibição, inverte o sinal das transações de cartão de crédito:
@@ -93,13 +115,28 @@ export const actions: Actions = {
 		const frequency = String(form.get('frequency') ?? 'monthly');
 		const nextChargeDate = form.get('nextChargeDate');
 		const validFrequencies = ['weekly', 'monthly', 'quarterly', 'yearly'];
+		// `fail` rather than a bare `{ error }`: the form only surfaces the
+		// message when result.type is 'failure', and a plain return counts as a
+		// success — so the card announced "Recorrência criada." for a rejected
+		// submit.
 		if (!validFrequencies.includes(frequency)) {
-			return { error: 'Frequência inválida.' };
+			return fail(400, { error: 'Frequência inválida.' });
 		}
 
 		const db = getDb(platform!.env.DB);
 		const [tx] = await db.select().from(transactions).where(eq(transactions.id, params.id));
 		if (!tx || tx.userId !== locals.userId) error(404, 'Transação não encontrada');
+
+		// Nothing stopped this from running twice — the card kept offering the
+		// form after a successful submit, so a second click minted a duplicate
+		// recurrence for the same description.
+		const existing = await getActiveRecurringExpenseByDescription(
+			db,
+			locals.userId,
+			tx.description
+		);
+		if (existing)
+			return fail(409, { error: 'Já existe uma recorrência ativa para esta descrição.' });
 
 		// Valor absoluto (recorrência é sempre um gasto/saída fixa).
 		const amount = Math.abs(tx.amount);
@@ -113,6 +150,27 @@ export const actions: Actions = {
 				typeof nextChargeDate === 'string' && nextChargeDate ? new Date(nextChargeDate) : undefined
 		});
 
+		return { success: true };
+	},
+
+	// Deactivates the recurrence for this description (soft delete, so the
+	// history of what was tracked survives). It is shared by every transaction
+	// with that description, which the card says out loud before offering this.
+	removeRecurrence: async ({ locals, platform, params }) => {
+		if (!locals.userId) redirect(303, '/login');
+
+		const db = getDb(platform!.env.DB);
+		const [tx] = await db.select().from(transactions).where(eq(transactions.id, params.id));
+		if (!tx || tx.userId !== locals.userId) error(404, 'Transação não encontrada');
+
+		const existing = await getActiveRecurringExpenseByDescription(
+			db,
+			locals.userId,
+			tx.description
+		);
+		if (!existing) return fail(404, { error: 'Nenhuma recorrência ativa para esta descrição.' });
+
+		await updateRecurringExpense(db, locals.userId, existing.id, { isActive: false });
 		return { success: true };
 	},
 

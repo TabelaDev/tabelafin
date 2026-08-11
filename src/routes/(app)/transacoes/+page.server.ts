@@ -20,6 +20,11 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	const month = url.searchParams.get('mes');
 	const search = url.searchParams.get('q');
 	const tipo = url.searchParams.get('tipo');
+	// Internal transfers (moving your own money: paying the card invoice,
+	// investing, transferring between own accounts) are hidden by default, the
+	// same as on the dashboard. This list used to include them while the
+	// dashboard did not, so the two never agreed on what a month cost.
+	const showInternal = url.searchParams.get('internas') === 'sim';
 
 	const conditions = [
 		eq(transactions.userId, userId),
@@ -30,7 +35,12 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	// Filtro de tipo (receitas/despesas) aplica a MESMA lógica do dashboard:
 	// exclui transferência interna e trata compra de cartão (positiva) como
 	// gasto. Assim a lista bate com os cards de resumo pra validar os números.
-	if (tipo === 'receitas' || tipo === 'despesas') {
+	//
+	// The type filter keeps excluding them even when the toggle is on: it exists
+	// precisely so the totals reconcile with the dashboard cards, and honouring
+	// the toggle there would quietly break that promise.
+	const isTypeFiltered = tipo === 'receitas' || tipo === 'despesas';
+	if (!showInternal || isTypeFiltered) {
 		conditions.push(
 			notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES]),
 			notInArray(transactions.description, [...INTERNAL_TRANSFER_DESCRIPTIONS])
@@ -118,7 +128,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 			accountName: tx.accountId ? (accountById.get(tx.accountId)?.name ?? null) : null
 		})),
 		categories: userCategories,
-		filters: { category, month, search, tipo }
+		filters: { category, month, search, tipo, internas: showInternal ? 'sim' : '' }
 	};
 };
 
