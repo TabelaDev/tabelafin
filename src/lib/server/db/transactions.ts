@@ -32,23 +32,17 @@ export async function getTransactionByPluggyId(db: Db, pluggyTransactionId: stri
 
 // Atualiza só a `pluggyCategory` de uma transação já existente (usado no
 // re-sync pra popular o campo em transações que entraram antes dele existir).
-export async function updatePluggyCategory(
+// Refreshes the fields the source still owns on an already-synced transaction.
+// This was two separate UPDATEs on the same row, run per transaction on every
+// sync — the single most repeated round trip in the job.
+export async function updatePluggyFields(
 	db: Db,
 	pluggyTransactionId: string,
-	category: string | null
+	fields: { category: string | null; amount: number }
 ) {
 	await db
 		.update(transactions)
-		.set({ pluggyCategory: category })
-		.where(eq(transactions.pluggyTransactionId, pluggyTransactionId));
-}
-
-// Atualiza o `amount` de uma transação já existente (usado no re-sync pra
-// corrigir transações estrangeiras gravadas antes do amount convertido).
-export async function updatePluggyAmount(db: Db, pluggyTransactionId: string, amount: number) {
-	await db
-		.update(transactions)
-		.set({ amount })
+		.set({ pluggyCategory: fields.category, amount: fields.amount })
 		.where(eq(transactions.pluggyTransactionId, pluggyTransactionId));
 }
 
@@ -236,26 +230,6 @@ export async function getTransactionsInRange(db: Db, userId: string, from: Date,
 				notInArray(transactions.description, [...INTERNAL_TRANSFER_DESCRIPTIONS]),
 				gte(transactions.date, from),
 				lte(transactions.date, new Date(to.getTime() - 1))
-			)
-		);
-}
-
-// `category_source='user'` nunca é sobrescrito por uma rodada de
-// categorização em lote — só atualiza linhas ainda sem categoria manual.
-// Categoria pode ser customizada (string livre); regras/IA escrevem
-// categorySource='ai', a regra automática do usuário também.
-export async function updateTransactionCategory(
-	db: Db,
-	transactionId: string,
-	category: string
-): Promise<void> {
-	await db
-		.update(transactions)
-		.set({ category, categorySource: 'ai' })
-		.where(
-			and(
-				eq(transactions.id, transactionId),
-				or(isNull(transactions.categorySource), eq(transactions.categorySource, 'ai'))
 			)
 		);
 }

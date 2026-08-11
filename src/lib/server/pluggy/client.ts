@@ -107,15 +107,26 @@ export interface PluggyTransaction {
 	category: string | null;
 }
 
+/**
+ * Fetches transactions for the given accounts.
+ *
+ * `from` bounds the window. Without it every sync pulled the account's entire
+ * history and then re-checked each row against the database — work that grows
+ * forever — so the caller passes the item's last sync date with a few days of
+ * slack for retroactive postings.
+ */
 export async function fetchTransactions(
 	token: string,
-	accountIds: string[]
+	accountIds: string[],
+	from?: Date
 ): Promise<PluggyTransaction[]> {
 	const all: PluggyTransaction[] = [];
 	// A API do Meu Pluggy aceita múltiplos accountIds via query params repetidos,
 	// mas pra simplificar e evitar URLs longas, buscamos uma conta por vez.
 	for (const accountId of accountIds) {
-		const res = await myApiFetch(`/transactions?accountId=${accountId}`, token);
+		const params = new URLSearchParams({ accountId });
+		if (from) params.set('from', from.toISOString().slice(0, 10));
+		const res = await myApiFetch(`/transactions?${params}`, token);
 		const data = (await res.json()) as Array<{
 			id: string;
 			description: string;

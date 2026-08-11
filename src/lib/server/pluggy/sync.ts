@@ -19,9 +19,7 @@ import {
 	getUncategorizedTransactions,
 	insertPluggyTransaction,
 	markSuperseded,
-	updatePluggyAmount,
-	updatePluggyCategory,
-	updateTransactionCategory
+	updatePluggyFields
 } from '$lib/server/db/transactions';
 import { financeAccounts, transactions } from '$lib/server/db/schema';
 import { and, eq, gte, inArray, isNull, notInArray, or } from 'drizzle-orm';
@@ -257,11 +255,13 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 		for (const id of pairMirrors(group)) toMark.add(id);
 	}
 
-	for (const id of toMark) {
+	// One statement instead of one per row: a busy month pairs dozens of legs,
+	// and each was its own round trip to D1.
+	if (toMark.size > 0) {
 		await db
 			.update(transactions)
 			.set({ pluggyCategory: 'Internal transfer' })
-			.where(eq(transactions.id, id));
+			.where(inArray(transactions.id, [...toMark]));
 	}
 }
 
@@ -282,11 +282,21 @@ async function categorizeNewTransactions(db: Db, masterKey: string, userId: stri
 	const rules = await getRulesByUser(db, userId);
 	if (rules.length > 0) {
 		const ruleByDescription = new Map(rules.map((r) => [r.description, r.category]));
+		// Group by category so each distinct category is one statement, rather
+		// than one per matching transaction.
+		const idsByCategory = new Map<string, string[]>();
 		for (const tx of pending) {
 			const category = ruleByDescription.get(tx.description);
-			if (category) {
-				await updateTransactionCategory(db, tx.id, category);
-			}
+			if (!category) continue;
+			const ids = idsByCategory.get(category) ?? [];
+			ids.push(tx.id);
+			idsByCategory.set(category, ids);
+		}
+		for (const [category, ids] of idsByCategory) {
+			await db
+				.update(transactions)
+				.set({ category, categorySource: 'rule' })
+				.where(inArray(transactions.id, ids));
 		}
 	}
 
@@ -336,8 +346,17 @@ async function categorizeNewTransactions(db: Db, masterKey: string, userId: stri
 		}))
 	});
 
+	const idsByAiCategory = new Map<string, string[]>();
 	for (const result of results) {
-		await updateTransactionCategory(db, result.id, result.category);
+		const ids = idsByAiCategory.get(result.category) ?? [];
+		ids.push(result.id);
+		idsByAiCategory.set(result.category, ids);
+	}
+	for (const [category, ids] of idsByAiCategory) {
+		await db
+			.update(transactions)
+			.set({ category, categorySource: 'ai' })
+			.where(inArray(transactions.id, ids));
 	}
 }
 
@@ -355,7 +374,13 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 			cachedBalance: pluggyAccount.balance
 		});
 
-		const pluggyTransactions = await fetchTransactions(token, [pluggyAccount.id]);
+		// Incremental window: re-fetching the whole history every night meant the
+		// job grew with the account, and every already-known row still cost a
+		// lookup. A week of slack covers postings that land retroactively.
+		const since = item.lastSyncedAt
+			? new Date(item.lastSyncedAt.getTime() - 7 * 24 * 60 * 60 * 1000)
+			: undefined;
+		const pluggyTransactions = await fetchTransactions(token, [pluggyAccount.id], since);
 		for (const tx of pluggyTransactions) {
 			const txDate = new Date(tx.date);
 
@@ -365,8 +390,7 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 			// pula o dedupe/supersede, que só faz sentido pra transação nova.
 			const alreadySynced = await getTransactionByPluggyId(db, tx.id);
 			if (alreadySynced) {
-				await updatePluggyCategory(db, tx.id, tx.category);
-				await updatePluggyAmount(db, tx.id, tx.amount);
+				await updatePluggyFields(db, tx.id, { category: tx.category, amount: tx.amount });
 				continue;
 			}
 
