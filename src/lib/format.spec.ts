@@ -31,8 +31,13 @@ describe('formatCompactCurrency', () => {
 		expect(spaces(formatCompactCurrency(1271.09))).toBe('R$ 1.271,09');
 	});
 
+	// How ICU renders the compact form varies by version — "R$ 100 mil" here,
+	// "R$ 100,0 mil" on CI — so assert the property that matters (it compacted
+	// and dropped the long digit run) instead of pinning the digits.
 	it('compacts values at or above the threshold', () => {
-		expect(spaces(formatCompactCurrency(100_000))).toBe('R$ 100 mil');
+		const compacted = spaces(formatCompactCurrency(100_000));
+		expect(compacted).toMatch(/^R\$ 100(,0)? mil$/);
+		expect(compacted).not.toContain('100.000');
 	});
 });
 
@@ -42,6 +47,8 @@ describe('formatCompactNumber', () => {
 	});
 
 	it('compacts values at or above the threshold', () => {
-		expect(spaces(formatCompactNumber(1_200_000))).toBe('1,2 mi');
+		const compacted = spaces(formatCompactNumber(1_200_000));
+		expect(compacted).toMatch(/^1,2\s?mi/);
+		expect(compacted).not.toContain('1.200.000');
 	});
 });
