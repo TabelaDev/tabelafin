@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { financeAccounts as accounts } from '$lib/server/db/schema';
+import { signedBalance, sumSignedBalance } from '$lib/accounts';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -23,9 +24,13 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 
 	return {
-		accounts: [...userAccounts].sort((a, b) => b.cachedBalance - a.cachedBalance),
+		// Sorted on the signed axis: by raw balance the card climbs to the top as
+		// if its open invoice were the user's largest account.
+		accounts: [...userAccounts].sort((a, b) => signedBalance(b) - signedBalance(a)),
 		summary: {
-			total: Math.round(userAccounts.reduce((sum, a) => sum + a.cachedBalance, 0) * 100) / 100,
+			// `credit` stays the debt as a magnitude — its own card already renders
+			// the "-" and the "fatura em aberto" label. Only the total sums signed.
+			total: sumSignedBalance(userAccounts),
 			checking: Math.round(checking * 100) / 100,
 			investment: Math.round(investment * 100) / 100,
 			credit: Math.round(credit * 100) / 100

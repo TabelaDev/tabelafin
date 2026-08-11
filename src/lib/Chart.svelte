@@ -76,13 +76,29 @@
 			stroke: { curve: 'smooth', width: 2 },
 			dataLabels: { enabled: false },
 			grid: { borderColor: c.grid, strokeDashArray: 4 },
-			xaxis: { labels: { style: { colors: c.text, fontFamily: 'JetBrains Mono, monospace' } } },
+			xaxis: {
+				labels: {
+					style: { colors: c.text, fontFamily: 'JetBrains Mono, monospace' },
+					// Mirror of the y axis rule: on a horizontal bar the value axis is
+					// x, so it needs the same compact format, and on every other chart
+					// this axis carries category names that must pass through intact.
+					formatter: (value) =>
+						typeof value === 'number' ? formatCompactNumber(value) : String(value ?? '')
+				}
+			},
 			yaxis: {
 				labels: {
 					style: { colors: c.text, fontFamily: 'JetBrains Mono, monospace' },
-					// Valores grandes compactam ("2,5 mil", "1,2 M") pra não encher
-					// o eixo; abaixo do threshold mantém inteiro.
-					formatter: (value) => formatCompactNumber(Number(value))
+					// Large values compact ("2,5 mil", "1,2 M") so the axis does not
+					// fill up; below the threshold they stay whole.
+					//
+					// Only numbers go through the compact format. On a horizontal bar
+					// the category axis IS the y axis, so Apex passes the category
+					// name here — running that through Number() turned every category
+					// label into "NaN". Page options cannot fix it from outside:
+					// deepMerge keeps the base whenever the override is undefined.
+					formatter: (value) =>
+						typeof value === 'number' ? formatCompactNumber(value) : String(value ?? '')
 				}
 			},
 			legend: { labels: { colors: c.text }, position: 'bottom' },

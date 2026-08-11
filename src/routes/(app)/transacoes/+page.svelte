@@ -91,13 +91,22 @@
 
 	const selectedIds = $derived(selected.map((r) => String(r.id)).filter(Boolean));
 
-	// Todas as linhas atualmente visíveis (após busca/filtros do server) — o
-	// "Selecionar todas" marca exatamente essas, no formato que o Table espera
-	// (mesmas chaves das rows: id, date, description, category, amount).
+	// Every currently visible row (after the server's search/filters) — "select
+	// all" ticks exactly these, in the shape the Table expects (same row keys:
+	// id, date, description, category, amount).
+	//
+	// `date` goes in as a timestamp and is formatted in the `cell` snippet. The
+	// Table only compares numerically when both sides are numbers; with the date
+	// pre-formatted it fell through to localeCompare and ordered "01 de ago." <
+	// "01 de dez." < "01 de jan." — alphabetical by month name, not chronological.
+	//
+	// Knock-on effect: the Table's global filter matches on String(row[key]), so
+	// turning `filterable` on here would break searching by date. This page's
+	// search is the separate <Input>, which filters `visible` before the rows.
 	const visibleRows = $derived(
 		visible.map((tx) => ({
 			id: tx.id,
-			date: formatDate(tx.date),
+			date: new Date(tx.date).getTime(),
 			description: tx.description,
 			category: tx.category,
 			amount: tx.displayAmount
@@ -269,7 +278,7 @@
 		>
 			{#snippet cell(row: Record<string, unknown>, key: string)}
 				{#if key === 'date'}
-					<span class="text-xs text-ink-soft">{row.date}</span>
+					<span class="text-xs text-ink-soft">{formatDate(new Date(Number(row.date)))}</span>
 				{:else if key === 'category'}
 					{#if row.category}
 						<CategoryBadge

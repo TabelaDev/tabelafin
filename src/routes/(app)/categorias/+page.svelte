@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Chart from '$lib/Chart.svelte';
 	import { Card } from '@tabeladev/tabelawebui';
+	import { formatCurrencyLabel } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -26,15 +27,7 @@
 			// sobrepor a barra accent.
 			offsetX: 6,
 			textAnchor: 'start' as const,
-			formatter: (value: number) => {
-				const n = Number(value);
-				if (!Number.isFinite(n)) return '';
-				return n.toLocaleString('pt-BR', {
-					style: 'currency',
-					currency: 'BRL',
-					maximumFractionDigits: 0
-				});
-			},
+			formatter: formatCurrencyLabel,
 			style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }
 		},
 		legend: { show: false }

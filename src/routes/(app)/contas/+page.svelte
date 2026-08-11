@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Card, Table, Badge } from '@tabeladev/tabelawebui';
 	import { formatCompactCurrency } from '$lib/format';
+	import { signedBalance } from '$lib/accounts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -78,7 +79,9 @@
 				name: a.name,
 				institution: a.institution,
 				type: typeLabel[a.type] ?? a.type,
-				balance: a.cachedBalance
+				// Signed: the card's open invoice is a debt, and on the raw balance
+				// it showed up green as if it were money available to spend.
+				balance: signedBalance(a)
 			}))}
 			pageSize={0}
 		>

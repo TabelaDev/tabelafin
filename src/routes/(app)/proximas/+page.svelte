@@ -79,9 +79,13 @@
 					{ key: 'accountName', label: 'Cartão' },
 					{ key: 'amount', label: 'Valor', sortable: true }
 				]}
-				rows={data.future.map((tx) => ({
+				rows={/* `date` goes in as a timestamp and is formatted in the `cell`
+				       snippet: the Table only compares numerically between two numbers,
+				       and with the date pre-formatted it fell through to localeCompare
+				       and ordered by month name. */
+				data.future.map((tx) => ({
 					id: tx.id,
-					date: formatDate(tx.date),
+					date: new Date(tx.date).getTime(),
 					description: tx.description,
 					accountName: tx.accountName ?? '—',
 					amount: tx.amount
@@ -90,7 +94,7 @@
 			>
 				{#snippet cell(row: Record<string, unknown>, key: string)}
 					{#if key === 'date'}
-						<span class="text-xs text-ink-soft">{row.date}</span>
+						<span class="text-xs text-ink-soft">{formatDate(new Date(Number(row.date)))}</span>
 					{:else if key === 'amount'}
 						<span class="font-mono text-sm text-ctp-red">{currency.format(Number(row.amount))}</span
 						>

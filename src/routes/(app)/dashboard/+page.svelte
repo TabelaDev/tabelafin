@@ -4,7 +4,8 @@
 	import Chart from '$lib/Chart.svelte';
 	import { Card, Table, Button } from '@tabeladev/tabelawebui';
 	import type { ApexOptions } from 'apexcharts';
-	import { formatCompactCurrency } from '$lib/format';
+	import { formatCompactCurrency, formatCurrencyLabel } from '$lib/format';
+	import { signedBalance } from '$lib/accounts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -38,21 +39,12 @@
 			bar: { horizontal: true, borderRadius: 0, barHeight: '60%' }
 		},
 		xaxis: { categories: data.summary.topCategories.map((c) => c.name) },
-		// Label com valor protegido contra NaN (o Apex pode passar o valor em
-		// formato inesperado) e deslocada pra fora da barra.
+		// Label pushed outside the bar so it does not sit on top of the accent.
 		dataLabels: {
 			enabled: true,
 			offsetX: 6,
 			textAnchor: 'start',
-			formatter: (value: number) => {
-				const n = Number(value);
-				if (!Number.isFinite(n)) return '';
-				return n.toLocaleString('pt-BR', {
-					style: 'currency',
-					currency: 'BRL',
-					maximumFractionDigits: 0
-				});
-			},
+			formatter: formatCurrencyLabel,
 			style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }
 		}
 	});
@@ -100,9 +92,14 @@
 		return data.categories.find((c) => c.name === cat)?.color ?? 'ctp-overlay1';
 	};
 
-	// 4 maiores contas por saldo (são 189 ativos de investimento — filtrar).
+	// Top 4 accounts by balance (there are 189 investment holdings — filter).
+	// Sorted and shown on the signed axis: by raw balance the card's open
+	// invoice competed for the top as if it were the largest account.
 	const topAccounts = $derived(
-		[...data.accounts].sort((a, b) => b.cachedBalance - a.cachedBalance).slice(0, 4)
+		[...data.accounts]
+			.map((a) => ({ ...a, balance: signedBalance(a) }))
+			.sort((a, b) => b.balance - a.balance)
+			.slice(0, 4)
 	);
 
 	// Negativo = gasto (vermelho), positivo = entrada (verde).
@@ -249,7 +246,7 @@
 						<p class="truncate font-mono text-sm font-medium">{account.name}</p>
 						<p class="font-mono text-xs text-ink-soft">{account.institution}</p>
 						<p class="mt-2 font-mono text-sm">
-							{formatCompactCurrency(account.cachedBalance)}
+							{formatCompactCurrency(account.balance)}
 						</p>
 					</a>
 				{/each}
