@@ -8,6 +8,10 @@
 
 	let { data }: { data: PageData } = $props();
 
+	// Form for a brand-new rule — description + category, typed directly.
+	let newDescription = $state('');
+	let newCategory = $state('');
+
 	// One row in edit mode at a time, same as the categories page next door.
 	let editingId = $state<string | null>(null);
 	let editCategory = $state('');
@@ -62,8 +66,8 @@
 
 <div class="flex flex-col gap-6">
 	<header>
-		<a href={resolve('/profile/categories')} class="font-mono text-sm text-ink-soft hover:text-ink"
-			>← Categorias</a
+		<a href={resolve('/categories/manage')} class="font-mono text-sm text-ink-soft hover:text-ink"
+			>← Gerenciar categorias</a
 		>
 		<h1 class="font-mono text-2xl font-bold">Regras automáticas</h1>
 		<p class="font-mono text-sm text-ink-soft">
@@ -71,6 +75,47 @@
 			Transações novas com a mesma descrição já entram categorizadas.
 		</p>
 	</header>
+
+	<!-- Nova regra -->
+	<Card>
+		<form
+			method="POST"
+			action="?/add"
+			use:enhance={() => {
+				return async ({ result }) => {
+					await applyAction(result);
+					if (result.type === 'success') {
+						newDescription = '';
+						newCategory = '';
+						await invalidateAll();
+					}
+				};
+			}}
+			class="flex flex-col gap-3"
+		>
+			<h2 class="font-mono text-sm font-semibold">Nova regra</h2>
+			<div class="flex flex-wrap items-center gap-2">
+				<Input
+					name="description"
+					placeholder="Descrição (ex.: Transferência recebida do Ensino Ágil)"
+					bind:value={newDescription}
+					class="w-72"
+					required
+				/>
+				<Select
+					name="category"
+					options={categoryOptions}
+					bind:value={newCategory}
+					class="w-44"
+					filter
+					filterPlaceholder="Buscar categoria…"
+				/>
+				<Button type="submit" variant="primary" disabled={!newDescription.trim() || !newCategory}>
+					Adicionar
+				</Button>
+			</div>
+		</form>
+	</Card>
 
 	<Card>
 		<div class="flex flex-col gap-3">
@@ -82,7 +127,7 @@
 				<Input bind:value={searchQuery} placeholder="Buscar descrição ou categoria…" class="w-64" />
 			</div>
 
-			<div class="overflow-x-auto border border-rule bg-paper-raised">
+			<div class="border border-rule bg-paper-raised">
 				<Table
 					columns={[
 						{ key: 'description', label: 'Descrição', sortable: true },

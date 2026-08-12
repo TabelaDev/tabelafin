@@ -29,6 +29,29 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 };
 
 export const actions: Actions = {
+	// Creates a brand-new rule from the form on this page — description +
+	// category typed by hand. Until this form existed, rules could only be
+	// created as a side effect of categorising a transaction.
+	add: async ({ request, locals, platform }) => {
+		if (!locals.userId) redirect(303, '/login');
+
+		const form = await request.formData();
+		const description = String(form.get('description') ?? '').trim();
+		const category = String(form.get('category') ?? '').trim();
+		if (!description) return { error: 'Informe a descrição.' };
+		if (!category) return { error: 'Escolha uma categoria.' };
+
+		const db = getDb(platform!.env.DB);
+
+		// The category has to be one of the user's own — same guard as update,
+		// otherwise the rule could point at a category that nothing renders.
+		const categories = await getCategoriesByUser(db, locals.userId);
+		if (!categories.some((c) => c.name === category)) return { error: 'Categoria inválida.' };
+
+		await upsertCategorizationRule(db, locals.userId, description, category);
+		return { success: true };
+	},
+
 	// Retargets a rule at another category. Keyed by description because that is
 	// what the rule is keyed by (unique index on user_id + description), so the
 	// upsert lands on the same row rather than creating a second one.

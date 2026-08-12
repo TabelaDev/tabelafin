@@ -26,7 +26,7 @@
 	}
 
 	// Colours arrive from the server already labelled for the dropdown ({ value, label }).
-	const colorOptions = data.colorOptions;
+	const colorOptions = $derived(data.colorOptions);
 	// The dot in its real colour: uses Catppuccin's global CSS variable through an
 	// inline style (a dynamic Tailwind class `bg-${color}` is not compiled by the
 	// JIT). `color` arrives as "ctp-peach" → --catppuccin-peach.
@@ -51,18 +51,17 @@
 <div class="flex flex-col gap-6">
 	<header class="flex flex-wrap items-start justify-between gap-2">
 		<div>
-			<a href={resolve('/profile')} class="font-mono text-sm text-ink-soft hover:text-ink"
-				>← Perfil</a
+			<a href={resolve('/categories')} class="font-mono text-sm text-ink-soft hover:text-ink"
+				>← Categorias</a
 			>
-			<h1 class="font-mono text-2xl font-bold">Categorias</h1>
+			<h1 class="font-mono text-2xl font-bold">Gerenciar categorias</h1>
 			<p class="font-mono text-sm text-ink-soft">
 				<span class="text-ink-faint">//</span> Suas categorias de transação — crie, renomeie, mude a cor.
 				As transações sem categoria aparecem como "Outros".
 			</p>
 		</div>
-		<a
-			href={resolve('/profile/categories/rules')}
-			class="font-mono text-xs text-accent hover:underline">regras automáticas</a
+		<a href={resolve('/categories/rules')} class="font-mono text-xs text-accent hover:underline"
+			>regras automáticas</a
 		>
 	</header>
 
