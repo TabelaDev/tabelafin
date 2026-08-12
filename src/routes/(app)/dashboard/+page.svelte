@@ -36,10 +36,16 @@
 	]);
 	const barOptions = $derived<ApexOptions>({
 		plotOptions: {
-			bar: { horizontal: true, borderRadius: 0, barHeight: '60%' }
+			bar: {
+				horizontal: true,
+				borderRadius: 0,
+				barHeight: '60%',
+				// Anchors the label at the bar tip; with offsetX + textAnchor it
+				// sits outside the bar, to the right — never on top of the accent.
+				dataLabels: { position: 'top' }
+			}
 		},
 		xaxis: { categories: data.summary.topCategories.map((c) => c.name) },
-		// Label pushed outside the bar so it does not sit on top of the accent.
 		dataLabels: {
 			enabled: true,
 			offsetX: 6,
@@ -55,15 +61,15 @@
 		stroke: { curve: 'smooth', width: 2 }
 	});
 
-	// Donut: only the largest categories above zero (top 7) — the R$ 0,00 ones
-	// just clutter the composition.
+	// Donut: the top 5 categories above zero — the R$ 0,00 ones just clutter the
+	// composition.
 	const positiveCategories = $derived(
 		Object.entries(data.summary.categoryTotals)
 			.filter(([, v]) => v > 0)
 			.sort(([, a], [, b]) => b - a)
 	);
-	const donutSeries = $derived(positiveCategories.slice(0, 7).map(([, v]) => v));
-	const donutLabels = $derived(positiveCategories.slice(0, 7).map(([k]) => k));
+	const donutSeries = $derived(positiveCategories.slice(0, 5).map(([, v]) => v));
+	const donutLabels = $derived(positiveCategories.slice(0, 5).map(([k]) => k));
 	const donutOptions = $derived<ApexOptions>({
 		labels: donutLabels,
 		legend: { position: 'bottom', horizontalAlign: 'center' },
