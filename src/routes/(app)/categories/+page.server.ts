@@ -1,9 +1,10 @@
 import { redirect } from '@sveltejs/kit';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { transactions } from '$lib/server/db/schema';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { isNotInternalTransfer, visibleTransactions } from '$lib/server/db/transactions';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -14,34 +15,43 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	// The user's own categories — the per-category total is computed below.
 	const userCategories = await getCategoriesByUser(db, userId);
 
-	// All-time spending per category (the negative amounts).
+	// All-time movement per category (negative = spending, positive = income),
+	// excluding internal transfers and investment movements — those are neither
+	// spending nor income (a card invoice payment would otherwise double-count
+	// the card purchases). Same predicate the dashboard and transactions use.
 	const rows = await db
 		.select({ category: transactions.category, amount: transactions.amount })
 		.from(transactions)
-		.where(and(eq(transactions.userId, userId), isNull(transactions.supersededByTransactionId)));
+		.where(and(visibleTransactions(userId), isNotInternalTransfer));
 
-	const totals: Record<string, number> = {};
+	const expenses: Record<string, number> = {};
+	const income: Record<string, number> = {};
 	for (const r of rows) {
-		if (r.amount >= 0) continue;
 		const cat = r.category ?? 'Outros';
-		totals[cat] = (totals[cat] ?? 0) + Math.abs(r.amount);
+		if (r.amount < 0) {
+			expenses[cat] = (expenses[cat] ?? 0) + Math.abs(r.amount);
+		} else {
+			income[cat] = (income[cat] ?? 0) + r.amount;
+		}
 	}
 
 	// Lists the user's categories with their totals; "Outros" (uncategorised
-	// spending) goes last when it has a value.
+	// movement) goes last when it has a value.
 	const categories = userCategories
 		.map((c) => ({
 			name: c.name,
 			color: c.color,
-			total: Math.round((totals[c.name] ?? 0) * 100) / 100
+			expense: Math.round((expenses[c.name] ?? 0) * 100) / 100,
+			income: Math.round((income[c.name] ?? 0) * 100) / 100
 		}))
-		.sort((a, b) => b.total - a.total);
+		.sort((a, b) => Math.max(b.expense, b.income) - Math.max(a.expense, a.income));
 
 	if (!userCategories.some((c) => c.name === 'Outros')) {
 		categories.push({
 			name: 'Outros',
 			color: 'ctp-overlay1',
-			total: Math.round((totals['Outros'] ?? 0) * 100) / 100
+			expense: Math.round((expenses['Outros'] ?? 0) * 100) / 100,
+			income: Math.round((income['Outros'] ?? 0) * 100) / 100
 		});
 	}
 

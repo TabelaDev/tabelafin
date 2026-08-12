@@ -8,8 +8,19 @@
 	let {
 		type,
 		series,
-		options
-	}: { type: 'bar' | 'area' | 'donut'; series: ChartSeries; options?: ApexOptions } = $props();
+		options,
+		onLegendClick
+	}: {
+		type: 'bar' | 'area' | 'donut';
+		series: ChartSeries;
+		options?: ApexOptions;
+		// Fired when the user clicks a legend item. The index is the legend
+		// item's position (0-based). Used by charts with one bar per category to
+		// re-render with the category toggled — ApexCharts itself can't toggle
+		// individual bars of a distributed bar chart (it disables legend clicks
+		// when `distributed` is on).
+		onLegendClick?: (index: number) => void;
+	} = $props();
 
 	let container: HTMLDivElement;
 	let chart: ApexCharts | null = null;
@@ -70,7 +81,16 @@
 				parentHeightOffset: 0,
 				toolbar: { show: false, tools: {} },
 				zoom: { enabled: false },
-				animations: { enabled: true }
+				animations: { enabled: true },
+				events: {
+					// ApexCharts hands the legend-click the series index (0-based);
+					// `distributed` bars map one category per legend item, so that
+					// is exactly the category position. The callback lets the page
+					// re-render with that bar hidden/shown.
+					legendClick: onLegendClick
+						? (_chartContext, seriesIndex: number) => onLegendClick(seriesIndex)
+						: undefined
+				}
 			},
 			colors: c.palette,
 			stroke: { curve: 'smooth', width: 2 },
