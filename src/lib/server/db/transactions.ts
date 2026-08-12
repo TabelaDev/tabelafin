@@ -10,6 +10,33 @@ import { getRuleForDescription } from '$lib/server/db/categorization-rules';
 
 type Db = ReturnType<typeof getDb>;
 
+// Internal transfers and investment movements are neither spending nor income —
+// filtered out of every summary query (dashboard, categories, reports). Beyond
+// the API's category, the description is filtered too ("Pagamento de fatura"
+// arrives with the generic "Transfers" category on the checking account, but is
+// internal movement). Shared here so every page uses the same predicate.
+//
+// A NULL `pluggyCategory` (manual/PDF transactions have no API category) must
+// NOT be dropped: SQL `NULL NOT IN (…)` evaluates to NULL — falsy — so a plain
+// NOT IN would silently hide every hand-typed transaction from the summaries.
+export const isNotInternalTransfer = and(
+	or(
+		isNull(transactions.pluggyCategory),
+		notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES])
+	),
+	or(
+		isNull(transactions.description),
+		notInArray(transactions.description, [...INTERNAL_TRANSFER_DESCRIPTIONS])
+	)
+);
+
+// The base condition for "a transaction the user actually sees": their own,
+// not superseded (a replaced PDF row never counts). Every user-facing query
+// starts from here.
+export function visibleTransactions(userId: string) {
+	return and(eq(transactions.userId, userId), isNull(transactions.supersededByTransactionId));
+}
+
 export interface NewPluggyTransactionInput {
 	userId: string;
 	accountId: string;
@@ -281,10 +308,8 @@ export async function getTransactionsInRange(db: Db, userId: string, from: Date,
 		.from(transactions)
 		.where(
 			and(
-				eq(transactions.userId, userId),
-				isNull(transactions.supersededByTransactionId),
-				notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES]),
-				notInArray(transactions.description, [...INTERNAL_TRANSFER_DESCRIPTIONS]),
+				visibleTransactions(userId),
+				isNotInternalTransfer,
 				gte(transactions.date, from),
 				lte(transactions.date, new Date(to.getTime() - 1))
 			)

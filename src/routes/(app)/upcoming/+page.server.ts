@@ -2,7 +2,8 @@ import { redirect } from '@sveltejs/kit';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
-import { financeAccounts as accounts, transactions } from '$lib/server/db/schema';
+import { getAccountsByUser } from '$lib/server/db/accounts';
+import { transactions } from '$lib/server/db/schema';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -25,7 +26,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		)
 		.orderBy(transactions.date);
 
-	const userAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId));
+	const userAccounts = await getAccountsByUser(db, userId);
 	const accountById = new Map(userAccounts.map((a) => [a.id, a]));
 
 	return {

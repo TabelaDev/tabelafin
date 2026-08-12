@@ -1,30 +1,19 @@
 import { redirect } from '@sveltejs/kit';
-import { and, desc, eq, gte, isNull, lt, lte, notInArray, sql } from 'drizzle-orm';
+import { and, desc, gte, lt, lte, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
+import { getAccountsByUser } from '$lib/server/db/accounts';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { getLatestMonthlyReport } from '$lib/server/db/monthly-reports';
-import { financeAccounts as accounts, transactions } from '$lib/server/db/schema';
+import { transactions } from '$lib/server/db/schema';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
-import {
-	INTERNAL_TRANSFER_CATEGORIES,
-	INTERNAL_TRANSFER_DESCRIPTIONS
-} from '$lib/server/pluggy/internal-transfers';
+import { isNotInternalTransfer, visibleTransactions } from '$lib/server/db/transactions';
 
 function startOfMonth(offset = 0): Date {
 	const now = new Date();
 	return new Date(now.getFullYear(), now.getMonth() + offset, 1);
 }
-
-// Internal transfers and investment movements are neither spending nor income —
-// filtered out of every dashboard summary query. Beyond the API's category, the
-// description is filtered too ("Pagamento de fatura" arrives with the generic
-// "Transfers" category on the checking account, but is internal movement).
-const isNotInternalTransfer = and(
-	notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES]),
-	notInArray(transactions.description, [...INTERNAL_TRANSFER_DESCRIPTIONS])
-);
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -38,7 +27,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		getPluggyCredentials(db, userId)
 	]);
 
-	const userAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId));
+	const userAccounts = await getAccountsByUser(db, userId);
 
 	// Tipo de conta por id — o cartão de crédito tem lógica própria (ver
 	// INTERNAL_TRANSFER_CATEGORIES e o tratamento de sinal no loop abaixo).
@@ -50,14 +39,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const recentTransactions = await db
 		.select()
 		.from(transactions)
-		.where(
-			and(
-				eq(transactions.userId, userId),
-				isNull(transactions.supersededByTransactionId),
-				isNotInternalTransfer,
-				lte(transactions.date, now)
-			)
-		)
+		.where(and(visibleTransactions(userId), isNotInternalTransfer, lte(transactions.date, now)))
 		.orderBy(desc(transactions.date))
 		.limit(10);
 
@@ -72,8 +54,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.from(transactions)
 		.where(
 			and(
-				eq(transactions.userId, userId),
-				isNull(transactions.supersededByTransactionId),
+				visibleTransactions(userId),
 				isNotInternalTransfer,
 				gte(transactions.date, monthStart),
 				lt(transactions.date, monthEnd)
@@ -85,8 +66,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.from(transactions)
 		.where(
 			and(
-				eq(transactions.userId, userId),
-				isNull(transactions.supersededByTransactionId),
+				visibleTransactions(userId),
 				isNotInternalTransfer,
 				gte(transactions.date, monthStartPrev),
 				lt(transactions.date, monthStart)
@@ -162,8 +142,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.from(transactions)
 		.where(
 			and(
-				eq(transactions.userId, userId),
-				isNull(transactions.supersededByTransactionId),
+				visibleTransactions(userId),
 				isNotInternalTransfer,
 				gte(transactions.date, sixMonthsAgo),
 				lt(transactions.date, monthEnd)

@@ -1,14 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { and, desc, eq, gte, inArray, isNull, lte, notInArray } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
-import { financeAccounts as accounts, transactions } from '$lib/server/db/schema';
+import { transactions } from '$lib/server/db/schema';
+import { getAccountsByUser } from '$lib/server/db/accounts';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
-import {
-	INTERNAL_TRANSFER_CATEGORIES,
-	INTERNAL_TRANSFER_DESCRIPTIONS
-} from '$lib/server/pluggy/internal-transfers';
+import { isNotInternalTransfer, visibleTransactions } from '$lib/server/db/transactions';
 
 export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -26,10 +24,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	// dashboard did not, so the two never agreed on what a month cost.
 	const showInternal = url.searchParams.get('internal') === 'yes';
 
-	const conditions = [
-		eq(transactions.userId, userId),
-		isNull(transactions.supersededByTransactionId)
-	];
+	const conditions = [visibleTransactions(userId)];
 	if (category) conditions.push(eq(transactions.category, category));
 
 	// The type filter (income/expenses) applies the SAME logic as the dashboard: it
@@ -41,10 +36,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	// the toggle there would quietly break that promise.
 	const isTypeFiltered = type === 'income' || type === 'expenses';
 	if (!showInternal || isTypeFiltered) {
-		conditions.push(
-			notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES]),
-			notInArray(transactions.description, [...INTERNAL_TRANSFER_DESCRIPTIONS])
-		);
+		conditions.push(isNotInternalTransfer);
 	}
 
 	let rows;
@@ -67,7 +59,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 
 	// The sign filter depends on the account type (a card's sign is inverted), so
 	// each account's type is needed to filter in memory.
-	const userAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId));
+	const userAccounts = await getAccountsByUser(db, userId);
 	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
 
 	// On a credit card the API reports a purchase as positive and a refund as
