@@ -35,14 +35,6 @@ export default defineConfig(
 		}
 	},
 	{
-		// Componentes gerados pelo shadcn-svelte — Button.href aceita URLs internas
-		// e externas indistintamente, então resolve() (rota estática) não se aplica aqui.
-		files: ['src/lib/components/ui/**'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
 		// worker/entry.js referencia svelte-kit-worker.d.ts via triple-slash de
 		// propósito — é a única forma de o TS aplicar uma ambient module
 		// declaration (fallback de resolução pro import relativo do _worker.js

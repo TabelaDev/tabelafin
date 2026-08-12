@@ -187,7 +187,7 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 					</div>
 
 					{#if error}
-						<p class="font-mono text-sm text-destructive">{error}</p>
+						<p class="font-mono text-sm text-danger">{error}</p>
 					{/if}
 
 					<!-- Preview do relatório -->

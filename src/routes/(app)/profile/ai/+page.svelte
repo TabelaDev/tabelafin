@@ -166,7 +166,7 @@ Regras:
 		{/if}
 
 		{#if form?.error}
-			<p class="font-mono text-sm text-destructive">{form.error}</p>
+			<p class="font-mono text-sm text-danger">{form.error}</p>
 		{/if}
 
 		<div class="flex justify-end">

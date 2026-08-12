@@ -296,7 +296,7 @@
 			</Button>
 			<Button variant="ghost" onclick={clearSelection}>Cancelar</Button>
 			{#if bulkError}
-				<span class="font-mono text-sm text-destructive">{bulkError}</span>
+				<span class="font-mono text-sm text-danger">{bulkError}</span>
 			{/if}
 		</div>
 	{/if}

@@ -42,7 +42,7 @@
 				</div>
 
 				{#if form?.error}
-					<p class="text-sm text-destructive">{form.error}</p>
+					<p class="text-sm text-danger">{form.error}</p>
 				{/if}
 
 				<Button type="submit">Entrar</Button>

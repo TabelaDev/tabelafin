@@ -179,7 +179,7 @@
 							};
 						}}
 					>
-						<Button type="submit" variant="ghost" size="sm" class="text-destructive">
+						<Button type="submit" variant="ghost" size="sm" class="text-danger">
 							Remover categoria e regra
 						</Button>
 					</form>
@@ -215,7 +215,7 @@
 						filterPlaceholder="Buscar categoria…"
 					/>
 					{#if categorizeError}
-						<p class="text-sm text-destructive">{categorizeError}</p>
+						<p class="text-sm text-danger">{categorizeError}</p>
 					{/if}
 					<Button type="submit" variant="primary" disabled={!selectedCategory.trim()}>
 						Salvar categoria
@@ -267,13 +267,13 @@
 							};
 						}}
 					>
-						<Button type="submit" variant="ghost" size="sm" class="text-destructive">
+						<Button type="submit" variant="ghost" size="sm" class="text-danger">
 							Remover recorrência
 						</Button>
 					</form>
 				</div>
 				{#if recurringError}
-					<p class="mt-2 text-sm text-destructive">{recurringError}</p>
+					<p class="mt-2 text-sm text-danger">{recurringError}</p>
 				{/if}
 			{:else}
 				<form
@@ -308,7 +308,7 @@
 						bind:value={recurringFrequency}
 					/>
 					{#if recurringError}
-						<p class="text-sm text-destructive">{recurringError}</p>
+						<p class="text-sm text-danger">{recurringError}</p>
 					{/if}
 					<Button type="submit" variant="outline">Adicionar recorrência</Button>
 				</form>

@@ -20,7 +20,7 @@
 
 	const accent = $derived(color.replace('ctp-', ''));
 	const style = $derived(
-		`background-color: color-mix(in oklab, var(--catppuccin-${accent}) 10%, transparent); color: var(--catppuccin-${accent});`
+		`background-color: color-mix(in oklab, var(--ctp-${accent}) 10%, transparent); color: var(--ctp-${accent});`
 	);
 </script>
 

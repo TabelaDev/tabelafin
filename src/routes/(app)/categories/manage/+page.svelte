@@ -29,9 +29,9 @@
 	const colorOptions = $derived(data.colorOptions);
 	// The dot in its real colour: uses Catppuccin's global CSS variable through an
 	// inline style (a dynamic Tailwind class `bg-${color}` is not compiled by the
-	// JIT). `color` arrives as "ctp-peach" → --catppuccin-peach.
+	// JIT). `color` arrives as "ctp-peach" → --ctp-peach.
 	const swatchStyle = (color: string) =>
-		`background-color: var(--catppuccin-${color.replace('ctp-', '')});`;
+		`background-color: var(--ctp-${color.replace('ctp-', '')});`;
 
 	// Client-side search over the category list.
 	let searchQuery = $state('');

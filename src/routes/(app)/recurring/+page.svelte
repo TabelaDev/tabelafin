@@ -50,10 +50,10 @@
 	const badgeStyle = (name: string | null) => {
 		const color = categoryColor(name);
 		if (!color) return '';
-		return `background-color: color-mix(in oklab, var(--catppuccin-${color.replace(
+		return `background-color: color-mix(in oklab, var(--ctp-${color.replace(
 			'ctp-',
 			''
-		)}) 10%, transparent); color: var(--catppuccin-${color.replace('ctp-', '')});`;
+		)}) 10%, transparent); color: var(--ctp-${color.replace('ctp-', '')});`;
 	};
 
 	function formatDate(ts: Date | string | null): string {
@@ -189,7 +189,7 @@
 					</div>
 
 					{#if form?.error}
-						<p class="font-mono text-sm text-destructive">{form.error}</p>
+						<p class="font-mono text-sm text-danger">{form.error}</p>
 					{/if}
 
 					<div class="flex justify-end">
@@ -254,9 +254,7 @@
 										>
 										<form method="POST" action="?/delete" use:enhance>
 											<input type="hidden" name="id" value={expense.id} />
-											<Button type="submit" variant="ghost" size="sm" class="text-destructive"
-												>✕</Button
-											>
+											<Button type="submit" variant="ghost" size="sm" class="text-danger">✕</Button>
 										</form>
 									</div>
 								</div>

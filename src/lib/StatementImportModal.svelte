@@ -242,7 +242,7 @@
 					<p class="font-mono text-sm text-accent">Lendo o export…</p>
 				{/if}
 				{#if parseError}
-					<p class="font-mono text-sm text-destructive">{parseError}</p>
+					<p class="font-mono text-sm text-danger">{parseError}</p>
 				{/if}
 			</div>
 		{:else}

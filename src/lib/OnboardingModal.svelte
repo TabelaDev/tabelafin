@@ -120,7 +120,7 @@
 	</div>
 
 	{#if error}
-		<p class="mb-3 text-sm text-destructive">{error}</p>
+		<p class="mb-3 text-sm text-danger">{error}</p>
 	{/if}
 
 	{#if step === 'ai'}

@@ -58,7 +58,7 @@
 {#if supports}
 	<form onsubmit={onSubmit} class="flex flex-col gap-3">
 		<Input type="file" accept="application/pdf" bind:files />
-		<p class="text-xs text-muted-foreground">
+		<p class="text-xs text-ink-soft">
 			A fatura/extrato é enviada direto pro modelo ({model}) e não fica salva — as transações
 			extraídas já entram categorizadas.
 		</p>
@@ -67,7 +67,7 @@
 		</Button>
 	</form>
 {:else}
-	<p class="text-sm text-muted-foreground">
+	<p class="text-sm text-ink-soft">
 		O modelo atual ({model}) não suporta upload de PDF. Escolha um modelo com suporte a documentos
 		(Claude ou GPT) em Perfil → Categorização por IA.
 	</p>

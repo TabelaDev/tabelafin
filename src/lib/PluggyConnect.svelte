@@ -118,6 +118,6 @@
 		{/if}
 	</Button>
 	{#if errorMessage}
-		<p class="text-sm text-destructive">{errorMessage}</p>
+		<p class="text-sm text-danger">{errorMessage}</p>
 	{/if}
 </div>
