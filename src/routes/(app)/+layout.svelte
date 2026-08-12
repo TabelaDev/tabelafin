@@ -39,7 +39,8 @@
 		{ href: resolve('/profile'), label: 'Perfil', icon: 'user' }
 	];
 
-	const isActive = (href: string) => page.url.pathname === href;
+	const isActive = (href: string) =>
+		page.url.pathname === href || page.url.pathname.startsWith(href + '/');
 
 	// Inline SVG icons with explicit width/height — Tailwind does not see a `class`
 	// inside a JS string, so the size comes from the attribute, not the class.
