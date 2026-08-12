@@ -59,7 +59,7 @@
 		"@better-auth/drizzle-adapter": "^1.6.26",
 		"@block65/webcrypto-web-push": "^1.0.2",
 		"@myriaddreamin/typst.ts": "^0.7.0",
-		"@tabeladev/tabelawebui": "^0.15.0",
+		"@tabeladev/tabelawebui": "^0.17.0",
 		"apexcharts": "^6.7.0",
 		"better-auth": "^1.6.26",
 		"fflate": "^0.8.3",

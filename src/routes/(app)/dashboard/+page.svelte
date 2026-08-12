@@ -136,44 +136,52 @@
 	<!-- Cards de resumo -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
 		<Card>
-			<p class="font-mono text-xs text-ink-soft">Saldo total</p>
-			<p class="mt-1 font-mono text-xl font-bold">
-				{formatCompactCurrency(data.summary.totalBalance)}
-			</p>
+			<Card.Content>
+				<p class="font-mono text-xs text-ink-soft">Saldo total</p>
+				<p class="mt-1 font-mono text-xl font-bold">
+					{formatCompactCurrency(data.summary.totalBalance)}
+				</p>
+			</Card.Content>
 		</Card>
 		<Card>
-			<a
-				href={resolve(`/transactions?month=${currentMonth}&type=expenses`)}
-				class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
-			>
-				Gastos do mês →
-			</a>
-			<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
-				{currency.format(data.summary.monthExpense)}
-			</p>
-			{#if expenseDelta !== null}
-				<span class="font-mono text-xs {expenseDelta > 0 ? 'text-ctp-red' : 'text-ctp-green'}">
-					{expenseDelta > 0 ? '▲' : '▼'}
-					{Math.abs(expenseDelta).toFixed(1)}% vs. mês anterior
-				</span>
-			{/if}
+			<Card.Content>
+				<a
+					href={resolve(`/transactions?month=${currentMonth}&type=expenses`)}
+					class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
+				>
+					Gastos do mês →
+				</a>
+				<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
+					{currency.format(data.summary.monthExpense)}
+				</p>
+				{#if expenseDelta !== null}
+					<span class="font-mono text-xs {expenseDelta > 0 ? 'text-ctp-red' : 'text-ctp-green'}">
+						{expenseDelta > 0 ? '▲' : '▼'}
+						{Math.abs(expenseDelta).toFixed(1)}% vs. mês anterior
+					</span>
+				{/if}
+			</Card.Content>
 		</Card>
 		<Card>
-			<a
-				href={resolve(`/transactions?month=${currentMonth}&type=income`)}
-				class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
-			>
-				Receitas do mês →
-			</a>
-			<p class="mt-1 font-mono text-xl font-bold text-ctp-green">
-				{currency.format(data.summary.monthIncome)}
-			</p>
+			<Card.Content>
+				<a
+					href={resolve(`/transactions?month=${currentMonth}&type=income`)}
+					class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
+				>
+					Receitas do mês →
+				</a>
+				<p class="mt-1 font-mono text-xl font-bold text-ctp-green">
+					{currency.format(data.summary.monthIncome)}
+				</p>
+			</Card.Content>
 		</Card>
 		<Card>
-			<p class="font-mono text-xs text-ink-soft">Investimentos</p>
-			<p class="mt-1 font-mono text-xl font-bold">
-				{formatCompactCurrency(data.summary.investmentBalance)}
-			</p>
+			<Card.Content>
+				<p class="font-mono text-xs text-ink-soft">Investimentos</p>
+				<p class="mt-1 font-mono text-xl font-bold">
+					{formatCompactCurrency(data.summary.investmentBalance)}
+				</p>
+			</Card.Content>
 		</Card>
 	</div>
 
@@ -183,19 +191,21 @@
 	<div class="grid grid-cols-1 gap-3 lg:grid-cols-3 {hasSideCharts && 'lg:grid-rows-2'}">
 		{#if data.summary.monthValues.length > 0}
 			<Card class={evolutionClass}>
-				<div>
-					<h2 class="font-mono text-sm font-semibold">Evolução do saldo</h2>
-					<p class="font-mono text-xs text-ink-soft">últimos 6 meses</p>
-				</div>
-				<div class="mt-2 min-h-56 flex-1">
-					<Chart type="area" series={areaSeries} options={areaOptions} />
-				</div>
+				<Card.Content>
+					<div>
+						<h2 class="font-mono text-sm font-semibold">Evolução do saldo</h2>
+						<p class="font-mono text-xs text-ink-soft">últimos 6 meses</p>
+					</div>
+					<div class="mt-2 min-h-56 flex-1">
+						<Chart type="area" series={areaSeries} options={areaOptions} />
+					</div>
+				</Card.Content>
 			</Card>
 		{/if}
 
 		{#if data.summary.topCategories.length > 0}
 			<Card class="lg:col-span-1">
-				{#snippet header()}
+				<Card.Header>
 					<div class="flex items-center justify-between">
 						<div>
 							<h2 class="font-mono text-sm font-semibold">Top categorias</h2>
@@ -205,29 +215,33 @@
 							>ver todas</a
 						>
 					</div>
-				{/snippet}
-				<div class="mt-2 min-h-40 flex-1">
-					<Chart type="bar" series={barSeries} options={barOptions} />
-				</div>
+				</Card.Header>
+				<Card.Content>
+					<div class="mt-2 min-h-40 flex-1">
+						<Chart type="bar" series={barSeries} options={barOptions} />
+					</div>
+				</Card.Content>
 			</Card>
 		{/if}
 
 		{#if donutSeries.length > 0}
 			<Card class="lg:col-span-1">
-				<div>
-					<h2 class="font-mono text-sm font-semibold">Composição de gastos</h2>
-					<p class="font-mono text-xs text-ink-soft">por categoria</p>
-				</div>
-				<div class="mt-2 min-h-48 flex-1">
-					<Chart type="donut" series={donutSeries} options={donutOptions} />
-				</div>
+				<Card.Content>
+					<div>
+						<h2 class="font-mono text-sm font-semibold">Composição de gastos</h2>
+						<p class="font-mono text-xs text-ink-soft">por categoria</p>
+					</div>
+					<div class="mt-2 min-h-48 flex-1">
+						<Chart type="donut" series={donutSeries} options={donutOptions} />
+					</div>
+				</Card.Content>
 			</Card>
 		{/if}
 	</div>
 
 	<!-- Contas — primeiro; ver todas leva pra página dedicada -->
 	<Card>
-		{#snippet header()}
+		<Card.Header>
 			<div class="flex items-center justify-between">
 				<h2 class="font-mono text-sm font-semibold">Contas</h2>
 				{#if data.accounts.length > 0}
@@ -236,80 +250,86 @@
 					>
 				{/if}
 			</div>
-		{/snippet}
+		</Card.Header>
 
-		{#if data.accounts.length === 0}
-			<p class="py-4 text-center font-mono text-sm text-ink-soft">
-				Nenhuma conta ainda. Conecte via Open Finance ou adicione transações manualmente.
-			</p>
-		{:else}
-			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-				{#each topAccounts as account (account.id)}
-					<a
-						href={resolve('/accounts')}
-						class="block border border-rule bg-paper p-3 transition-colors hover:border-accent"
-					>
-						<p class="truncate font-mono text-sm font-medium">{account.name}</p>
-						<p class="font-mono text-xs text-ink-soft">{account.institution}</p>
-						<p class="mt-2 font-mono text-sm">
-							{formatCompactCurrency(account.balance)}
-						</p>
-					</a>
-				{/each}
-			</div>
-		{/if}
+		<Card.Content>
+			{#if data.accounts.length === 0}
+				<p class="py-4 text-center font-mono text-sm text-ink-soft">
+					Nenhuma conta ainda. Conecte via Open Finance ou adicione transações manualmente.
+				</p>
+			{:else}
+				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+					{#each topAccounts as account (account.id)}
+						<a
+							href={resolve('/accounts')}
+							class="block border border-rule bg-paper p-3 transition-colors hover:border-accent"
+						>
+							<p class="truncate font-mono text-sm font-medium">{account.name}</p>
+							<p class="font-mono text-xs text-ink-soft">{account.institution}</p>
+							<p class="mt-2 font-mono text-sm">
+								{formatCompactCurrency(account.balance)}
+							</p>
+						</a>
+					{/each}
+				</div>
+			{/if}
+		</Card.Content>
 	</Card>
 
 	<!-- Transações recentes — tabela real -->
 	<Card>
-		{#snippet header()}
+		<Card.Header>
 			<div class="flex items-center justify-between">
 				<h2 class="font-mono text-sm font-semibold">Transações recentes</h2>
 				<a href={resolve('/transactions')} class="font-mono text-xs text-accent hover:underline"
 					>ver todas</a
 				>
 			</div>
-		{/snippet}
+		</Card.Header>
 
-		<Table
-			columns={[
-				{ key: 'date', label: 'Data', sortable: true },
-				{ key: 'description', label: 'Descrição' },
-				{ key: 'category', label: 'Categoria' },
-				{ key: 'amount', label: 'Valor', sortable: true }
-			]}
-			rows={data.recentTransactions.map((tx) => ({
-				id: tx.id,
-				date: formatDate(tx.date),
-				description: tx.description,
-				category: tx.category,
-				amount: tx.amount
-			}))}
-			pageSize={0}
-		>
-			{#snippet cell(row: Record<string, unknown>, key: string)}
-				{#if key === 'date'}
-					<span class="text-xs text-ink-soft">{row.date}</span>
-				{:else if key === 'category'}
-					{#if row.category}
-						<CategoryBadge
-							category={String(row.category)}
-							color={categoryColor(String(row.category))}
-						/>
+		<Card.Content>
+			<Table
+				columns={[
+					{ key: 'date', label: 'Data', sortable: true },
+					{ key: 'description', label: 'Descrição' },
+					{ key: 'category', label: 'Categoria' },
+					{ key: 'amount', label: 'Valor', sortable: true }
+				]}
+				rows={data.recentTransactions.map((tx) => ({
+					id: tx.id,
+					date: formatDate(tx.date),
+					description: tx.description,
+					category: tx.category,
+					amount: tx.amount
+				}))}
+				pageSize={0}
+			>
+				{#snippet cell(row: Record<string, unknown>, key: string)}
+					{#if key === 'date'}
+						<span class="text-xs text-ink-soft">{row.date}</span>
+					{:else if key === 'category'}
+						{#if row.category}
+							<CategoryBadge
+								category={String(row.category)}
+								color={categoryColor(String(row.category))}
+							/>
+						{:else}
+							<span class="text-xs text-ink-faint">[sem categoria]</span>
+						{/if}
+					{:else if key === 'amount'}
+						<span class={amountClass(Number(row.amount))}
+							>{currency.format(Number(row.amount))}</span
+						>
 					{:else}
-						<span class="text-xs text-ink-faint">[sem categoria]</span>
+						{row.description}
 					{/if}
-				{:else if key === 'amount'}
-					<span class={amountClass(Number(row.amount))}>{currency.format(Number(row.amount))}</span>
-				{:else}
-					{row.description}
-				{/if}
-			{/snippet}
-			{#snippet empty()}
-				<p class="py-8 text-center font-mono text-sm text-ink-soft">
-					Nenhuma transação ainda. Adicione uma manualmente ou conecte suas contas.
-				</p>
-			{/snippet}
-		</Table>
+				{/snippet}
+				{#snippet empty()}
+					<p class="py-8 text-center font-mono text-sm text-ink-soft">
+						Nenhuma transação ainda. Adicione uma manualmente ou conecte suas contas.
+					</p>
+				{/snippet}
+			</Table>
+		</Card.Content>
 	</Card>
 </div>

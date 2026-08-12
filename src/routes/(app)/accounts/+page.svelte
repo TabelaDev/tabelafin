@@ -98,33 +98,43 @@
 	<!-- Cards de resumo -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
 		<Card>
-			<p class="font-mono text-xs text-ink-soft">Saldo total</p>
-			<p class="mt-1 font-mono text-xl font-bold">
-				{formatCompactCurrency(data.summary.total)}
-			</p>
-		</Card>
-		<Card>
-			<p class="font-mono text-xs text-ink-soft">Conta corrente</p>
-			<p class="mt-1 font-mono text-xl font-bold">
-				{formatCompactCurrency(data.summary.checking)}
-			</p>
-		</Card>
-		<Card>
-			<p class="font-mono text-xs text-ink-soft">Investimentos</p>
-			<p class="mt-1 font-mono text-xl font-bold">
-				{formatCompactCurrency(data.summary.investment)}
-			</p>
-		</Card>
-		<Card>
-			<p class="font-mono text-xs text-ink-soft">Cartão de crédito</p>
-			{#if data.summary.credit > 0}
-				<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
-					-{formatCompactCurrency(data.summary.credit)}
+			<Card.Content>
+				<p class="font-mono text-xs text-ink-soft">Saldo total</p>
+				<p class="mt-1 font-mono text-xl font-bold">
+					{formatCompactCurrency(data.summary.total)}
 				</p>
-			{:else}
-				<p class="mt-1 font-mono text-xl font-bold">{formatCompactCurrency(data.summary.credit)}</p>
-			{/if}
-			<p class="font-mono text-xs text-ink-faint">fatura em aberto (dívida)</p>
+			</Card.Content>
+		</Card>
+		<Card>
+			<Card.Content>
+				<p class="font-mono text-xs text-ink-soft">Conta corrente</p>
+				<p class="mt-1 font-mono text-xl font-bold">
+					{formatCompactCurrency(data.summary.checking)}
+				</p>
+			</Card.Content>
+		</Card>
+		<Card>
+			<Card.Content>
+				<p class="font-mono text-xs text-ink-soft">Investimentos</p>
+				<p class="mt-1 font-mono text-xl font-bold">
+					{formatCompactCurrency(data.summary.investment)}
+				</p>
+			</Card.Content>
+		</Card>
+		<Card>
+			<Card.Content>
+				<p class="font-mono text-xs text-ink-soft">Cartão de crédito</p>
+				{#if data.summary.credit > 0}
+					<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
+						-{formatCompactCurrency(data.summary.credit)}
+					</p>
+				{:else}
+					<p class="mt-1 font-mono text-xl font-bold">
+						{formatCompactCurrency(data.summary.credit)}
+					</p>
+				{/if}
+				<p class="font-mono text-xs text-ink-faint">fatura em aberto (dívida)</p>
+			</Card.Content>
 		</Card>
 	</div>
 

@@ -67,108 +67,114 @@
 
 	<!-- Nova categoria -->
 	<Card>
-		<form
-			method="POST"
-			action="?/add"
-			use:enhance={() => {
-				return async ({ result }) => {
-					await applyAction(result);
-					if (result.type === 'success') {
-						newName = '';
-						newColor = 'ctp-overlay1';
-						await invalidateAll();
-					}
-				};
-			}}
-			class="flex flex-col gap-3"
-		>
-			<h2 class="font-mono text-sm font-semibold">Nova categoria</h2>
-			<div class="flex flex-wrap items-center gap-2">
-				<Input
-					name="name"
-					placeholder="Nome (ex.: Psicólogo)"
-					bind:value={newName}
-					class="w-56"
-					required
-				/>
-				<Select name="color" options={colorOptions} bind:value={newColor} class="w-40" />
-				<Button type="submit" variant="primary" disabled={!newName.trim()}>Adicionar</Button>
-			</div>
-		</form>
+		<Card.Content>
+			<form
+				method="POST"
+				action="?/add"
+				use:enhance={() => {
+					return async ({ result }) => {
+						await applyAction(result);
+						if (result.type === 'success') {
+							newName = '';
+							newColor = 'ctp-overlay1';
+							await invalidateAll();
+						}
+					};
+				}}
+				class="flex flex-col gap-3"
+			>
+				<h2 class="font-mono text-sm font-semibold">Nova categoria</h2>
+				<div class="flex flex-wrap items-center gap-2">
+					<Input
+						name="name"
+						placeholder="Nome (ex.: Psicólogo)"
+						bind:value={newName}
+						class="w-56"
+						required
+					/>
+					<Select name="color" options={colorOptions} bind:value={newColor} class="w-40" />
+					<Button type="submit" variant="primary" disabled={!newName.trim()}>Adicionar</Button>
+				</div>
+			</form>
+		</Card.Content>
 	</Card>
 
 	<!-- Lista de categorias -->
 	<Card>
-		<div class="flex flex-col gap-2">
-			<h2 class="font-mono text-sm font-semibold">Suas categorias</h2>
-			<Input bind:value={searchQuery} placeholder="Buscar categoria…" />
-			{#each filteredCategories as cat (cat.name)}
-				<div
-					class="flex items-center justify-between gap-3 border-b border-rule py-2 last:border-b-0"
-				>
-					<div class="flex items-center gap-2">
-						<span class="inline-block size-3 rounded-full" style={swatchStyle(cat.color)}></span>
-						<span class="font-mono text-sm">{cat.name}</span>
-					</div>
-
-					{#if editingName === cat.name}
-						<form
-							method="POST"
-							action="?/update"
-							use:enhance={() => {
-								return async ({ result }) => {
-									await applyAction(result);
-									if (result.type === 'success') {
-										cancelEdit();
-										await invalidateAll();
-									}
-								};
-							}}
-							class="flex flex-wrap items-center gap-2"
-						>
-							<input type="hidden" name="name" value={cat.name} />
-							<Input name="newName" bind:value={editName} class="w-44" required />
-							<Select name="color" options={colorOptions} bind:value={editColor} class="w-36" />
-							<Button type="submit" size="sm" variant="primary">Salvar</Button>
-							<Button type="button" size="sm" variant="ghost" onclick={cancelEdit}>Cancelar</Button>
-						</form>
-					{:else}
+		<Card.Content>
+			<div class="flex flex-col gap-2">
+				<h2 class="font-mono text-sm font-semibold">Suas categorias</h2>
+				<Input bind:value={searchQuery} placeholder="Buscar categoria…" />
+				{#each filteredCategories as cat (cat.name)}
+					<div
+						class="flex items-center justify-between gap-3 border-b border-rule py-2 last:border-b-0"
+					>
 						<div class="flex items-center gap-2">
-							<Button size="sm" variant="outline" onclick={() => startEdit(cat.name, cat.color)}>
-								Editar
-							</Button>
+							<span class="inline-block size-3 rounded-full" style={swatchStyle(cat.color)}></span>
+							<span class="font-mono text-sm">{cat.name}</span>
+						</div>
+
+						{#if editingName === cat.name}
 							<form
 								method="POST"
-								action="?/remove"
+								action="?/update"
 								use:enhance={() => {
 									return async ({ result }) => {
 										await applyAction(result);
-										if (result.type === 'success') await invalidateAll();
+										if (result.type === 'success') {
+											cancelEdit();
+											await invalidateAll();
+										}
 									};
 								}}
+								class="flex flex-wrap items-center gap-2"
 							>
 								<input type="hidden" name="name" value={cat.name} />
-								<Button
-									type="submit"
-									size="sm"
-									variant="ghost"
-									class="text-ctp-red hover:text-ctp-red"
+								<Input name="newName" bind:value={editName} class="w-44" required />
+								<Select name="color" options={colorOptions} bind:value={editColor} class="w-36" />
+								<Button type="submit" size="sm" variant="primary">Salvar</Button>
+								<Button type="button" size="sm" variant="ghost" onclick={cancelEdit}
+									>Cancelar</Button
 								>
-									Excluir
-								</Button>
 							</form>
-						</div>
-					{/if}
-				</div>
-			{/each}
+						{:else}
+							<div class="flex items-center gap-2">
+								<Button size="sm" variant="outline" onclick={() => startEdit(cat.name, cat.color)}>
+									Editar
+								</Button>
+								<form
+									method="POST"
+									action="?/remove"
+									use:enhance={() => {
+										return async ({ result }) => {
+											await applyAction(result);
+											if (result.type === 'success') await invalidateAll();
+										};
+									}}
+								>
+									<input type="hidden" name="name" value={cat.name} />
+									<Button
+										type="submit"
+										size="sm"
+										variant="ghost"
+										class="text-ctp-red hover:text-ctp-red"
+									>
+										Excluir
+									</Button>
+								</form>
+							</div>
+						{/if}
+					</div>
+				{/each}
 
-			{#if filteredCategories.length === 0}
-				<p class="font-mono text-sm text-ink-soft">
-					{data.categories.length === 0
-						? 'Nenhuma categoria ainda.'
-						: 'Nenhuma categoria encontrada para a busca.'}
-				</p>
-			{/if}
-		</div>
+				{#if filteredCategories.length === 0}
+					<p class="font-mono text-sm text-ink-soft">
+						{data.categories.length === 0
+							? 'Nenhuma categoria ainda.'
+							: 'Nenhuma categoria encontrada para a busca.'}
+					</p>
+				{/if}
+			</div>
+		</Card.Content>
 	</Card>
 </div>

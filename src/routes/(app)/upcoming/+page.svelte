@@ -149,36 +149,42 @@
 
 	{#if data.future.length === 0}
 		<Card>
-			<p class="py-8 text-center font-mono text-sm text-ink-soft">
-				Nenhum lançamento futuro. As próximas faturas do cartão aparecem aqui quando o banco
-				pré-lançar as parcelas.
-			</p>
+			<Card.Content>
+				<p class="py-8 text-center font-mono text-sm text-ink-soft">
+					Nenhum lançamento futuro. As próximas faturas do cartão aparecem aqui quando o banco
+					pré-lançar as parcelas.
+				</p>
+			</Card.Content>
 		</Card>
 	{:else}
 		<!-- Resumo por conta -->
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 			<Card>
-				<p class="font-mono text-xs text-ink-soft">
-					{monthFilter ? `Fatura de ${monthLabel(monthFilter)}` : 'Total futuro'}
-				</p>
-				<p class="mt-1 font-mono text-xl font-bold text-accent">
-					{formatCompactCurrency(
-						monthFilter || accountFilter || searchQuery.trim() ? filteredTotal : data.total
-					)}
-				</p>
-				{#if monthFilter || accountFilter || searchQuery.trim()}
-					<p class="font-mono text-xs text-ink-faint">
-						de {formatCompactCurrency(data.total)} no total
+				<Card.Content>
+					<p class="font-mono text-xs text-ink-soft">
+						{monthFilter ? `Fatura de ${monthLabel(monthFilter)}` : 'Total futuro'}
 					</p>
-				{/if}
+					<p class="mt-1 font-mono text-xl font-bold text-accent">
+						{formatCompactCurrency(
+							monthFilter || accountFilter || searchQuery.trim() ? filteredTotal : data.total
+						)}
+					</p>
+					{#if monthFilter || accountFilter || searchQuery.trim()}
+						<p class="font-mono text-xs text-ink-faint">
+							de {formatCompactCurrency(data.total)} no total
+						</p>
+					{/if}
+				</Card.Content>
 			</Card>
 			{#each futureByAccount as acc (acc.id)}
 				<Card>
-					<p class="truncate font-mono text-xs text-ink-soft">{acc.name || 'Sem conta'}</p>
-					<p class="mt-1 font-mono text-xl font-bold">
-						{formatCompactCurrency(acc.total)}
-					</p>
-					<p class="font-mono text-xs text-ink-faint">{acc.count}x parcelas</p>
+					<Card.Content>
+						<p class="truncate font-mono text-xs text-ink-soft">{acc.name || 'Sem conta'}</p>
+						<p class="mt-1 font-mono text-xl font-bold">
+							{formatCompactCurrency(acc.total)}
+						</p>
+						<p class="font-mono text-xs text-ink-faint">{acc.count}x parcelas</p>
+					</Card.Content>
 				</Card>
 			{/each}
 		</div>
@@ -186,15 +192,17 @@
 		<!-- Gastos futuros por mês de fatura -->
 		{#if byMonth.length > 1}
 			<Card>
-				<div>
-					<h2 class="font-mono text-sm font-semibold">Gastos por fatura</h2>
-					<p class="font-mono text-xs text-ink-soft">
-						{byMonth.length} meses com parcelas pré-lançadas
-					</p>
-				</div>
-				<div class="mt-2 min-h-56 flex-1">
-					<Chart type="bar" series={monthSeries} options={monthChartOptions} />
-				</div>
+				<Card.Content>
+					<div>
+						<h2 class="font-mono text-sm font-semibold">Gastos por fatura</h2>
+						<p class="font-mono text-xs text-ink-soft">
+							{byMonth.length} meses com parcelas pré-lançadas
+						</p>
+					</div>
+					<div class="mt-2 min-h-56 flex-1">
+						<Chart type="bar" series={monthSeries} options={monthChartOptions} />
+					</div>
+				</Card.Content>
 			</Card>
 		{/if}
 

@@ -55,104 +55,110 @@ Regras:
 	<form method="POST" use:enhance class="flex flex-col gap-6">
 		<!-- Categorização -->
 		<Card>
-			<div class="flex flex-col gap-3">
-				<div class="flex items-start justify-between gap-4">
-					<div>
-						<h2 class="font-mono text-sm font-semibold">Categorização de transações</h2>
-						<p class="mt-1 font-mono text-xs text-ink-soft">
-							System prompt usado pra categorizar transações em lote. Define regras e comportamento
-							da IA ao classificar gastos.
-						</p>
+			<Card.Content>
+				<div class="flex flex-col gap-3">
+					<div class="flex items-start justify-between gap-4">
+						<div>
+							<h2 class="font-mono text-sm font-semibold">Categorização de transações</h2>
+							<p class="mt-1 font-mono text-xs text-ink-soft">
+								System prompt usado pra categorizar transações em lote. Define regras e
+								comportamento da IA ao classificar gastos.
+							</p>
+						</div>
+						<label class="flex shrink-0 cursor-pointer items-center gap-2">
+							<input
+								type="checkbox"
+								name="categorizationEnabled"
+								bind:checked={categorizationEnabled}
+								class="h-4 w-4 accent-ctp-green"
+							/>
+							<span class="font-mono text-xs text-ink-soft">Ativo</span>
+						</label>
 					</div>
-					<label class="flex shrink-0 cursor-pointer items-center gap-2">
-						<input
-							type="checkbox"
-							name="categorizationEnabled"
-							bind:checked={categorizationEnabled}
-							class="h-4 w-4 accent-ctp-green"
-						/>
-						<span class="font-mono text-xs text-ink-soft">Ativo</span>
-					</label>
+					<textarea
+						name="categorizationPrompt"
+						bind:value={categorizationPrompt}
+						rows="8"
+						placeholder="Você categoriza transações financeiras pessoais (Brasil). Categorias válidas: ..."
+						class="bg-paper-inset w-full resize-y rounded border border-rule px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+					></textarea>
+					<p class="font-mono text-xs text-ink-faint">
+						Deixe vazio pra usar o prompt padrão. Suas categorias (definidas em Perfil → Categorias)
+						são injetadas automaticamente.
+					</p>
+					<details class="font-mono text-xs text-ink-soft">
+						<summary class="cursor-pointer text-accent hover:underline">Ver prompt padrão</summary>
+						<pre
+							class="mt-2 border border-rule bg-paper-raised p-3 whitespace-pre-wrap text-ink-soft">{DEFAULT_CATEGORIZATION_PROMPT}</pre>
+					</details>
 				</div>
-				<textarea
-					name="categorizationPrompt"
-					bind:value={categorizationPrompt}
-					rows="8"
-					placeholder="Você categoriza transações financeiras pessoais (Brasil). Categorias válidas: ..."
-					class="bg-paper-inset w-full resize-y rounded border border-rule px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-				></textarea>
-				<p class="font-mono text-xs text-ink-faint">
-					Deixe vazio pra usar o prompt padrão. Suas categorias (definidas em Perfil → Categorias)
-					são injetadas automaticamente.
-				</p>
-				<details class="font-mono text-xs text-ink-soft">
-					<summary class="cursor-pointer text-accent hover:underline">Ver prompt padrão</summary>
-					<pre
-						class="mt-2 border border-rule bg-paper-raised p-3 whitespace-pre-wrap text-ink-soft">{DEFAULT_CATEGORIZATION_PROMPT}</pre>
-				</details>
-			</div>
+			</Card.Content>
 		</Card>
 
 		<!-- Relatório mensal -->
 		<Card>
-			<div class="flex flex-col gap-3">
-				<div class="flex items-start justify-between gap-4">
-					<div>
-						<h2 class="font-mono text-sm font-semibold">Relatório mensal</h2>
-						<p class="mt-1 font-mono text-xs text-ink-soft">
-							Template do prompt usado pra gerar o resumo mensal. A IA recebe seus dados financeiros
-							e segue essas instruções pra escrever o relatório.
-						</p>
+			<Card.Content>
+				<div class="flex flex-col gap-3">
+					<div class="flex items-start justify-between gap-4">
+						<div>
+							<h2 class="font-mono text-sm font-semibold">Relatório mensal</h2>
+							<p class="mt-1 font-mono text-xs text-ink-soft">
+								Template do prompt usado pra gerar o resumo mensal. A IA recebe seus dados
+								financeiros e segue essas instruções pra escrever o relatório.
+							</p>
+						</div>
+						<label class="flex shrink-0 cursor-pointer items-center gap-2">
+							<input
+								type="checkbox"
+								name="reportEnabled"
+								bind:checked={reportEnabled}
+								class="h-4 w-4 accent-ctp-green"
+							/>
+							<span class="font-mono text-xs text-ink-soft">Ativo</span>
+						</label>
 					</div>
-					<label class="flex shrink-0 cursor-pointer items-center gap-2">
-						<input
-							type="checkbox"
-							name="reportEnabled"
-							bind:checked={reportEnabled}
-							class="h-4 w-4 accent-ctp-green"
-						/>
-						<span class="font-mono text-xs text-ink-soft">Ativo</span>
-					</label>
+					<textarea
+						name="reportPrompt"
+						bind:value={reportPrompt}
+						rows="8"
+						placeholder="Escreva um parágrafo curto (3-5 frases, em português do Brasil, tom direto e prático) ..."
+						class="bg-paper-inset w-full resize-y rounded border border-rule px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+					></textarea>
 				</div>
-				<textarea
-					name="reportPrompt"
-					bind:value={reportPrompt}
-					rows="8"
-					placeholder="Escreva um parágrafo curto (3-5 frases, em português do Brasil, tom direto e prático) ..."
-					class="bg-paper-inset w-full resize-y rounded border border-rule px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-				></textarea>
-			</div>
+			</Card.Content>
 		</Card>
 
 		<!-- Chat IA -->
 		<Card>
-			<div class="flex flex-col gap-3">
-				<div class="flex items-start justify-between gap-4">
-					<div>
-						<h2 class="font-mono text-sm font-semibold">Chat com IA</h2>
-						<p class="mt-1 font-mono text-xs text-ink-soft">
-							System prompt do chat conversacional. Define a personalidade e comportamento da IA
-							quando o usuário faz perguntas sobre seus gastos.
-						</p>
+			<Card.Content>
+				<div class="flex flex-col gap-3">
+					<div class="flex items-start justify-between gap-4">
+						<div>
+							<h2 class="font-mono text-sm font-semibold">Chat com IA</h2>
+							<p class="mt-1 font-mono text-xs text-ink-soft">
+								System prompt do chat conversacional. Define a personalidade e comportamento da IA
+								quando o usuário faz perguntas sobre seus gastos.
+							</p>
+						</div>
+						<label class="flex shrink-0 cursor-pointer items-center gap-2">
+							<input
+								type="checkbox"
+								name="chatEnabled"
+								bind:checked={chatEnabled}
+								class="h-4 w-4 accent-ctp-green"
+							/>
+							<span class="font-mono text-xs text-ink-soft">Ativo</span>
+						</label>
 					</div>
-					<label class="flex shrink-0 cursor-pointer items-center gap-2">
-						<input
-							type="checkbox"
-							name="chatEnabled"
-							bind:checked={chatEnabled}
-							class="h-4 w-4 accent-ctp-green"
-						/>
-						<span class="font-mono text-xs text-ink-soft">Ativo</span>
-					</label>
+					<textarea
+						name="chatSystemPrompt"
+						bind:value={chatSystemPrompt}
+						rows="8"
+						placeholder="Você é um assistente financeiro pessoal. Responda em português do Brasil, ..."
+						class="bg-paper-inset w-full resize-y rounded border border-rule px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+					></textarea>
 				</div>
-				<textarea
-					name="chatSystemPrompt"
-					bind:value={chatSystemPrompt}
-					rows="8"
-					placeholder="Você é um assistente financeiro pessoal. Responda em português do Brasil, ..."
-					class="bg-paper-inset w-full resize-y rounded border border-rule px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-				></textarea>
-			</div>
+			</Card.Content>
 		</Card>
 
 		{#if form?.success}

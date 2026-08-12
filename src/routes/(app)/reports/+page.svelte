@@ -170,39 +170,43 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 
 	{#if data.latestReport}
 		<Card>
-			<div class="flex flex-col gap-4">
-				<div class="flex items-center justify-between">
-					<div>
-						<h2 class="font-mono text-sm font-semibold">
-							Relatório de {data.latestReport.yearMonth}
-						</h2>
-						<p class="mt-1 font-mono text-xs text-ink-soft">
-							Gerado em {new Date(data.latestReport.generatedAt).toLocaleDateString('pt-BR')}
+			<Card.Content>
+				<div class="flex flex-col gap-4">
+					<div class="flex items-center justify-between">
+						<div>
+							<h2 class="font-mono text-sm font-semibold">
+								Relatório de {data.latestReport.yearMonth}
+							</h2>
+							<p class="mt-1 font-mono text-xs text-ink-soft">
+								Gerado em {new Date(data.latestReport.generatedAt).toLocaleDateString('pt-BR')}
+							</p>
+						</div>
+						<Button onclick={generatePdf} disabled={isGenerating} size="sm">
+							{isGenerating ? 'Gerando...' : 'Baixar PDF'}
+						</Button>
+					</div>
+
+					{#if error}
+						<p class="font-mono text-sm text-destructive">{error}</p>
+					{/if}
+
+					<!-- Preview do relatório -->
+					<div class="bg-paper-inset border border-rule p-4">
+						<p class="font-mono text-sm text-ink">
+							{data.latestReport.summary.narrative ?? 'Relatório financeiro do mês.'}
 						</p>
 					</div>
-					<Button onclick={generatePdf} disabled={isGenerating} size="sm">
-						{isGenerating ? 'Gerando...' : 'Baixar PDF'}
-					</Button>
 				</div>
-
-				{#if error}
-					<p class="font-mono text-sm text-destructive">{error}</p>
-				{/if}
-
-				<!-- Preview do relatório -->
-				<div class="bg-paper-inset border border-rule p-4">
-					<p class="font-mono text-sm text-ink">
-						{data.latestReport.summary.narrative ?? 'Relatório financeiro do mês.'}
-					</p>
-				</div>
-			</div>
+			</Card.Content>
 		</Card>
 	{:else}
 		<Card>
-			<p class="py-4 text-center font-mono text-sm text-ink-soft">
-				Nenhum relatório disponível ainda. Os relatórios são gerados automaticamente no dia 1 de
-				cada mês.
-			</p>
+			<Card.Content>
+				<p class="py-4 text-center font-mono text-sm text-ink-soft">
+					Nenhum relatório disponível ainda. Os relatórios são gerados automaticamente no dia 1 de
+					cada mês.
+				</p>
+			</Card.Content>
 		</Card>
 	{/if}
 </div>

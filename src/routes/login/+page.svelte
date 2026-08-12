@@ -18,34 +18,40 @@
 	>
 		← tabelafin
 	</a>
-	<Card title="TabelaFin" description="Entre com sua conta para acessar suas finanças.">
-		<form method="POST" use:enhance class="flex flex-col gap-4">
-			<div class="flex flex-col gap-2">
-				<Label for="email">E-mail</Label>
-				<Input id="email" name="email" type="email" placeholder="seu@email.com" required />
-			</div>
+	<Card>
+		<Card.Header>
+			<Card.Title>TabelaFin</Card.Title>
+			<Card.Description>Entre com sua conta para acessar suas finanças.</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<form method="POST" use:enhance class="flex flex-col gap-4">
+				<div class="flex flex-col gap-2">
+					<Label for="email">E-mail</Label>
+					<Input id="email" name="email" type="email" placeholder="seu@email.com" required />
+				</div>
 
-			<div class="flex flex-col gap-2">
-				<Label for="password">Senha</Label>
-				<Input
-					id="password"
-					name="password"
-					type="password"
-					autocomplete="current-password"
-					required
-				/>
-			</div>
+				<div class="flex flex-col gap-2">
+					<Label for="password">Senha</Label>
+					<Input
+						id="password"
+						name="password"
+						type="password"
+						autocomplete="current-password"
+						required
+					/>
+				</div>
 
-			{#if form?.error}
-				<p class="text-sm text-destructive">{form.error}</p>
-			{/if}
+				{#if form?.error}
+					<p class="text-sm text-destructive">{form.error}</p>
+				{/if}
 
-			<Button type="submit">Entrar</Button>
+				<Button type="submit">Entrar</Button>
 
-			<p class="text-center text-sm text-ink-soft">
-				Não tem uma conta?
-				<a href={resolve('/signup')} class="text-accent hover:underline">Cadastre-se</a>
-			</p>
-		</form>
+				<p class="text-center text-sm text-ink-soft">
+					Não tem uma conta?
+					<a href={resolve('/signup')} class="text-accent hover:underline">Cadastre-se</a>
+				</p>
+			</form>
+		</Card.Content>
 	</Card>
 </div>

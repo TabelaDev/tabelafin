@@ -96,7 +96,7 @@
 	</header>
 
 	<Card>
-		{#snippet header()}
+		<Card.Header>
 			<div class="flex flex-wrap items-center justify-between gap-2">
 				<div>
 					<h2 class="font-mono text-sm font-semibold">
@@ -120,14 +120,16 @@
 					>
 				</div>
 			</div>
-		{/snippet}
+		</Card.Header>
 
-		<div class="mt-2" style={`height: ${chartHeight}px`}>
-			{#if series[0].data.length > 0}
-				<Chart type="bar" {series} {options} onLegendClick={toggleCategory} />
-			{:else}
-				<p class="py-12 text-center font-mono text-sm text-ink-soft">Sem dados ainda.</p>
-			{/if}
-		</div>
+		<Card.Content>
+			<div class="mt-2" style={`height: ${chartHeight}px`}>
+				{#if series[0].data.length > 0}
+					<Chart type="bar" {series} {options} onLegendClick={toggleCategory} />
+				{:else}
+					<p class="py-12 text-center font-mono text-sm text-ink-soft">Sem dados ainda.</p>
+				{/if}
+			</div>
+		</Card.Content>
 	</Card>
 </div>
