@@ -1,25 +1,16 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import {
-		Button,
-		ThemeToggle,
-		LandingHero,
-		LandingSteps,
-		LandingFeatures,
-		LandingRoadmap,
-		LandingFooter,
-		SectionHeading
-	} from '@tabeladev/tabelawebui';
-	import CodeXmlIcon from '@lucide/svelte/icons/code-xml';
-	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
-	import KeyRoundIcon from '@lucide/svelte/icons/key-round';
-	import LandmarkIcon from '@lucide/svelte/icons/landmark';
+	import BadgeDollarSignIcon from '@lucide/svelte/icons/badge-dollar-sign';
 	import ChartLineIcon from '@lucide/svelte/icons/chart-line';
 	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
-	import SmartphoneIcon from '@lucide/svelte/icons/smartphone';
+	import CodeXmlIcon from '@lucide/svelte/icons/code-xml';
 	import FileUpIcon from '@lucide/svelte/icons/file-up';
+	import KeyRoundIcon from '@lucide/svelte/icons/key-round';
+	import LandmarkIcon from '@lucide/svelte/icons/landmark';
+	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
+	import SmartphoneIcon from '@lucide/svelte/icons/smartphone';
 	import TagsIcon from '@lucide/svelte/icons/tags';
-	import BadgeDollarSignIcon from '@lucide/svelte/icons/badge-dollar-sign';
+	import { Button, Landing, SectionHeading, ThemeToggle } from '@tabeladev/tabelawebui';
 
 	const REPO_URL = 'https://github.com/TabelaDev/tabelafin';
 
@@ -52,12 +43,10 @@
 </script>
 
 {#snippet heroTitle()}
-	<span class="block">Suas contas.</span>
-	<span class="block">Sua chave de IA.</span>
-	<span class="block">Zero caixa preta.</span>
+	Tabela<span style="color: var(--twui-accent);">Fin</span>
 {/snippet}
 {#snippet heroActions()}
-	<Button href={resolve('/signup')} variant="primary" size="lg" class="shadow-glow">Começar</Button>
+	<Button href={resolve('/signup')} variant="primary" size="lg">Começar</Button>
 	<Button href={REPO_URL} target="_blank" rel="noreferrer" variant="outline" size="lg">
 		<CodeXmlIcon class="size-4" />
 		Ver o código
@@ -108,15 +97,12 @@
 		<header class="sticky top-0 z-40 border-b border-rule bg-background/80 backdrop-blur-sm">
 			<div class="flex h-14 items-center justify-between gap-4 px-6">
 				<a href={resolve('/')} class="font-mono text-sm font-semibold tracking-tight">tabelafin</a>
-				<div class="flex items-center gap-2">
-					<ThemeToggle />
-					<Button href={resolve('/signup')} size="sm">Começar</Button>
-				</div>
+				<ThemeToggle />
 			</div>
 		</header>
 
 		<div class="flex flex-col gap-24 px-6 pt-16 pb-8 md:pt-24">
-			<LandingHero
+			<Landing.Hero
 				eyebrow="Suas finanças sem mistério"
 				title={heroTitle}
 				lead="O TabelaFin conecta Open Finance, categoriza com regras locais ou a sua própria IA e mostra os números numa tabela direta. Sem assinatura, sem planos empurrados — seus dados ficam no seu banco."
@@ -127,9 +113,9 @@
 			<section class="flex flex-col gap-8">
 				<SectionHeading
 					eyebrow="Como funciona"
-					title="Quatro passos, e seus números fazem sentido."
+					title="Quatro passos e seus números fazem sentido."
 				/>
-				<LandingSteps {steps} />
+				<Landing.Steps {steps} />
 			</section>
 
 			<section class="flex flex-col gap-8">
@@ -137,7 +123,7 @@
 					eyebrow="Recursos"
 					title="O que ele faz e o que ele não faz com os seus dados."
 				/>
-				<LandingFeatures
+				<Landing.Features
 					features={[
 						{
 							icon: keyIcon,
@@ -191,7 +177,7 @@
 					title="O que vem depois."
 					lead="Nada disso existe ainda. Tá aqui porque o roadmap é público — igual o código."
 				/>
-				<LandingRoadmap
+				<Landing.Roadmap
 					items={[
 						{ icon: phoneIcon, label: 'Push das suas contas' },
 						{ icon: checkIcon, label: 'Orçamentos por categoria' },
@@ -200,7 +186,7 @@
 				/>
 			</section>
 
-			<LandingFooter
+			<Landing.Footer
 				name="tabelafin"
 				license="AGPL-3.0 · SvelteKit + Cloudflare Workers"
 				repoUrl={REPO_URL}
