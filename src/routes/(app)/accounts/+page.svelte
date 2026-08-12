@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { Accordion, Badge, Card, Input, Select, Table } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency } from '$lib/format';
+	import { resolve } from '$app/paths';
 	import { signedBalance } from '$lib/accounts';
+	import { formatCompactCurrency } from '$lib/format';
+	import { Accordion, Badge, Button, Card, Input, Select, Table } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -116,9 +117,13 @@
 		</Card>
 		<Card>
 			<p class="font-mono text-xs text-ink-soft">Cartão de crédito</p>
-			<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
-				-{formatCompactCurrency(data.summary.credit)}
-			</p>
+			{#if data.summary.credit > 0}
+				<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
+					-{formatCompactCurrency(data.summary.credit)}
+				</p>
+			{:else}
+				<p class="mt-1 font-mono text-xl font-bold">{formatCompactCurrency(data.summary.credit)}</p>
+			{/if}
 			<p class="font-mono text-xs text-ink-faint">fatura em aberto (dívida)</p>
 		</Card>
 	</div>
@@ -138,7 +143,7 @@
 	{/if}
 
 	<!-- Filtros -->
-	<div class="flex flex-wrap items-center gap-2">
+	<div class="flex flex-wrap items-center gap-2 lg:flex-nowrap">
 		<Input bind:value={searchQuery} placeholder="Buscar conta..." class="w-full min-w-40 sm:w-64" />
 		<Select class="w-48" options={typeOptions} bind:value={typeFilter} />
 		<Select
@@ -149,17 +154,20 @@
 			filterPlaceholder="Buscar instituição…"
 		/>
 		{#if hasFilters}
-			<p class="font-mono text-xs text-ink-soft">
+			<p class="shrink-0 font-mono text-xs text-ink-soft">
 				{rows.length}
 				{rows.length === 1 ? 'conta' : 'contas'} · {currency.format(filteredTotal)}
 			</p>
 		{/if}
+		<a href={resolve('/accounts')} class="ml-auto">
+			<Button variant="ghost">Limpar</Button>
+		</a>
 	</div>
 
 	<!-- Tabela de contas -->
 	<div class="overflow-x-auto border border-rule bg-paper-raised">
 		<Table
-			widths={[4, 1, 3, 3]}
+			widths={[4, 1, 1.5, 1]}
 			columns={[
 				{ key: 'name', label: 'Conta', sortable: true },
 				{ key: 'institution', label: 'Instituição', sortable: true },
@@ -168,7 +176,7 @@
 			]}
 			{rows}
 			rowKey="id"
-			pageSize={25}
+			pageSize={10}
 			pageSizeOptions={[10, 25, 50, 100]}
 		>
 			{#snippet cell(row: Record<string, unknown>, key: string)}

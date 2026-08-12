@@ -1,8 +1,7 @@
 import { redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
-import { financeAccounts as accounts } from '$lib/server/db/schema';
+import { getAccountsByUser } from '$lib/server/db/accounts';
 import { signedBalance, sumSignedBalance } from '$lib/accounts';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
@@ -11,7 +10,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
 
-	const userAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId));
+	const userAccounts = await getAccountsByUser(db, userId);
 
 	const checking = userAccounts
 		.filter((a) => a.type === 'checking')
