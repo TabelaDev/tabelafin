@@ -12,7 +12,9 @@ function devPort() {
 			.split('\n')
 			.find((l) => l.startsWith(`${cwd}: `));
 		if (line) return Number(line.slice(cwd.length + 2));
-	} catch {}
+	} catch {
+		/* dev-ports.yaml may not exist yet */
+	}
 	return parseInt(process.env.DEV_PORT || '5173', 10);
 }
 
