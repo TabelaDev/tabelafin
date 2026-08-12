@@ -5,6 +5,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 
 export default defineConfig({
+	server: {
+		port: parseInt(process.env.DEV_PORT || '5173', 10)
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({
