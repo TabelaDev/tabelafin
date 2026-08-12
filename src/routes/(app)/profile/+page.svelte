@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { Button, Card } from '@tabeladev/tabelawebui';
+	import { Button, Card, Divider } from '@tabeladev/tabelawebui';
 	import { openOnboarding } from '$lib/onboarding-store';
 	import { openStatementImport } from '$lib/statement-import-store';
 	import type { PageData } from './$types';
@@ -46,6 +46,56 @@
 		</div>
 	</Card>
 
+	<!-- Open Finance -->
+	<Card>
+		<div class="flex items-center justify-between gap-4">
+			<div>
+				<h2 class="font-mono text-sm font-semibold">Open Finance</h2>
+				<p class="mt-1 font-mono text-xs text-ink-soft">
+					Sincroniza suas contas automaticamente. Sem conexão, você lança transações manualmente.
+				</p>
+			</div>
+			{#if data.pluggyConfigured}
+				<span
+					class="border border-signal bg-signal-soft px-3 py-1 font-mono text-xs font-medium text-signal"
+					>Conectado</span
+				>
+			{:else}
+				<span
+					class="border border-danger bg-danger-soft px-3 py-1 font-mono text-xs font-medium text-danger"
+					>Não conectado</span
+				>
+			{/if}
+		</div>
+		<div class="mt-3 flex items-center justify-between gap-3">
+			{#if data.pluggyConfigured}
+				<p class="font-mono text-xs text-ink-soft">Contas sincronizando automaticamente.</p>
+				<Button variant="outline" size="sm" onclick={() => openOnboarding('pluggy')}>
+					Reconectar
+				</Button>
+			{:else}
+				<p class="font-mono text-xs text-ink-soft">Nenhuma conta conectada.</p>
+				<Button variant="primary" size="sm" onclick={() => openOnboarding('pluggy')}>
+					Conectar Open Finance
+				</Button>
+			{/if}
+		</div>
+	</Card>
+
+	<!-- Importar extratos do Gmail via Takeout -->
+	<Card>
+		<div class="flex items-center justify-between gap-4">
+			<div>
+				<h2 class="font-mono text-sm font-semibold">Importar extratos</h2>
+				<p class="mt-1 font-mono text-xs text-ink-soft">
+					Traz o histórico de extratos que chegaram por email, a partir de um export do Google
+					Takeout. Cada extrato é lido pelo seu modelo de IA.
+				</p>
+			</div>
+			<Button variant="outline" onclick={() => openStatementImport()}>Importar</Button>
+		</div>
+	</Card>
+
 	<!-- Ocultar IA -->
 	<Card>
 		<form
@@ -79,6 +129,8 @@
 			</label>
 		</form>
 	</Card>
+
+	<Divider label="IA" />
 
 	{#if !data.hideAi}
 		<!-- Categorização por IA (chave/modelo) -->
@@ -133,69 +185,4 @@
 			</Card>
 		</a>
 	{/if}
-
-	<!-- Categorias -->
-	<a href={resolve('/profile/categories')} class="block">
-		<Card>
-			<div class="flex items-center justify-between">
-				<div>
-					<h2 class="font-mono text-sm font-semibold">Categorias</h2>
-					<p class="mt-1 font-mono text-xs text-ink-soft">
-						Crie e edite suas categorias de transação (nome e cor).
-					</p>
-				</div>
-				<span class="font-mono text-sm text-accent">→</span>
-			</div>
-		</Card>
-	</a>
-
-	<!-- Importar extratos do Gmail via Takeout -->
-	<Card>
-		<div class="flex items-center justify-between gap-4">
-			<div>
-				<h2 class="font-mono text-sm font-semibold">Importar extratos</h2>
-				<p class="mt-1 font-mono text-xs text-ink-soft">
-					Traz o histórico de extratos que chegaram por email, a partir de um export do Google
-					Takeout. Cada extrato é lido pelo seu modelo de IA.
-				</p>
-			</div>
-			<Button variant="outline" onclick={() => openStatementImport()}>Importar</Button>
-		</div>
-	</Card>
-
-	<!-- Open Finance -->
-	<Card>
-		<div class="flex items-center justify-between gap-4">
-			<div>
-				<h2 class="font-mono text-sm font-semibold">Open Finance</h2>
-				<p class="mt-1 font-mono text-xs text-ink-soft">
-					Sincroniza suas contas automaticamente. Sem conexão, você lança transações manualmente.
-				</p>
-			</div>
-			{#if data.pluggyConfigured}
-				<span
-					class="border border-signal bg-signal-soft px-3 py-1 font-mono text-xs font-medium text-signal"
-					>Conectado</span
-				>
-			{:else}
-				<span
-					class="border border-danger bg-danger-soft px-3 py-1 font-mono text-xs font-medium text-danger"
-					>Não conectado</span
-				>
-			{/if}
-		</div>
-		<div class="mt-3 flex items-center justify-between gap-3">
-			{#if data.pluggyConfigured}
-				<p class="font-mono text-xs text-ink-soft">Contas sincronizando automaticamente.</p>
-				<Button variant="outline" size="sm" onclick={() => openOnboarding('pluggy')}>
-					Reconectar
-				</Button>
-			{:else}
-				<p class="font-mono text-xs text-ink-soft">Nenhuma conta conectada.</p>
-				<Button variant="primary" size="sm" onclick={() => openOnboarding('pluggy')}>
-					Conectar Open Finance
-				</Button>
-			{/if}
-		</div>
-	</Card>
 </div>
