@@ -24,6 +24,14 @@ describe('formatCurrencyLabel', () => {
 	it('keeps negative values signed', () => {
 		expect(spaces(formatCurrencyLabel(-40))).toBe('-R$ 40');
 	});
+
+	// A signed credit-card balance of zero arrives as -0, which Intl renders as
+	// "-R$ 0" — a nil balance must not show a minus sign.
+	it('normalises negative zero to a plain zero', () => {
+		expect(spaces(formatCurrencyLabel(-0))).toBe('R$ 0');
+		expect(spaces(formatCompactCurrency(-0))).toBe('R$ 0,00');
+		expect(spaces(formatCompactNumber(-0))).toBe('0');
+	});
 });
 
 describe('formatCompactCurrency', () => {
