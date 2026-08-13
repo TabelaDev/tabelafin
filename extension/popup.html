@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			body {
+				width: 280px;
+				padding: 12px;
+				font-family: ui-monospace, 'JetBrains Mono', monospace;
+				font-size: 13px;
+				color: #4c4f69;
+				background: #eff1f5;
+			}
+			h1 {
+				font-size: 14px;
+				margin: 0 0 10px;
+			}
+			label {
+				display: block;
+				margin: 0 0 4px;
+				font-size: 11px;
+				color: #6c6f85;
+			}
+			input {
+				width: 100%;
+				box-sizing: border-box;
+				padding: 5px 6px;
+				margin-bottom: 10px;
+				border: 1px solid #bcc0cc;
+				background: #fff;
+			}
+			button {
+				width: 100%;
+				padding: 6px;
+				border: 1px solid #276b1a;
+				background: #276b1a;
+				color: #fff;
+				cursor: pointer;
+				font-family: inherit;
+			}
+			.muted {
+				font-size: 11px;
+				color: #6c6f85;
+			}
+			.ok {
+				color: #40a02b;
+			}
+			.err {
+				color: #d20f39;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>TabelaFin · Bridge Pluggy</h1>
+
+		<label for="origin">Origem do app</label>
+		<input id="origin" placeholder="https://tabelafin.ianptkcs-023.workers.dev" />
+
+		<label for="device">Código de pareamento</label>
+		<input id="device" placeholder="cole o código gerado no app" />
+
+		<button id="save">Salvar</button>
+
+		<div id="status" class="muted" style="margin-top: 10px"></div>
+		<div id="result" style="margin-top: 6px"></div>
+
+		<script src="popup.js"></script>
+	</body>
+</html>

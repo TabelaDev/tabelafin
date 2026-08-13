@@ -1,0 +1,28 @@
+{
+	"manifest_version": 3,
+	"name": "TabelaFin — Bridge do Meu Pluggy",
+	"version": "0.1.0",
+	"description": "Captura o token do Meu Pluggy e sincroniza automaticamente com o TabelaFin.",
+	"permissions": ["storage"],
+	"host_permissions": [
+		"https://*.pluggy.ai/*",
+		"https://*.ianptkcs-023.workers.dev/*",
+		"http://localhost/*",
+		"http://127.0.0.1/*"
+	],
+	"background": {
+		"service_worker": "background.js"
+	},
+	"content_scripts": [
+		{
+			"matches": ["https://meu.pluggy.ai/*"],
+			"js": ["content.js"],
+			"run_at": "document_start",
+			"world": "MAIN"
+		}
+	],
+	"action": {
+		"default_popup": "popup.html",
+		"default_title": "TabelaFin"
+	}
+}
