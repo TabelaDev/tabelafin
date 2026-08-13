@@ -43,6 +43,12 @@ export function formatCurrencyLabel(value: unknown): string {
 	return labelBRL.format(normaliseZero(n));
 }
 
+// Full BRL format, the same `fullBRL` the compact helpers use internally. Pages
+// used to re-create this Intl.NumberFormat themselves — a single export here.
+export function formatCurrency(value: number): string {
+	return fullBRL.format(normaliseZero(value));
+}
+
 // Bare compact format (no currency), for chart axes and tooltips: "2,5 mil",
 // "1,2 M". Used where the "R$" prefix already appears in the surrounding text.
 export function formatCompactNumber(value: number, threshold = 100_000): string {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button, Input, Label, Card } from '@tabeladev/tabelawebui';
+	import { Button, Input, Label, Card, Wordmark } from '@tabeladev/tabelawebui';
 	import { resolve } from '$app/paths';
 	import type { ActionData } from './$types';
 
@@ -16,11 +16,11 @@
 		href={resolve('/')}
 		class="absolute top-6 left-6 font-mono text-sm font-semibold text-ink-soft transition-colors hover:text-ink"
 	>
-		← tabelafin
+		← <Wordmark prefix="Tabela" suffix="Fin" />
 	</a>
 	<Card>
 		<Card.Header>
-			<Card.Title>TabelaFin</Card.Title>
+			<Card.Title><Wordmark prefix="Tabela" suffix="Fin" /></Card.Title>
 			<Card.Description>Crie sua conta para começar a controlar suas finanças.</Card.Description>
 		</Card.Header>
 		<Card.Content>

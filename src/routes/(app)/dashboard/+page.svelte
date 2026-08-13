@@ -2,18 +2,14 @@
 	import CategoryBadge from '$lib/CategoryBadge.svelte';
 	import { resolve } from '$app/paths';
 	import Chart from '$lib/Chart.svelte';
+	import { horizontalBarOptions } from '$lib/charts';
 	import { Card, Table, Button } from '@tabeladev/tabelawebui';
 	import type { ApexOptions } from 'apexcharts';
-	import { formatCompactCurrency, formatCurrencyLabel } from '$lib/format';
+	import { formatCompactCurrency, formatCurrency } from '$lib/format';
 	import { signedBalance } from '$lib/accounts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-
-	const currency = new Intl.NumberFormat('pt-BR', {
-		style: 'currency',
-		currency: 'BRL'
-	});
 
 	// The current month as YYYY-MM — used by the spending/income card links that
 	// open the transactions page with the filters already applied.
@@ -34,26 +30,12 @@
 	const barSeries = $derived([
 		{ name: 'Gasto', data: data.summary.topCategories.map((c) => c.value) }
 	]);
-	const barOptions = $derived<ApexOptions>({
-		plotOptions: {
-			bar: {
-				horizontal: true,
-				borderRadius: 0,
-				barHeight: '60%',
-				// Anchors the label at the bar tip; with offsetX + textAnchor it
-				// sits outside the bar, to the right — never on top of the accent.
-				dataLabels: { position: 'top' }
-			}
-		},
-		xaxis: { categories: data.summary.topCategories.map((c) => c.name) },
-		dataLabels: {
-			enabled: true,
-			offsetX: 6,
-			textAnchor: 'start',
-			formatter: formatCurrencyLabel,
-			style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }
-		}
-	});
+	const barOptions = $derived<ApexOptions>(
+		horizontalBarOptions({
+			categories: data.summary.topCategories.map((c) => c.name),
+			barHeight: '60%'
+		})
+	);
 
 	const areaSeries = $derived([{ name: 'Saldo', data: data.summary.monthValues }]);
 	const areaOptions = $derived<ApexOptions>({
@@ -78,7 +60,7 @@
 		// already appends the slice's percentage on a donut.
 		tooltip: {
 			y: {
-				formatter: (value) => currency.format(Number(value))
+				formatter: (value) => formatCurrency(Number(value))
 			}
 		}
 	});
@@ -152,7 +134,7 @@
 					Gastos do mês →
 				</a>
 				<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
-					{currency.format(data.summary.monthExpense)}
+					{formatCurrency(data.summary.monthExpense)}
 				</p>
 				{#if expenseDelta !== null}
 					<span class="font-mono text-xs {expenseDelta > 0 ? 'text-ctp-red' : 'text-ctp-green'}">
@@ -171,7 +153,7 @@
 					Receitas do mês →
 				</a>
 				<p class="mt-1 font-mono text-xl font-bold text-ctp-green">
-					{currency.format(data.summary.monthIncome)}
+					{formatCurrency(data.summary.monthIncome)}
 				</p>
 			</Card.Content>
 		</Card>
@@ -317,8 +299,7 @@
 							<span class="text-xs text-ink-faint">[sem categoria]</span>
 						{/if}
 					{:else if key === 'amount'}
-						<span class={amountClass(Number(row.amount))}
-							>{currency.format(Number(row.amount))}</span
+						<span class={amountClass(Number(row.amount))}>{formatCurrency(Number(row.amount))}</span
 						>
 					{:else}
 						{row.description}

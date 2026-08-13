@@ -1,13 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { signedBalance } from '$lib/accounts';
-	import { formatCompactCurrency } from '$lib/format';
+	import { formatCompactCurrency, formatCurrency } from '$lib/format';
 	import { Accordion, Badge, Button, Card, Input, Select, Table } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-
-	const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 	const typeLabel: Record<string, string> = {
 		checking: 'Conta corrente',
@@ -166,7 +164,7 @@
 		{#if hasFilters}
 			<p class="shrink-0 font-mono text-xs text-ink-soft">
 				{rows.length}
-				{rows.length === 1 ? 'conta' : 'contas'} · {currency.format(filteredTotal)}
+				{rows.length === 1 ? 'conta' : 'contas'} · {formatCurrency(filteredTotal)}
 			</p>
 		{/if}
 		<a href={resolve('/accounts')} class="ml-auto">
@@ -196,7 +194,7 @@
 					<Badge>[{row.type}]</Badge>
 				{:else if key === 'balance'}
 					<span class={amountClass(Number(row.balance))}>
-						{currency.format(Number(row.balance))}
+						{formatCurrency(Number(row.balance))}
 					</span>
 				{:else}
 					<span class="text-xs text-ink-soft">{row.institution}</span>

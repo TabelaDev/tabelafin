@@ -1,13 +1,11 @@
 <script lang="ts">
 	import Chart from '$lib/Chart.svelte';
 	import { Card, Input, Select, Table } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency, formatCurrencyLabel } from '$lib/format';
+	import { formatCompactCurrency, formatCurrency, formatCurrencyLabel } from '$lib/format';
 	import type { ApexOptions } from 'apexcharts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-
-	const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 	function formatDate(ts: Date | string): string {
 		const d = typeof ts === 'string' ? new Date(ts) : ts;
@@ -249,8 +247,7 @@
 					{#if key === 'date'}
 						<span class="text-xs text-ink-soft">{formatDate(new Date(Number(row.date)))}</span>
 					{:else if key === 'amount'}
-						<span class="font-mono text-sm text-ctp-red">{currency.format(Number(row.amount))}</span
-						>
+						<span class="font-mono text-sm text-ctp-red">{formatCurrency(Number(row.amount))}</span>
 					{:else if key === 'accountName'}
 						<span class="text-xs text-ink-faint">{row.accountName}</span>
 					{:else}

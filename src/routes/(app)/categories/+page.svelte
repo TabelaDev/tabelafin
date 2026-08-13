@@ -1,13 +1,12 @@
 <script lang="ts">
 	import Chart from '$lib/Chart.svelte';
+	import { horizontalBarOptions } from '$lib/charts';
 	import { resolve } from '$app/paths';
 	import { Card, Select } from '@tabeladev/tabelawebui';
-	import { formatCurrencyLabel } from '$lib/format';
+	import { formatCurrency } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-
-	const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 	// Gastos (expense) vs Receitas (income) por categoria — o toggle mora no card.
 	let direction: 'expense' | 'income' = $state('expense');
@@ -48,34 +47,13 @@
 			data: sorted.map((c) => (hidden.includes(c.name) ? null : isExpense ? c.expense : c.income))
 		}
 	]);
-	const options = $derived({
-		chart: { type: 'bar' as const, stacked: false },
-		plotOptions: {
-			bar: {
-				horizontal: true,
-				borderRadius: 2,
-				// `distributed` gives each bar its own palette colour AND turns the
-				// legend into a per-category list. Clicks are handled by the page
-				// (onLegendClick) because ApexCharts disables its own legend toggle
-				// on distributed bar charts.
-				distributed: true,
-				// Anchors the label at the tip (end) of the bar instead of the
-				// middle — with `offsetX` + `textAnchor:'start'` it sits outside
-				// the bar, to the right, so short bars don't cram the value inside
-				// the accent fill.
-				dataLabels: { position: 'top' as const }
-			}
-		},
-		xaxis: { categories: sorted.map((c) => c.name) },
-		dataLabels: {
-			enabled: true,
-			offsetX: 6,
-			textAnchor: 'start' as const,
-			formatter: formatCurrencyLabel,
-			style: { fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }
-		},
-		legend: { show: true, position: 'bottom' as const }
-	});
+	const options = $derived(
+		horizontalBarOptions({
+			categories: sorted.map((c) => c.name),
+			distributed: true,
+			showLegend: true
+		})
+	);
 
 	// Height scales with the number of bars so a long category list never gets
 	// crammed into a fixed box — each bar gets ~36px, plus room for the legend.
@@ -102,7 +80,7 @@
 					<h2 class="font-mono text-sm font-semibold">
 						{isExpense ? 'Gastos' : 'Receitas'} por categoria
 					</h2>
-					<p class="font-mono text-xs text-ink-soft">Total: {currency.format(total)}</p>
+					<p class="font-mono text-xs text-ink-soft">Total: {formatCurrency(total)}</p>
 				</div>
 				<div class="flex items-center gap-3">
 					<Select

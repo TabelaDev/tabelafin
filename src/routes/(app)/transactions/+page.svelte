@@ -5,11 +5,10 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { Table, Button, Select, DatePicker, Input, Dialog, Toggle } from '@tabeladev/tabelawebui';
+	import { formatCurrency } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-
-	const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 	// Local state seeded from the URL filters — a deliberate one-shot read (it does
 	// not re-sync when `data` changes); the function wrapper avoids the compiler's
@@ -216,7 +215,7 @@
 					<!-- Sum first, then take the magnitude. Summing Math.abs of each
 					     row made a refund add to the expense total instead of
 					     reducing it. -->
-					{currency.format(Math.abs(visible.reduce((sum, t) => sum + t.displayAmount, 0)))}
+					{formatCurrency(Math.abs(visible.reduce((sum, t) => sum + t.displayAmount, 0)))}
 				</span>
 			{/if}
 			{#if data.future.length > 0}
@@ -333,7 +332,7 @@
 					{/if}
 				{:else if key === 'amount'}
 					<span class={Number(row.amount) >= 0 ? 'text-ctp-green' : 'text-ctp-red'}>
-						{currency.format(Number(row.amount))}
+						{formatCurrency(Number(row.amount))}
 					</span>
 				{:else if key === 'action'}
 					<!-- Ação explícita de abrir o detalhe — clicar na linha seleciona,

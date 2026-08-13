@@ -11,7 +11,7 @@
 	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
 	import SmartphoneIcon from '@lucide/svelte/icons/smartphone';
 	import TagsIcon from '@lucide/svelte/icons/tags';
-	import { Button, Landing, SectionHeading } from '@tabeladev/tabelawebui';
+	import { Button, Landing, SectionHeading, Wordmark } from '@tabeladev/tabelawebui';
 
 	const REPO_URL = 'https://github.com/TabelaDev/tabelafin';
 
@@ -101,7 +101,7 @@
 </script>
 
 {#snippet heroTitle()}
-	Tabela<span style="color: var(--twui-accent);">Fin</span>
+	<Wordmark prefix="Tabela" suffix="Fin" />
 {/snippet}
 
 {#snippet keyIcon()}

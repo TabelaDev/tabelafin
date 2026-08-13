@@ -4,11 +4,10 @@
 	import { resolve } from '$app/paths';
 	import CategoryBadge from '$lib/CategoryBadge.svelte';
 	import { Badge, Button, Card, Select } from '@tabeladev/tabelawebui';
+	import { formatCurrency } from '$lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-
-	const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 	// Form state — kept per form so success/error does not leak between cards (the
 	// global `form` is shared by every action on the page).
@@ -87,7 +86,7 @@
 				<div class="flex items-center justify-between">
 					<span class="font-mono text-sm text-ink-soft">Valor</span>
 					<span class="font-mono text-xl font-bold {isExpense ? 'text-ctp-red' : 'text-ctp-green'}">
-						{currency.format(data.transaction.displayAmount)}
+						{formatCurrency(data.transaction.displayAmount)}
 					</span>
 				</div>
 
@@ -245,7 +244,7 @@
 					<div class="flex flex-wrap items-center gap-2">
 						<Badge>[{frequencyLabel[data.recurrence.frequency] ?? data.recurrence.frequency}]</Badge
 						>
-						<span class="font-mono text-sm">{currency.format(data.recurrence.amount)}</span>
+						<span class="font-mono text-sm">{formatCurrency(data.recurrence.amount)}</span>
 						<a href={resolve('/recurring')} class="font-mono text-xs text-accent hover:underline">
 							ver recorrências
 						</a>
