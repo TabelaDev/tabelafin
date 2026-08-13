@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { amountsMatchForDedupe, isWithinSupersedeWindow } from './transactions';
+import { drizzle } from 'drizzle-orm/sqlite-proxy';
+import {
+	amountsMatchForDedupe,
+	isWithinSupersedeWindow,
+	renameCategoryOnTransactions
+} from './transactions';
+
+// A drizzle instance that executes nothing and records the SQL it would have
+// sent. Enough to assert which rows a statement can reach, which is the part
+// that matters for tenant isolation.
+function recordingDb() {
+	const statements: { sql: string; params: unknown[] }[] = [];
+	const db = drizzle(async (sql, params) => {
+		statements.push({ sql, params });
+		return { rows: [] };
+	});
+	return {
+		db: db as unknown as Parameters<typeof renameCategoryOnTransactions>[0],
+		statements
+	};
+}
 
 // The rule that decides whether a row extracted from a statement PDF is already
 // covered by something the user has. Getting it wrong in either direction is
@@ -41,5 +61,33 @@ describe('isWithinSupersedeWindow', () => {
 	it('rejects four days apart', () => {
 		expect(isWithinSupersedeWindow(base, new Date('2026-03-19T00:00:00.000Z'))).toBe(false);
 		expect(isWithinSupersedeWindow(base, new Date('2026-03-11T00:00:00.000Z'))).toBe(false);
+	});
+});
+
+// Category names are per-user, not global: two people can both have "Mercado".
+// The rename used to run `WHERE category = ?` with no owner, so renaming one
+// user's category rewrote every other user's matching transactions.
+describe('renameCategoryOnTransactions', () => {
+	it('filters by owner as well as by the old category name', async () => {
+		const { db, statements } = recordingDb();
+
+		await renameCategoryOnTransactions(db, 'user-a', 'Mercado', 'Supermercado');
+
+		expect(statements).toHaveLength(1);
+		expect(statements[0].sql).toContain('"user_id"');
+		expect(statements[0].params).toEqual(['Supermercado', 'user-a', 'Mercado']);
+	});
+
+	it('never emits an update reaching rows it cannot attribute to the user', async () => {
+		const { db, statements } = recordingDb();
+
+		await renameCategoryOnTransactions(db, 'user-a', 'Mercado', 'Supermercado');
+
+		// The owner predicate has to be part of the WHERE, not merely a parameter
+		// that happens to be passed: an update whose WHERE only mentions the
+		// category would match other users' rows.
+		const where = statements[0].sql.slice(statements[0].sql.indexOf('where'));
+		expect(where).toContain('"user_id"');
+		expect(where).toContain('"category"');
 	});
 });

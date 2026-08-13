@@ -1,4 +1,3 @@
-import { eq } from 'drizzle-orm';
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
@@ -8,7 +7,7 @@ import {
 	getCategoriesByUser,
 	updateCategory
 } from '$lib/server/db/user-categories';
-import { transactions } from '$lib/server/db/schema';
+import { renameCategoryOnTransactions } from '$lib/server/db/transactions';
 
 // The available colour palette — the same Catppuccin classes used in badges, with
 // a Portuguese label for the dropdown.
@@ -69,10 +68,7 @@ export const actions: Actions = {
 
 		// Renamed: repoints the transactions that carried the old name.
 		if (newName !== oldName) {
-			await db
-				.update(transactions)
-				.set({ category: newName })
-				.where(eq(transactions.category, oldName));
+			await renameCategoryOnTransactions(db, locals.userId, oldName, newName);
 		}
 		return { success: true };
 	},

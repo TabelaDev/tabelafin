@@ -281,6 +281,23 @@ export async function markSuperseded(
 		.where(eq(transactions.id, oldTransactionId));
 }
 
+// Repoints the transactions that carried a renamed category. `userId` is part of
+// the signature — and of the WHERE — because category names are not unique
+// across users: two people can both have "Mercado", and renaming one person's
+// category must never touch the other's rows. This lived inline in the rename
+// action, where the filter was missing.
+export async function renameCategoryOnTransactions(
+	db: Db,
+	userId: string,
+	oldName: string,
+	newName: string
+): Promise<void> {
+	await db
+		.update(transactions)
+		.set({ category: newName })
+		.where(and(eq(transactions.userId, userId), eq(transactions.category, oldName)));
+}
+
 // Transactions ready for a categorisation batch (ESCOPO.md §3.3): no category
 // yet and not superseded (a replaced PDF row never needs its own category — it
 // disappears from the screens either way).
