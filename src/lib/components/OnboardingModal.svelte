@@ -140,6 +140,26 @@
 
 	// Depois de abrir o Meu Pluggy (com a extensão vinculada), o usuário volta
 	// aqui e confirma. Se o token já chegou, o onboarding fecha.
+	// Pular o Open Finance: encerra o onboarding marcando como visto, sem exigir
+	// conexão. (Na etapa de IA, "pular" só avança pra próxima etapa.)
+	async function skip() {
+		statusMsg = '';
+		try {
+			const res = await fetch('/api/onboarding/finish', { method: 'POST' });
+			if (!res.ok) {
+				const data = (await res.json().catch(() => null)) as { error?: string } | null;
+				statusMsg = data?.error ?? 'Não foi possível pular agora.';
+				return;
+			}
+			closeOnboarding();
+			await invalidateAll();
+		} catch {
+			statusMsg = 'Não foi possível pular agora.';
+		}
+	}
+
+	// Depois de abrir o Meu Pluggy (com a extensão vinculada), o usuário volta
+	// aqui e confirma. Se o token já chegou, o onboarding fecha.
 	async function checkStatus() {
 		checking = true;
 		statusMsg = '';
@@ -210,9 +230,12 @@
 				/>
 			</div>
 
-			<Button onclick={submitAi} disabled={submitting}>
-				{submitting ? 'Salvando…' : 'Continuar'}
-			</Button>
+			<div class="flex items-center justify-between gap-3">
+				<Button variant="ghost" onclick={() => ((step = 'pluggy'), (error = ''))}>Pular</Button>
+				<Button onclick={submitAi} disabled={submitting}>
+					{submitting ? 'Salvando…' : 'Continuar'}
+				</Button>
+			</div>
 		</div>
 	{:else}
 		<div class="flex flex-col gap-4">
@@ -294,9 +317,14 @@
 				<p class="text-sm text-danger">{statusMsg}</p>
 			{/if}
 
-			<Button onclick={checkStatus} disabled={checking || pairingLoading}>
-				{checking ? 'Verificando…' : 'Já conectei — verificar'}
-			</Button>
+			<div class="flex items-center justify-between gap-3">
+				<Button variant="ghost" onclick={skip} disabled={checking || pairingLoading || submitting}>
+					Pular
+				</Button>
+				<Button onclick={checkStatus} disabled={checking || pairingLoading}>
+					{checking ? 'Verificando…' : 'Já conectei — verificar'}
+				</Button>
+			</div>
 
 			<button
 				type="button"

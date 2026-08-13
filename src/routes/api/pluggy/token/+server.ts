@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { upsertPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { upsertPluggyItem } from '$lib/server/db/pluggy-items';
+import { setUserSeenOnboarding } from '$lib/server/db/users';
 import { encryptSecret } from '$lib/server/crypto';
 import { fetchItems } from '$lib/server/pluggy/client';
 import { syncUserItems } from '$lib/server/pluggy/sync';
@@ -89,6 +90,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			status: item.status
 		});
 	}
+
+	// O usuário agora tem credencial + conexões: onboarding pode ser considerado
+	// visto (senão o modal reabriria a cada login mesmo depois de conectar).
+	await setUserSeenOnboarding(db, userId, true);
 
 	const syncPromise = syncUserItems(db, masterKey, userId).catch((err) => {
 		console.error('[pluggy/token] sync pós-token falhou', {
