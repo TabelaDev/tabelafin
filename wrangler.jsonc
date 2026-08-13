@@ -35,5 +35,31 @@
 			"migrations_dir": "drizzle"
 		}
 	],
-	"kv_namespaces": [{ "binding": "SESSIONS", "id": "34086589c9b34c1ab5c5b59e236662f0" }]
+	"kv_namespaces": [{ "binding": "SESSIONS", "id": "34086589c9b34c1ab5c5b59e236662f0" }],
+	// Homologação: recursos isolados (D1/KV próprios, vars apontando pro
+	// subdomínio de staging), sem crons — disparo manual no painel pra testar.
+	// Secrets via `wrangler secret put <NOME> --env staging`.
+	"env": {
+		"staging": {
+			"name": "tabelafin-staging",
+			// Environments herdam `triggers.crons` do top-level; lista vazia zera
+			// (staging não tem cron — disparo manual no painel pra testar).
+			"triggers": { "crons": [] },
+			"vars": {
+				"ORIGIN": "https://tabelafin-staging.ianptkcs-023.workers.dev",
+				"VAPID_PUBLIC_KEY": "BNGg4bHjsBjz2tVbuoyGXAaBMmbaUbKgYizkf82DAYVO3hBWm7nNSghb6qx0hDYjn-N_lHN6RHaqSeoRkc5ZtH8",
+				"VAPID_SUBJECT": "https://tabelafin-staging.ianptkcs-023.workers.dev",
+				"BETTER_AUTH_URL": "https://tabelafin-staging.ianptkcs-023.workers.dev"
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "tabelafin-db-staging",
+					"database_id": "1eda2c73-fc28-4dbc-a4cb-9b7852f4f168",
+					"migrations_dir": "drizzle"
+				}
+			],
+			"kv_namespaces": [{ "binding": "SESSIONS", "id": "678a10fb88e74c74b7d2ebdc59ef356c" }]
+		}
+	}
 }

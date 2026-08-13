@@ -56,10 +56,14 @@ Runbook de implantação do staging (feito uma vez, depois vira só o deploy):
    `wrangler d1 create tabelafin-db-staging`
    `wrangler kv namespace create SESSIONS_STAGING`
 2. No `wrangler.jsonc`, adicionar o bloco `env.staging` (nome, vars apontando pro
-   subdomínio de staging, D1/KV criados acima, sem crons — disparo manual no
-   painel pra testar). Rodar `bun run check` depois: o `wrangler types` regenera
+   subdomínio de staging, D1/KV criados acima). Atenção: environments **herdam**
+   `triggers.crons` do top-level — pra staging ficar sem cron, declarar
+   `"triggers": { "crons": [] }` no bloco (o wrangler tenta registrar os crons
+   herdados mesmo sem você pedir, e o limite do plano Free é 5 por conta).
+   Rodar `bun run check` depois: o `wrangler types` regenera
    `worker-configuration.d.ts`, e se o hash mudar, commitar o arquivo novo.
-3. Migrações: `wrangler d1 migrations apply tabelafin-db-staging --remote`
+3. Migrações: `wrangler d1 migrations apply tabelafin-db-staging --remote --env staging`
+   (sem `--env staging` o wrangler não acha o banco — ele só existe no env).
 4. Secrets (valores novos, não reusar os de prod):
    - `wrangler secret put MASTER_KEY --env staging`
    - `wrangler secret put BETTER_AUTH_SECRET --env staging`
@@ -71,9 +75,9 @@ Runbook de implantação do staging (feito uma vez, depois vira só o deploy):
 6. Smoke test: cadastrar usuário novo no subdomínio de staging, onboarding +
    Pluggy, e o cron via botão "Trigger" no painel.
 
-Script sugerido no `package.json`: `"deploy:staging": "bun run build && wrangler
-d1 migrations apply tabelafin-db-staging --remote && wrangler deploy --env staging"`.
-Staging é deploy **manual** — não tem job/pipeline automático.
+Script já no `package.json`: `deploy:staging` (build + migrações + deploy, tudo
+apontando pro env staging). Staging é deploy **manual** — não tem job/pipeline
+automático.
 
 ## Rotas
 
