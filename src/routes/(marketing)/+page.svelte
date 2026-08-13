@@ -15,9 +15,9 @@
 
 	const REPO_URL = 'https://github.com/TabelaDev/tabelafin';
 
-	const TITLE = 'TabelaFin — suas finanças sem mistério';
+	const TITLE = 'TabelaFin';
 	const DESCRIPTION =
-		'Open Finance, categorização por regras locais ou pela sua própria chave de IA, e os números numa tabela direta. Sem assinatura: seus dados ficam no seu banco.';
+		'Open Finance, categorização por regras locais ou pela sua própria chave de IA, e os números numa tabela direta. Sem assinatura: a chave de IA é sua e o código é aberto.';
 
 	const canonical = $derived(`${page.url.origin}${page.url.pathname}`);
 
@@ -26,25 +26,25 @@
 			number: '01',
 			color: 'var(--ctp-mauve)',
 			title: 'Suas contas entram',
-			body: 'Conecta o Open Finance e as transações sincronizam sozinhas. Sem conta? Você lança manualmente — do mesmo jeito simples.'
+			body: 'Conecte sua conta do Meu Pluggy e nós sincronizamos suas transações automaticamente. Não possui uma conta? Você ainda pode lançar os dados manualmente de forma simplificada.'
 		},
 		{
 			number: '02',
 			color: 'var(--ctp-sapphire)',
 			title: 'Tudo é categorizado',
-			body: 'Regras locais ou sua própria chave de IA classificam cada lançamento. Nada de caixa preta: você vê e ajusta a categoria quando quiser.'
+			body: 'Regras locais ou sua própria chave de IA classificam cada lançamento. Sem algoritmo misterioso: você vê e ajusta as regras quando e como quiser.'
 		},
 		{
 			number: '03',
 			color: 'var(--ctp-peach)',
-			title: 'Os números falam',
+			title: 'Entenda os seus números',
 			body: 'Saldo por conta, gastos do mês, top categorias e a evolução do seu dinheiro em gráficos diretos.'
 		},
 		{
 			number: '04',
 			color: 'var(--ctp-green)',
-			title: 'Você decide',
-			body: 'Seus dados ficam no seu banco. Sem IA nem Open Finance, o app continua funcionando só com a planilha que você preencher.'
+			title: 'Você controla os seus dados',
+			body: 'Open source (AGPL): audite o código ou rode você mesmo. Sem IA nem Open Finance, o app continua funcionando só com a planilha que você preencher.'
 		}
 	];
 
@@ -53,15 +53,15 @@
 			icon: keyIcon,
 			iconBg: 'color-mix(in srgb, var(--ctp-mauve) 12%, transparent)',
 			iconColor: 'var(--ctp-mauve)',
-			title: 'IA opcional, regras sempre',
-			body: 'Sem API key, o TabelaFin categoriza por regras locais rápidas. Com a sua chave, você escolhe o provedor e o modelo — e paga direto pra eles.'
+			title: 'IA opcional',
+			body: 'Com sua chave de API você escolhe provedor e modelo, e paga direto pra eles — sem taxa nossa. Sem chave, as regras locais assumem a categorização. E dá pra ocultar a IA da plataforma por completo.'
 		},
 		{
 			icon: shieldIcon,
 			iconBg: 'color-mix(in srgb, var(--ctp-sapphire) 12%, transparent)',
 			iconColor: 'var(--ctp-sapphire)',
-			title: 'Seus dados, seu banco',
-			body: 'Tudo fica no seu banco de dados, na sua conta. As credenciais de IA e do Open Finance ficam criptografadas.'
+			title: 'Suas credenciais criptografadas',
+			body: 'Sua chave de IA e as credenciais do Open Finance ficam criptografadas no banco de dados — nada em texto puro.'
 		},
 		{
 			icon: landmarkIcon,
@@ -159,8 +159,9 @@
 		<Landing.Hero
 			eyebrow="Suas finanças sem mistério"
 			title={heroTitle}
-			lead="O TabelaFin conecta Open Finance, categoriza com regras locais ou a sua própria IA e mostra os números numa tabela direta. Sem assinatura, sem planos empurrados — seus dados ficam no seu banco."
-			note="Cola seu token de acesso e configura IA e Open Finance só se quiser."
+			lead="O TabelaFin conecta Open Finance, categoriza suas contas com regras locais ou com a sua própria IA e mostra os números numa tabela direta. Sem assinatura, sem planos empurrados: você controla o seu próprio custo."
+			note="Crie sua conta e configure IA ou Open Finance apenas se quiser."
+			justify
 		>
 			{#snippet actions()}
 				<Button href={resolve('/signup')} variant="primary" size="lg">Começar</Button>
@@ -173,7 +174,7 @@
 
 		<section class="flex flex-col gap-8">
 			<SectionHeading eyebrow="Como funciona" title="Quatro passos e seus números fazem sentido." />
-			<Landing.Steps {steps} />
+			<Landing.Steps {steps} justify />
 		</section>
 
 		<section class="flex flex-col gap-8">
@@ -181,7 +182,7 @@
 				eyebrow="Recursos"
 				title="O que ele faz e o que ele não faz com os seus dados."
 			/>
-			<Landing.Features {features} />
+			<Landing.Features {features} justify />
 		</section>
 
 		<section class="flex flex-col gap-8">
@@ -189,6 +190,7 @@
 				eyebrow="No radar"
 				title="O que vem depois."
 				lead="Nada disso existe ainda. Tá aqui porque o roadmap é público — igual o código."
+				justify
 			/>
 			<Landing.Roadmap items={roadmap} />
 		</section>
