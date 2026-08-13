@@ -23,9 +23,14 @@
 	let model = $state<string>(AI_PROVIDERS.deepseek.models[0].id);
 	let apiKey = $state('');
 
-	// Pluggy form
+	// Pluggy — fluxo da extensão (ver docs/pluggy-integration.md)
+	let deviceToken = $state('');
+	let pairingLoading = $state(false);
+	let checking = $state(false);
+	let statusMsg = $state('');
+	// Fallback avançado: colar o token manualmente.
 	let token = $state('');
-	let showHelp = $state(false);
+	let showManual = $state(false);
 
 	// Steps are disabled while submitting so the user cannot change step with a
 	// request in flight.
@@ -112,6 +117,50 @@
 			submitting = false;
 		}
 	}
+
+	async function generatePairing() {
+		pairingLoading = true;
+		statusMsg = '';
+		try {
+			const res = await fetch('/api/pluggy/device', { method: 'POST' });
+			const data = (await res.json()) as { deviceToken?: string; error?: string };
+			if (!res.ok || !data.deviceToken) {
+				statusMsg = data.error ?? 'Não foi possível gerar o código.';
+				return;
+			}
+			deviceToken = data.deviceToken;
+		} finally {
+			pairingLoading = false;
+		}
+	}
+
+	async function copyDeviceToken() {
+		await navigator.clipboard.writeText(deviceToken);
+	}
+
+	// Depois de abrir o Meu Pluggy (com a extensão vinculada), o usuário volta
+	// aqui e confirma. Se o token já chegou, o onboarding fecha.
+	async function checkStatus() {
+		checking = true;
+		statusMsg = '';
+		try {
+			const res = await fetch('/api/pluggy/status');
+			const data = (await res.json()) as { configured?: boolean; error?: string };
+			if (!res.ok) {
+				statusMsg = data.error ?? 'Não foi possível verificar agora.';
+				return;
+			}
+			if (!data.configured) {
+				statusMsg =
+					'Ainda não chegou nenhum token. Confira se a extensão está vinculada e abra o Meu Pluggy.';
+				return;
+			}
+			closeOnboarding();
+			await invalidateAll();
+		} finally {
+			checking = false;
+		}
+	}
 </script>
 
 <Dialog bind:open title="Configurar TabelaFin">
@@ -168,8 +217,8 @@
 	{:else}
 		<div class="flex flex-col gap-4">
 			<p class="text-sm text-ink-soft">
-				O TabelaFin acessa seus dados bancários pelo Meu Pluggy (grátis, pra uso pessoal). Você
-				conecta suas contas lá e cola aqui o token que o Meu Pluggy te dá.
+				O TabelaFin lê seus dados bancários pelo Meu Pluggy com uma extensão de navegador que pega o
+				seu token automaticamente. Você só faz login no Meu Pluggy — o resto acontece sozinho.
 			</p>
 
 			<div class="flex flex-col gap-4 text-sm">
@@ -179,18 +228,17 @@
 							class="mr-2 inline-flex size-6 items-center justify-center border border-accent bg-accent-soft font-mono text-xs font-bold text-accent"
 							>1</span
 						>
-						<span>Conecte suas contas no Meu Pluggy.</span>
+						<span>Instale a extensão.</span>
 					</span>
 					<p class="text-sm text-ink-soft">
-						Entre em
-						<a
-							class="text-accent underline underline-offset-4 hover:opacity-80"
-							href="https://meu.pluggy.ai/en/overview"
-							target="_blank"
-							rel="noreferrer">meu.pluggy.ai</a
+						Ela fica na pasta <code class="border border-rule bg-paper-raised px-1 font-mono"
+							>extension/</code
 						>
-						e faça login. Se ainda não conectou seu banco, conecte agora — é parecido com entrar no app
-						do banco.
+						do repositório. Carregue no Chrome em
+						<code class="border border-rule bg-paper-raised px-1 font-mono"
+							>chrome://extensions</code
+						>
+						(ative o "Modo desenvolvedor" e escolha "Carregar sem compactação").
 					</p>
 				</div>
 
@@ -200,74 +248,24 @@
 							class="mr-2 inline-flex size-6 items-center justify-center border border-accent bg-accent-soft font-mono text-xs font-bold text-accent"
 							>2</span
 						>
-						<span>Pegue o seu token de acesso.</span>
+						<span>Vincule a extensão.</span>
 					</span>
 					<p class="text-sm text-ink-soft">
-						É o "crachá" que comprova que é você. O Meu Pluggy mostra ele nas ferramentas de
-						desenvolvedor do navegador — não se assuste com esse nome, é só um botão escondido.
+						Gere um código de pareamento e cole no popup da extensão, no campo "Código de
+						pareamento".
 					</p>
-					<button
-						type="button"
-						class="mt-1 cursor-pointer self-start font-mono text-xs text-accent underline underline-offset-4 hover:opacity-80"
-						onclick={() => (showHelp = !showHelp)}
-						>{showHelp
-							? '▲ Ocultar o passo a passo'
-							: '▼ Como achar o token (guia passo a passo)'}</button
-					>
-
-					{#if showHelp}
-						<div class="flex flex-col gap-3 border border-rule bg-paper p-4 text-sm text-ink-soft">
-							<div class="flex flex-col gap-1">
-								<span class="font-mono font-semibold text-ink">1. Abra o painel do navegador</span>
-								<p>
-									No seu navegador (Chrome, Edge, Brave), aperte a tecla
-									<kbd class="border border-rule bg-paper-raised px-1 font-mono">F12</kbd>. Vai
-									abrir uma janela nova ao lado da página.
-								</p>
-							</div>
-							<div class="flex flex-col gap-1">
-								<span class="font-mono font-semibold text-ink">2. Vá na aba "Rede"</span>
-								<p>
-									No topo dessa janela, clique na aba <strong>Rede</strong> (ou
-									<strong>Network</strong>).
-								</p>
-							</div>
-							<div class="flex flex-col gap-1">
-								<span class="font-mono font-semibold text-ink">3. Recarregue a página</span>
-								<p>
-									Recarregue o Meu Pluggy (aperte <kbd
-										class="border border-rule bg-paper-raised px-1 font-mono">F5</kbd
-									>). Vão aparecer várias linhas na lista.
-								</p>
-							</div>
-							<div class="flex flex-col gap-1">
-								<span class="font-mono font-semibold text-ink">4. Ache a linha do token</span>
-								<p>
-									Na listinha, cada linha tem uma coluna <strong>Nome</strong> (no começo da linha).
-									Os nomes são curtos, tipo
-									<code class="border border-rule bg-paper-raised px-1 font-mono">transactions</code
-									>,
-									<code class="border border-rule bg-paper-raised px-1 font-mono">accounts</code>
-									ou
-									<code class="border border-rule bg-paper-raised px-1 font-mono">items</code>.
-									Clique em qualquer uma delas — as colunas de status, tipo, etc. são só informações
-									técnicas, ignore.
-								</p>
-							</div>
-							<div class="flex flex-col gap-1">
-								<span class="font-mono font-semibold text-ink">5. Copie o token</span>
-								<p>
-									Na janelinha que abrir à direita, clique na aba
-									<strong>Cabeçalhos</strong> (ou <strong>Headers</strong>). Desça até achar
-									"Authorization". O texto ao lado é o seu token — copie tudo, começando em
-									<code class="border border-rule bg-paper-raised px-1 font-mono">eyJ</code>.
-								</p>
-							</div>
-							<p class="border-t border-rule pt-3">
-								Se aparecer "Bearer" na frente (ex.: <em>Bearer eyJ...abc</em>), copie só a parte de
-								depois do espaço. Aí é só colar aqui embaixo.
-							</p>
+					{#if deviceToken}
+						<div class="flex items-center gap-2 border border-accent bg-accent-soft p-3">
+							<code class="min-w-0 flex-1 truncate font-mono text-xs text-accent"
+								>{deviceToken}</code
+							>
+							<Button size="sm" variant="outline" onclick={copyDeviceToken}>Copiar</Button>
 						</div>
+						<p class="text-sm text-ink-faint">Agora cole esse código no popup da extensão.</p>
+					{:else}
+						<Button size="sm" variant="outline" onclick={generatePairing} disabled={pairingLoading}>
+							{pairingLoading ? 'Gerando…' : 'Gerar código de pareamento'}
+						</Button>
 					{/if}
 				</div>
 
@@ -277,32 +275,56 @@
 							class="mr-2 inline-flex size-6 items-center justify-center border border-accent bg-accent-soft font-mono text-xs font-bold text-accent"
 							>3</span
 						>
-						<span>Cole o token aqui embaixo.</span>
+						<span>Conecte no Meu Pluggy.</span>
 					</span>
 					<p class="text-sm text-ink-soft">
-						Pronto! Depois de salvar, suas contas começam a sincronizar sozinhas.
+						Abra
+						<a
+							class="text-accent underline underline-offset-4 hover:opacity-80"
+							href="https://meu.pluggy.ai/en/overview"
+							target="_blank"
+							rel="noreferrer">meu.pluggy.ai</a
+						>
+						e faça login — a extensão captura o token e sincroniza sozinha.
 					</p>
 				</div>
 			</div>
 
-			<div class="flex flex-col gap-2">
-				<Label for="token">Token de acesso</Label>
-				<Input
-					id="token"
-					type="password"
-					autocomplete="off"
-					required
-					placeholder="eyJhbGciOi..."
-					bind:value={token}
-				/>
-				<p class="text-sm text-ink-faint">
-					Começa com eyJ e pode ser comprido — pode colar inteiro.
-				</p>
-			</div>
+			{#if statusMsg}
+				<p class="text-sm text-danger">{statusMsg}</p>
+			{/if}
 
-			<Button onclick={submitPluggy} disabled={submitting}>
-				{submitting ? 'Validando…' : 'Salvar e conectar'}
+			<Button onclick={checkStatus} disabled={checking || pairingLoading}>
+				{checking ? 'Verificando…' : 'Já conectei — verificar'}
 			</Button>
+
+			<button
+				type="button"
+				class="cursor-pointer self-start font-mono text-xs text-accent underline underline-offset-4 hover:opacity-80"
+				onclick={() => (showManual = !showManual)}
+			>
+				{showManual ? '▲ Ocultar opção manual' : '▼ Prefere colar o token manualmente?'}
+			</button>
+
+			{#if showManual}
+				<div class="flex flex-col gap-2 border border-rule bg-paper p-4">
+					<Label for="token">Token de acesso do Meu Pluggy</Label>
+					<Input
+						id="token"
+						type="password"
+						autocomplete="off"
+						placeholder="eyJhbGciOi..."
+						bind:value={token}
+					/>
+					<p class="text-sm text-ink-faint">
+						Começa com eyJ. O Meu Pluggy mostra ele nas ferramentas de desenvolvedor do navegador
+						(F12 → Rede → Cabeçalhos → Authorization).
+					</p>
+					<Button onclick={submitPluggy} disabled={submitting}>
+						{submitting ? 'Validando…' : 'Salvar e conectar'}
+					</Button>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </Dialog>

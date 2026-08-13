@@ -86,6 +86,24 @@
 		</Card.Content>
 	</Card>
 
+	<!-- Extensão do navegador (captura o token do Meu Pluggy) -->
+	<Card>
+		<Card.Content>
+			<div class="flex items-center justify-between gap-4">
+				<div>
+					<h2 class="font-mono text-sm font-semibold">Extensão do navegador</h2>
+					<p class="mt-1 font-mono text-xs text-ink-soft">
+						Pega o token do Meu Pluggy automaticamente, sem copiar e colar. O token expira em ~24h e
+						renova sozinho quando você abre o Meu Pluggy.
+					</p>
+				</div>
+				<Button variant="outline" size="sm" onclick={() => openOnboarding('pluggy')}>
+					Vincular / revisar
+				</Button>
+			</div>
+		</Card.Content>
+	</Card>
+
 	<!-- Importar extratos do Gmail via Takeout -->
 	<Card>
 		<Card.Content>
