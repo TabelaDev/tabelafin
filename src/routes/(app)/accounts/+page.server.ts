@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { getAccountsByUser } from '$lib/server/db/accounts';
-import { signedBalance, sumSignedBalance } from '$lib/accounts';
+import { signedBalance, sumSignedBalance } from '$lib/lib/accounts';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');

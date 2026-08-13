@@ -1,12 +1,12 @@
 <script lang="ts">
-	import CategoryBadge from '$lib/CategoryBadge.svelte';
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
 	import { resolve } from '$app/paths';
-	import Chart from '$lib/Chart.svelte';
-	import { horizontalBarOptions } from '$lib/charts';
+	import Chart from '$lib/components/Chart.svelte';
+	import { horizontalBarOptions } from '$lib/client/charts';
 	import { Card, Table, Button } from '@tabeladev/tabelawebui';
 	import type { ApexOptions } from 'apexcharts';
-	import { formatCompactCurrency, formatCurrency } from '$lib/format';
-	import { signedBalance } from '$lib/accounts';
+	import { formatCompactCurrency, formatCurrency } from '$lib/lib/format';
+	import { signedBalance } from '$lib/lib/accounts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

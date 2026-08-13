@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { Button, Card, Input, Label, Select } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency } from '$lib/format';
+	import { formatCompactCurrency } from '$lib/lib/format';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();

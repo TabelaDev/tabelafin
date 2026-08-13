@@ -18,7 +18,10 @@ linguagem de toda a TabelaDev).
   adapter não sobrescrever o `entry.js`).
 - **UI:** `@tabeladev/tabelawebui` (registry). Tailwind v4, um único stylesheet em
   `src/routes/layout.css`. Sem shadcn.
-- **PWA:** `@vite-pwa/sveltekit` + `src/lib/ReloadPrompt.svelte`.
+- **PWA:** `@vite-pwa/sveltekit` + `src/lib/components/ReloadPrompt.svelte`.
+- **Layout de `src/lib/`:** `components/` (.svelte), `stores/` (svelte/store),
+  `lib/` (utils compartilhados client+server), `client/` (só-browser). Server-only
+  sempre em `server/`. Não criar arquivo novo na raiz do `src/lib/`.
 
 ## Rodando dev
 
@@ -37,6 +40,40 @@ A porta sai de `~/.config/dev-ports.yaml` (chaveada pelo cwd), com fallback `DEV
 Banco: `bun run db:generate` / `db:migrate` / `db:studio`.
 
 Antes de abrir PR: `bun run check && bun run lint && bun run test && bun run build`.
+
+## Staging (homologação)
+
+Dois ambientes no Cloudflare Workers, via environments do wrangler: `tabelafin`
+(prod, `tabelafin.ianptkcs-023.workers.dev`) e `tabelafin-staging`
+(`tabelafin-staging.ianptkcs-023.workers.dev`). Recursos **isolados**: D1
+`tabelafin-db-staging` + KV `SESSIONS_STAGING`, nunca compartilham banco/sessão
+com prod. O build do SvelteKit é env-agnóstico (URL vem de var em runtime), então
+`bun run build` gera o mesmo bundle pra ambos.
+
+Runbook de implantação do staging (feito uma vez, depois vira só o deploy):
+
+1. Criar recursos (anotar os ids de saída):
+   `wrangler d1 create tabelafin-db-staging`
+   `wrangler kv namespace create SESSIONS_STAGING`
+2. No `wrangler.jsonc`, adicionar o bloco `env.staging` (nome, vars apontando pro
+   subdomínio de staging, D1/KV criados acima, sem crons — disparo manual no
+   painel pra testar). Rodar `bun run check` depois: o `wrangler types` regenera
+   `worker-configuration.d.ts`, e se o hash mudar, commitar o arquivo novo.
+3. Migrações: `wrangler d1 migrations apply tabelafin-db-staging --remote`
+4. Secrets (valores novos, não reusar os de prod):
+   - `wrangler secret put MASTER_KEY --env staging`
+   - `wrangler secret put BETTER_AUTH_SECRET --env staging`
+   - `wrangler secret put DEEPSEEK_API_KEY --env staging`
+   - VAPID: `npx web-push generate-vapid-keys` gera um par novo; publicKey entra
+     no `VAPID_PUBLIC_KEY` das vars do staging e privateKey em
+     `wrangler secret put VAPID_PRIVATE_KEY --env staging` (o par precisa casar).
+5. Deploy: `bun run build && wrangler deploy --env staging`
+6. Smoke test: cadastrar usuário novo no subdomínio de staging, onboarding +
+   Pluggy, e o cron via botão "Trigger" no painel.
+
+Script sugerido no `package.json`: `"deploy:staging": "bun run build && wrangler
+d1 migrations apply tabelafin-db-staging --remote && wrangler deploy --env staging"`.
+Staging é deploy **manual** — não tem job/pipeline automático.
 
 ## Rotas
 

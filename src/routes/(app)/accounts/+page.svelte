@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { signedBalance } from '$lib/accounts';
-	import { formatCompactCurrency, formatCurrency } from '$lib/format';
+	import { signedBalance } from '$lib/lib/accounts';
+	import { formatCompactCurrency, formatCurrency } from '$lib/lib/format';
 	import { Accordion, Badge, Button, Card, Input, Select, Table } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 

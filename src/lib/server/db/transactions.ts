@@ -1,7 +1,7 @@
 import { and, eq, gte, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
 import type { getDb } from './index';
 import { transactions } from './schema';
-import type { TransactionCategory } from '$lib/categories';
+import type { TransactionCategory } from '$lib/lib/categories';
 import {
 	INTERNAL_TRANSFER_CATEGORIES,
 	INTERNAL_TRANSFER_DESCRIPTIONS

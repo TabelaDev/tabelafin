@@ -1,5 +1,5 @@
 import type { ApexOptions } from 'apexcharts';
-import { formatCurrencyLabel } from '$lib/format';
+import { formatCurrencyLabel } from '$lib/lib/format';
 
 // Shared horizontal bar chart preset (barra horizontal com rótulo na ponta da
 // barra). Usado pelo dashboard (top categorias) e pela página de categorias —

@@ -31,7 +31,7 @@ import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { getUserAiPrompts } from '$lib/server/db/user-ai-prompts';
 import { findUserById } from '$lib/server/db/users';
 import { INTERNAL_TRANSFER_CATEGORIES, INTERNAL_TRANSFER_DESCRIPTIONS } from './internal-transfers';
-import type { AiProvider } from '$lib/ai-providers';
+import type { AiProvider } from '$lib/lib/ai-providers';
 
 type Db = ReturnType<typeof getDb>;
 type PluggyItemRow = Awaited<ReturnType<typeof getAllPluggyItems>>[number];

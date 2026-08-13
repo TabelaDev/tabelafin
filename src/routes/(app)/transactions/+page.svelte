@@ -1,11 +1,11 @@
 <script lang="ts">
-	import CategoryBadge from '$lib/CategoryBadge.svelte';
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
 	import { untrack } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { Table, Button, Select, DatePicker, Input, Dialog, Toggle } from '@tabeladev/tabelawebui';
-	import { formatCurrency } from '$lib/format';
+	import { formatCurrency } from '$lib/lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

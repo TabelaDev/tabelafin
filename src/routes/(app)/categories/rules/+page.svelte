@@ -2,7 +2,7 @@
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import CategoryBadge from '$lib/CategoryBadge.svelte';
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
 	import { Button, Card, Input, Select, Table } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 

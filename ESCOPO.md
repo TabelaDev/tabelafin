@@ -27,7 +27,7 @@ sessão:
   `ai_credentials` cifrado.
 - **Onboarding de Open Finance** (`src/routes/onboarding/pluggy/`): paste de
   Client ID/Secret do Meu Pluggy + Pluggy Connect Widget (via CDN,
-  `src/lib/PluggyConnect.svelte`) pra conectar Nubank/XP de verdade.
+  `src/lib/components/PluggyConnect.svelte`) pra conectar Nubank/XP de verdade.
 - **Cliente Pluggy** (`src/lib/server/pluggy/client.ts`): fetch-based, sem
   SDK. Endpoints confirmados via WebFetch contra docs.pluggy.ai + o repo
   oficial `pluggyai/quickstart` — não só conhecimento de treino.
@@ -38,7 +38,7 @@ sessão:
   chamada por usuário no fim de cada sync, nunca por transação.
 - **Relatório mensal + push** (`src/lib/server/reports/generate.ts`, cron
   `0 7 1 * *`): narrativa via IA, comparação mês a mês, notificação Web Push
-  quando fica pronto (`src/lib/PushSubscribe.svelte`).
+  quando fica pronto (`src/lib/components/PushSubscribe.svelte`).
 - **Upload de PDF como fallback** (seção 2.4): `src/lib/server/ai/extract.ts`
   manda o PDF (base64) direto pro modelo do usuário via document understanding
   (bloco `document` da Anthropic / `input_file` da OpenAI, formatos confirmados
@@ -46,7 +46,7 @@ sessão:
   estruturado). Rota `POST /api/statement-upload` valida o PDF, grava em
   `statement_uploads` e insere as transações com `source='pdf_upload'` e
   `categorySource='ai'` — o arquivo é descartado (sem R2). Gating por
-  `supportsDocuments` desabilita o upload na UI (`src/lib/StatementUpload.svelte`)
+  `supportsDocuments` desabilita o upload na UI (`src/lib/components/StatementUpload.svelte`)
   quando o modelo escolhido não suporta documentos.
 - **Dashboard** (`src/routes/dashboard/`): contas, transações com categoria,
   relatório mais recente, upload de PDF.
@@ -110,7 +110,7 @@ Cada usuário cola sua **própria API key de LLM** (Anthropic/OpenAI) e escolhe
 o **modelo**. Usada tanto pra categorizar transações quanto pra extrair dados
 de PDF (seção 2.4). O usuário paga sua própria inferência; sem custo
 compartilhado. Reaproveita **exatamente** o padrão já em produção no
-TabelaCal (`src/lib/ai-providers.ts`, `src/lib/server/ai/parse.ts`).
+TabelaCal (`src/lib/lib/ai-providers.ts`, `src/lib/server/ai/parse.ts`).
 
 ### 2.3 Open Finance: BYO Meu Pluggy (API interna, sem plano comercial)
 

@@ -16,7 +16,7 @@
 		extractPdfsFromTakeout,
 		TakeoutParseError,
 		type TakeoutAttachment
-	} from '$lib/takeout-mbox';
+	} from '$lib/client/takeout-mbox';
 	import {
 		closeStatementImport,
 		finishQueue,
@@ -32,7 +32,7 @@
 		toggleSelected,
 		type ImportState,
 		type QueueItem
-	} from '$lib/statement-import-store';
+	} from '$lib/stores/statement-import-store';
 
 	const STEPS = [
 		{ value: 'instructions', label: 'Takeout' },

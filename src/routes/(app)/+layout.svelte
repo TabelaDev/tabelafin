@@ -4,9 +4,9 @@
 	import { resolve } from '$app/paths';
 	import { AppShell, FloatingActionPill, Status, StatusPill } from '@tabeladev/tabelawebui';
 	import { onMount } from 'svelte';
-	import ChatWidget from '$lib/ChatWidget.svelte';
-	import OnboardingModal from '$lib/OnboardingModal.svelte';
-	import StatementImportModal from '$lib/StatementImportModal.svelte';
+	import ChatWidget from '$lib/components/ChatWidget.svelte';
+	import OnboardingModal from '$lib/components/OnboardingModal.svelte';
+	import StatementImportModal from '$lib/components/StatementImportModal.svelte';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();

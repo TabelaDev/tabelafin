@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Dialog, Stepper, Button, Input, Label, Select } from '@tabeladev/tabelawebui';
 	import { invalidateAll } from '$app/navigation';
-	import { AI_PROVIDERS, type AiProvider } from '$lib/ai-providers';
-	import { onboarding, closeOnboarding } from '$lib/onboarding-store';
+	import { AI_PROVIDERS, type AiProvider } from '$lib/lib/ai-providers';
+	import { onboarding, closeOnboarding } from '$lib/stores/onboarding-store';
 	import { get } from 'svelte/store';
 	import { onMount } from 'svelte';
 

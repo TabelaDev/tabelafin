@@ -1,7 +1,7 @@
 // Rule-based categorisation (keyword matching) — used when the user has no AI
 // configured. A simple offline fallback that needs no external call. The user can
 // always override the category by hand.
-import type { TransactionCategory } from '$lib/categories';
+import type { TransactionCategory } from '$lib/lib/categories';
 
 interface Rule {
 	keywords: string[];

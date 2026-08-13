@@ -8,4 +8,5 @@ bun.lockb
 # Miscellaneous
 /static/
 /drizzle/
+/tmp/
 worker-configuration.d.ts

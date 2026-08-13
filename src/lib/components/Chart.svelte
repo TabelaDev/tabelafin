@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ApexCharts, { type ApexOptions } from 'apexcharts';
 	import { mode } from 'mode-watcher';
-	import { formatCompactNumber } from '$lib/format';
+	import { formatCompactNumber } from '$lib/lib/format';
 
 	type ChartSeries = ApexOptions['series'];
 

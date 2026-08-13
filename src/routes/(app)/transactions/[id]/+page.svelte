@@ -2,9 +2,9 @@
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import CategoryBadge from '$lib/CategoryBadge.svelte';
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
 	import { Badge, Button, Card, Select } from '@tabeladev/tabelawebui';
-	import { formatCurrency } from '$lib/format';
+	import { formatCurrency } from '$lib/lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

@@ -3,7 +3,7 @@
 // recurring on each dashboard view. Same fetch-based dispatch pattern
 // (Anthropic/OpenAI/DeepSeek) as TabelaCal (server/ai/parse.ts): no SDK, only
 // fetch(), so it runs in `workerd`.
-import type { AiProvider } from '$lib/ai-providers';
+import type { AiProvider } from '$lib/lib/ai-providers';
 
 export interface TransactionToCategorize {
 	id: string;

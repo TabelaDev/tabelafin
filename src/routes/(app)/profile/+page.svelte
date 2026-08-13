@@ -3,8 +3,8 @@
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { Button, Card, Divider } from '@tabeladev/tabelawebui';
-	import { openOnboarding } from '$lib/onboarding-store';
-	import { openStatementImport } from '$lib/statement-import-store';
+	import { openOnboarding } from '$lib/stores/onboarding-store';
+	import { openStatementImport } from '$lib/stores/statement-import-store';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

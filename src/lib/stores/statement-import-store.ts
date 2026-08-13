@@ -9,7 +9,7 @@
 // completed, which is the only source that cannot lie.
 
 import { writable } from 'svelte/store';
-import type { TakeoutAttachment } from '$lib/takeout-mbox';
+import type { TakeoutAttachment } from '$lib/client/takeout-mbox';
 
 export type ImportStep = 'instructions' | 'upload' | 'review';
 

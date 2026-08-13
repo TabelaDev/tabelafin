@@ -36,3 +36,4 @@ vite.config.ts.timestamp-*
 
 # scratch de debug
 tmp-*
+/tmp/

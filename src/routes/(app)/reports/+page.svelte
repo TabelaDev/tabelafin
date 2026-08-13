@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Card } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency } from '$lib/format';
+	import { formatCompactCurrency } from '$lib/lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

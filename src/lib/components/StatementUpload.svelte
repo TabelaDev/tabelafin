@@ -7,7 +7,7 @@
 	import { Button } from '@tabeladev/tabelawebui';
 	import { Input } from '@tabeladev/tabelawebui';
 	import { toast } from '@tabeladev/tabelawebui';
-	import { modelSupportsDocuments, type AiProvider } from '$lib/ai-providers';
+	import { modelSupportsDocuments, type AiProvider } from '$lib/lib/ai-providers';
 
 	let { provider, model }: { provider: AiProvider; model: string } = $props();
 

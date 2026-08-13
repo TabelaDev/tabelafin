@@ -1,9 +1,9 @@
 <script lang="ts">
-	import Chart from '$lib/Chart.svelte';
-	import { horizontalBarOptions } from '$lib/charts';
+	import Chart from '$lib/components/Chart.svelte';
+	import { horizontalBarOptions } from '$lib/client/charts';
 	import { resolve } from '$app/paths';
 	import { Card, Select } from '@tabeladev/tabelawebui';
-	import { formatCurrency } from '$lib/format';
+	import { formatCurrency } from '$lib/lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

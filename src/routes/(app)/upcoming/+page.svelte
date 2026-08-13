@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Chart from '$lib/Chart.svelte';
+	import Chart from '$lib/components/Chart.svelte';
 	import { Card, Input, Select, Table } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency, formatCurrency, formatCurrencyLabel } from '$lib/format';
+	import { formatCompactCurrency, formatCurrency, formatCurrencyLabel } from '$lib/lib/format';
 	import type { ApexOptions } from 'apexcharts';
 	import type { PageData } from './$types';
 

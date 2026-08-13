@@ -11,7 +11,7 @@ import {
 import { insertPdfTransaction } from '$lib/server/db/transactions';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { extractTransactionsFromPdf } from '$lib/server/ai/extract';
-import { modelSupportsDocuments, type AiProvider } from '$lib/ai-providers';
+import { modelSupportsDocuments, type AiProvider } from '$lib/lib/ai-providers';
 
 // Upload ceiling: below the providers' document limits (32 MB at Anthropic, 50 MB
 // per file at OpenAI), and comfortably above any real statement or invoice (most

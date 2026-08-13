@@ -6,7 +6,7 @@
 	import { ToastType } from '$lib/enums/toast-type';
 	import { pwaInfo } from 'virtual:pwa-info';
 	import { getFlash } from 'sveltekit-flash-message';
-	import ReloadPrompt from '$lib/ReloadPrompt.svelte';
+	import ReloadPrompt from '$lib/components/ReloadPrompt.svelte';
 
 	let { children } = $props();
 

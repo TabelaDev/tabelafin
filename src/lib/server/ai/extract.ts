@@ -9,7 +9,7 @@
 // Providers without `supportsDocuments` (DeepSeek, for one) never reach here: the
 // gating happens in the UI and in the upload route before the call. As a
 // safeguard, the dispatch still throws if it is called with one of them.
-import type { AiProvider } from '$lib/ai-providers';
+import type { AiProvider } from '$lib/lib/ai-providers';
 
 export interface ExtractedTransaction {
 	date: string; // 'YYYY-MM-DD'

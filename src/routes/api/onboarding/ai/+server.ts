@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { AI_PROVIDERS, type AiProvider } from '$lib/ai-providers';
+import { AI_PROVIDERS, type AiProvider } from '$lib/lib/ai-providers';
 import { encryptSecret } from '$lib/server/crypto';
 import { getDb } from '$lib/server/db';
 import { upsertAiCredentials } from '$lib/server/db/ai-credentials';
