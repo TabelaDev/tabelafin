@@ -30,8 +30,10 @@ convention.
 
 ## How it works
 
-1. You connect your accounts to **Meu Pluggy** (Pluggy's free personal product)
-   and paste your session access token into TabelaFin's onboarding.
+1. You log into **Meu Pluggy** (Pluggy's free personal product) and a small
+   browser extension (load unpacked, no store) captures your session token
+   automatically — no copy-paste. See `extension/` and
+   `docs/pluggy-integration.md`.
 2. A daily cron syncs accounts, transactions and investments through the Meu
    Pluggy API.
 3. New transactions are categorised in batch by your own AI (BYOK), or by simple
@@ -62,7 +64,10 @@ twice over:
   model. You pay for your own inference.
 - **Open Finance**: every user brings their own connection through
   [Meu Pluggy](https://www.pluggy.ai/meu-pluggy) (free for personal use), rather
-  than TabelaFin maintaining one shared paid commercial Pluggy account.
+  than TabelaFin maintaining one shared paid commercial Pluggy account. A
+  browser extension grabs the session token automatically so there is nothing to
+  copy-paste; the token expires in ~24h and is refreshed whenever you open Meu
+  Pluggy (see `docs/pluggy-integration.md` for the full decision).
 
 See `ESCOPO.md` for the product decisions in more detail.
 
