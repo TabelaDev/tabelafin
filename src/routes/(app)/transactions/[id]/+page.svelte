@@ -15,7 +15,10 @@
 	let categorizeDone = $state(false);
 	let recurringFrequency = $state('monthly');
 	let recurringError = $state('');
-	let tags = $state<string[]>(data.tags);
+	// One-shot read of the loaded tags (the TagInput owns it after that); the
+	// function wrapper avoids the `state_referenced_locally` warning.
+	const initialTags = () => data.tags;
+	let tags = $state<string[]>(initialTags());
 	let tagsError = $state('');
 	let tagsDone = $state(false);
 

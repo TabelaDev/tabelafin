@@ -62,9 +62,9 @@
 		};
 	};
 
-	const total = data.tags.reduce((sum, t) => sum + t.expense + t.income, 0);
-	const totalExpense = data.tags.reduce((sum, t) => sum + t.expense, 0);
-	const totalIncome = data.tags.reduce((sum, t) => sum + t.income, 0);
+	const total = $derived(data.tags.reduce((sum, t) => sum + t.expense + t.income, 0));
+	const totalExpense = $derived(data.tags.reduce((sum, t) => sum + t.expense, 0));
+	const totalIncome = $derived(data.tags.reduce((sum, t) => sum + t.income, 0));
 </script>
 
 <svelte:head>
