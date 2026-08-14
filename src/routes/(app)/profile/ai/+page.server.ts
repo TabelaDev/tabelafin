@@ -49,7 +49,7 @@ export const actions: Actions = {
 			chatSystemPrompt: chatSystemPrompt || null
 		});
 
-		// Toggles de funcionalidade (checkbox marcado = enabled).
+		// Feature toggles (checkbox checked = enabled).
 		await updateUserAiToggles(db, locals.userId, {
 			categorization: form.get('categorizationEnabled') === 'on',
 			report: form.get('reportEnabled') === 'on',

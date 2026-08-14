@@ -1,54 +1,53 @@
-# Extensão TabelaFin — Bridge do Meu Pluggy
+# TabelaFin Extension — Meu Pluggy Bridge
 
-Extensão do Chrome (Manifest V3, **sem publicar na Web Store**) que captura o
-token de sessão do Meu Pluggy automaticamente e sincroniza com o TabelaFin. O
-usuário só precisa **fazer login no Meu Pluggy** — nada de copiar e colar.
+A Chrome extension (Manifest V3, **not published to the Web Store**) that captures
+the Meu Pluggy session token automatically and syncs it with TabelaFin. The user
+only needs to **sign in to Meu Pluggy** — no copy-paste.
 
-Contexto completo da decisão (e o porquê da extensão em vez de Client
-ID/Secret ou do Pluggy Connect): `docs/pluggy-integration.md`.
+Full context on the decision (and why an extension instead of Client ID/Secret or
+Pluggy Connect): `docs/pluggy-integration.md`.
 
-## Instalação (modo desenvolvedor)
+## Installation (developer mode)
 
-1. Abra `chrome://extensions` no Chrome (ou Edge/Brave).
-2. Ative o **Modo desenvolvedor** (canto superior direito).
-3. Clique em **Carregar sem compactação** e selecione esta pasta (`extension/`).
-4. O ícone da extensão aparece na barra.
+1. Open `chrome://extensions` in Chrome (or Edge/Brave).
+2. Enable **Developer mode** (top right).
+3. Click **Load unpacked** and select this folder (`extension/`).
+4. The extension icon shows up in the toolbar.
 
-## Pareamento (uma vez)
+## Pairing (one time)
 
-1. No TabelaFin (Perfil → Extensão do navegador → "Vincular / revisar"), clique
-   em **Gerar código de pareamento**.
-2. Copie o código e abra o popup desta extensão.
-3. Cole o código no campo **Código de pareamento** e clique em **Salvar**.
-   - Deixe o campo **Origem do app** com o valor padrão
-     (`https://tabelafin.ianptkcs-023.workers.dev`), ou aponte pro staging/dev
-     se estiver testando localmente.
+1. In TabelaFin (Profile → Browser extension → "Pair / review"), click
+   **Generate pairing code**.
+2. Copy the code and open this extension's popup.
+3. Paste the code into the **Pairing code** field and click **Save**.
+   - Keep the **App origin** field at its default
+     (`https://tabelafin.ianptkcs-023.workers.dev`), or point it to staging/dev
+     when testing locally.
 
-## Uso
+## Usage
 
-Abra o Meu Pluggy (`meu.pluggy.ai`) e faça login. O content script intercepta o
-header `Authorization: Bearer` das chamadas à `my-api.pluggy.ai` e envia o
-token pro app, que valida, criptografa e sincroniza.
+Open Meu Pluggy (`meu.pluggy.ai`) and sign in. The content script intercepts the
+`Authorization: Bearer` header on calls to `my-api.pluggy.ai` and sends the
+token to the app, which validates, encrypts and syncs it.
 
-O token do Meu Pluggy expira em ~24h. **Não se preocupe**: toda vez que você
-abrir o Meu Pluggy, a extensão reenvia um token fresco — o app fica sempre
-atualizado enquanto você usar o Meu Pluggy. O popup mostra o resultado do
-último envio.
+The Meu Pluggy token expires in ~24h. **Don't worry**: every time you open Meu
+Pluggy, the extension resends a fresh token — the app stays up to date as long
+as you use Meu Pluggy. The popup shows the result of the last push.
 
-## Como funciona
+## How it works
 
-- `content.js` — roda no `MAIN world` em `document_start`, embrulha `fetch`/XHR
-  e captura o `Bearer` (o token não fica em `localStorage`, então é interceptado
-  na rede).
-- `background.js` — service worker que manda o token pro app em
-  `/api/pluggy/token`, autenticado pelo device token pareado.
-- `popup.html/js` — configura origem + código de pareamento e mostra o status.
+- `content.js` — runs in the `MAIN world` at `document_start`, wraps `fetch`/XHR
+  and captures the `Bearer` token (the token is not in `localStorage`, so it is
+  intercepted on the wire).
+- `background.js` — service worker that pushes the token to the app at
+  `/api/pluggy/token`, authenticated with the paired device token.
+- `popup.html/js` — configures origin + pairing code and shows the status.
 
-## Solução de problemas
+## Troubleshooting
 
-| Sintoma                                 | Causa / ação                                                                      |
-| --------------------------------------- | --------------------------------------------------------------------------------- |
-| Popup diz "Nenhum código de pareamento" | Gere e cole o código de pareamento no app (Perfil → Extensão).                    |
-| "Código de pareamento inválido"         | O código expirou (válido por 1 ano) ou foi digitado errado — gere outro.          |
-| Nada sincroniza após abrir o Meu Pluggy | Confira se está logado no Meu Pluggy e se a origem no popup aponta pro app certo. |
-| Troquei de navegador                    | Parear de novo: o device token fica no `chrome.storage` de cada navegador.        |
+| Symptom                                | Cause / action                                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Popup says "No pairing code"           | Generate and paste the pairing code in the app (Profile → Browser extension).                        |
+| "Invalid pairing code"                 | The code expired (valid for 1 year) or was mistyped — generate another one.                          |
+| Nothing syncs after opening Meu Pluggy | Check that you are signed in to Meu Pluggy and that the origin in the popup points to the right app. |
+| I switched browsers                    | Pair again: the device token lives in each browser's `chrome.storage`.                               |

@@ -76,7 +76,7 @@
 		</p>
 	</header>
 
-	<!-- Nova regra -->
+	<!-- New rule -->
 	<Card>
 		<Card.Content>
 			<form

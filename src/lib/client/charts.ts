@@ -1,9 +1,9 @@
 import type { ApexOptions } from 'apexcharts';
 import { formatCurrencyLabel } from '$lib/lib/format';
 
-// Shared horizontal bar chart preset (barra horizontal com rótulo na ponta da
-// barra). Usado pelo dashboard (top categorias) e pela página de categorias —
-// as diferenças entre eles são paramétricas, não duas configs separadas.
+// Shared horizontal bar chart preset (horizontal bar with label at the tip of the
+// bar). Used by the dashboard (top categories) and the categories page — the
+// differences between them are parametric, not two separate configs.
 export function horizontalBarOptions({
 	categories,
 	distributed = false,

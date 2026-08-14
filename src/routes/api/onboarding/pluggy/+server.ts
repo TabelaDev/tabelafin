@@ -29,7 +29,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 	const db = getDb(platform!.env.DB);
 
-	// Onboarding exige IA configurada antes de conectar Open Finance.
+	// Onboarding requires AI configured before connecting Open Finance.
 	const aiCredentials = await getAiCredentials(db, locals.userId);
 	if (!aiCredentials) {
 		return json({ error: 'Configure a IA antes de conectar o Open Finance.' }, { status: 400 });

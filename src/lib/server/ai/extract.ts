@@ -14,7 +14,7 @@ import type { AiProvider } from '$lib/lib/ai-providers';
 export interface ExtractedTransaction {
 	date: string; // 'YYYY-MM-DD'
 	description: string;
-	amount: number; // negativo pra gasto, positivo pra entrada
+	amount: number; // negative for expense, positive for income
 	category: string;
 }
 

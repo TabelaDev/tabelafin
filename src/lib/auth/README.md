@@ -1,60 +1,60 @@
-# auth — Módulo reutilizável de autenticação
+# auth — Reusable authentication module
 
-Módulo de autenticação via Better Auth, pronto pra copiar e usar em qualquer projeto SvelteKit + Drizzle + Cloudflare Workers.
+Authentication module built on Better Auth, ready to copy into any SvelteKit + Drizzle + Cloudflare Workers project.
 
-## Estrutura
+## Structure
 
 ```
 src/lib/auth/
 ├── index.ts              # Entry point (re-exports)
-├── create.ts             # Cria instância do Better Auth
-├── errors.ts             # Mapeamento de erros pra mensagens amigáveis
-├── cookies.ts            # Encaminhamento de cookies de sessão
-├── schema.ts             # Schema Drizzle das tabelas Better Auth
-├── hooks.ts              # Hook do SvelteKit pra resolver sessão
+├── create.ts             # Creates the Better Auth instance
+├── errors.ts             # Maps errors to friendly messages
+├── cookies.ts            # Forwards session cookies
+├── schema.ts             # Drizzle schema for the Better Auth tables
+├── hooks.ts              # SvelteKit hook to resolve the session
 └── components/
-    ├── LoginForm.svelte   # Formulário de login reutilizável
-    └── RegisterForm.svelte # Formulário de cadastro reutilizável
+    ├── LoginForm.svelte   # Reusable login form
+    └── RegisterForm.svelte # Reusable sign-up form
 ```
 
 ## Setup
 
-### 1. Instalar dependências
+### 1. Install dependencies
 
 ```bash
 bun add better-auth @better-auth/drizzle-adapter
 ```
 
-### 2. Copiar a pasta `src/lib/auth/`
+### 2. Copy the `src/lib/auth/` folder
 
-Copie toda a pasta pro novo projeto.
+Copy the whole folder into the new project.
 
-### 3. Adicionar tabelas ao schema Drizzle
+### 3. Add tables to the Drizzle schema
 
-No seu `src/lib/server/db/schema.ts`, importe e use as tabelas de `auth/schema.ts`:
+In your `src/lib/server/db/schema.ts`, import and use the tables from `auth/schema.ts`:
 
 ```ts
 import { authUser, authSession, authAccount } from '$lib/auth/schema';
 
-// Adicione campos próprios do app ao authUser se necessário
+// Add app-specific fields to authUser if needed
 export const users = sqliteTable('user', {
 	...authUser,
 	timezone: text('timezone').notNull().default('UTC')
 });
 
-// Re-exporta pra Better Auth
+// Re-export for Better Auth
 export const sessions = authSession;
 export const accounts = authAccount;
 ```
 
-### 4. Configurar env vars
+### 4. Configure env vars
 
 ```bash
-BETTER_AUTH_SECRET="seu-segredo-32chars"
+BETTER_AUTH_SECRET="your-32char-secret"
 BETTER_AUTH_URL="http://localhost:5173"
 ```
 
-### 5. Criar instância do auth
+### 5. Create the auth instance
 
 ```ts
 import { createAuth } from '$lib/auth/create';
@@ -65,11 +65,11 @@ const auth = createAuth({
 	provider: 'sqlite',
 	secret: env.BETTER_AUTH_SECRET,
 	baseURL: env.BETTER_AUTH_URL,
-	cookiePrefix: 'meuapp'
+	cookiePrefix: 'myapp'
 });
 ```
 
-### 6. Configurar hook
+### 6. Configure the hook
 
 ```ts
 // hooks.server.ts
@@ -80,7 +80,7 @@ import { getDb } from '$lib/server/db';
 export const handle = handleAuth(getAuth, getDb);
 ```
 
-### 7. Criar rotas
+### 7. Create the routes
 
 #### Login (`src/routes/login/+page.server.ts`)
 
@@ -123,7 +123,7 @@ export const actions = {
 };
 ```
 
-#### Cadastro — mesmo padrão com `signUpEmail`.
+#### Sign-up — same pattern with `signUpEmail`.
 
 ### 8. Components
 
@@ -139,7 +139,7 @@ export const actions = {
 ```
 
 ```svelte
-<!-- src/routes/cadastro/+page.svelte -->
+<!-- src/routes/signup/+page.svelte -->
 <script>
 	import RegisterForm from '$lib/auth/components/RegisterForm.svelte';
 	import type { ActionData } from './$types';
@@ -149,11 +149,11 @@ export const actions = {
 <RegisterForm error={form?.error} />
 ```
 
-## Migration do banco
+## Database migration
 
-Rode `npx auth@latest generate` pra gerar as migrations, ou crie manualmente seguindo o schema em `auth/schema.ts`.
+Run `npx auth@latest generate` to generate the migrations, or create them by hand following the schema in `auth/schema.ts`.
 
-## Referência
+## Reference
 
 - [Better Auth Docs](https://www.better-auth.com/docs)
 - [Drizzle Adapter](https://www.better-auth.com/docs/adapters/drizzle)

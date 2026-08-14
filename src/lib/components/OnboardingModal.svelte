@@ -23,8 +23,8 @@
 	let model = $state<string>(AI_PROVIDERS.deepseek.models[0].id);
 	let apiKey = $state('');
 
-	// Pluggy — duas alternativas de conexão (ver docs/pluggy-integration.md):
-	// a extensão (automática) ou colar o token à mão.
+	// Pluggy — two connection alternatives (see docs/pluggy-integration.md):
+	// the extension (automatic) or pasting the token by hand.
 	let connectMethod = $state<'extension' | 'manual'>('extension');
 	let deviceToken = $state('');
 	let pairingLoading = $state(false);
@@ -140,10 +140,8 @@
 		await navigator.clipboard.writeText(deviceToken);
 	}
 
-	// Depois de abrir o Meu Pluggy (com a extensão vinculada), o usuário volta
-	// aqui e confirma. Se o token já chegou, o onboarding fecha.
-	// Pular o Open Finance: encerra o onboarding marcando como visto, sem exigir
-	// conexão. (Na etapa de IA, "pular" só avança pra próxima etapa.)
+	// Skipping Open Finance ends the onboarding and marks it as seen, without
+	// requiring a connection. (On the AI step, "skip" only advances the flow.)
 	async function skip() {
 		statusMsg = '';
 		try {
@@ -160,8 +158,8 @@
 		}
 	}
 
-	// Depois de abrir o Meu Pluggy (com a extensão vinculada), o usuário volta
-	// aqui e confirma. Se o token já chegou, o onboarding fecha.
+	// After opening Meu Pluggy (with the extension paired), the user comes back
+	// here and confirms. When the token has arrived, the onboarding closes.
 	async function checkStatus() {
 		checking = true;
 		statusMsg = '';

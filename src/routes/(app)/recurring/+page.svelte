@@ -27,7 +27,7 @@
 	// Display order of the frequencies.
 	const GROUP_ORDER = ['monthly', 'weekly', 'quarterly', 'yearly'];
 
-	// Agrupa as recorrências ativas por frequência, na ordem definida.
+	// Groups active recurrences by frequency, in the defined order.
 	const groups = $derived.by(() => {
 		const byFreq: Record<string, typeof data.expenses> = {};
 		for (const e of data.expenses) {
@@ -93,7 +93,7 @@
 		</Button>
 	</header>
 
-	<!-- Total mensal estimado -->
+	<!-- Estimated monthly total -->
 	{#if data.expenses.length > 0}
 		<Card>
 			<Card.Content>
@@ -107,7 +107,7 @@
 		</Card>
 	{/if}
 
-	<!-- Formulário de novo gasto recorrente -->
+	<!-- New recurring expense form -->
 	{#if showForm}
 		<Card>
 			<Card.Content>
@@ -200,7 +200,7 @@
 		</Card>
 	{/if}
 
-	<!-- Lista agrupada por frequência -->
+	<!-- List grouped by frequency -->
 	{#if groups.length === 0 && inactive.length === 0}
 		<Card>
 			<Card.Content>

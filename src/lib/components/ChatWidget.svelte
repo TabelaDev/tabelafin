@@ -101,8 +101,8 @@
 	}
 </script>
 
-<!-- Widget flutuante do chat IA — não é sidebar full-screen; abre como painel
-     fixo no canto, posicionado pelo layout (offset da sidebar no desktop). -->
+<!-- Floating AI chat widget — not a full-screen sidebar; opens as a fixed panel
+     in the corner, positioned by the layout (sidebar offset on desktop). -->
 {#if open}
 	<div
 		class="fixed z-50 flex max-h-[80svh] w-[22rem] max-w-[calc(100vw-2rem)] flex-col border border-rule bg-paper shadow-[3px_3px_0_0_var(--twui-rule)] {className}"

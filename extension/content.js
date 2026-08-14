@@ -1,10 +1,10 @@
-// Content script (world: MAIN, document_start) — captura o token do Meu Pluggy.
+// Content script (world: MAIN, document_start) — captures the Meu Pluggy token.
 //
-// O token é a sessão Auth0 do Meu Pluggy: fica em memória no SPA, não em
-// localStorage, então não dá pra "ler" de um lugar fixo. Em vez disso, este
-// script embrulha fetch/XHR e intercepta o header Authorization: Bearer que o
-// Meu Pluggy manda pra my-api.pluggy.ai. Roda no MAIN world e no document_start
-// pra estar no lugar antes do primeiro request do SPA.
+// The token is the Auth0 session of Meu Pluggy: it lives in the SPA's memory,
+// not in localStorage, so there is no fixed place to "read" it from. Instead,
+// this script wraps fetch/XHR and intercepts the Authorization: Bearer header
+// that Meu Pluggy sends to my-api.pluggy.ai. It runs in the MAIN world at
+// document_start so it is in place before the SPA's first request.
 (() => {
 	const API_URL = 'https://my-api.pluggy.ai';
 	const captured = new Set();

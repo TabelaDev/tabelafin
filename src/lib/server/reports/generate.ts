@@ -20,7 +20,7 @@ type Db = ReturnType<typeof getDb>;
 interface MonthRange {
 	yearMonth: string; // 'YYYY-MM'
 	from: Date;
-	to: Date; // exclusivo
+	to: Date; // exclusive
 }
 
 // The month before the day the cron runs (the 1st of the current month, see
@@ -71,8 +71,8 @@ async function generateReportForUser(
 	userId: string,
 	range: MonthRange
 ): Promise<void> {
-	// Idempotente: se o cron rodar de novo (retry, ou reprocessamento manual),
-	// nunca gera o mesmo relatório/push duas vezes.
+	// Idempotent: if the cron runs again (retry or manual reprocessing),
+	// it never generates the same report/push twice.
 	const existing = await getMonthlyReport(db, userId, range.yearMonth);
 	if (existing) return;
 

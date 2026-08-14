@@ -3,9 +3,9 @@ import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { setUserSeenOnboarding } from '$lib/server/db/users';
 
-// Encerra o onboarding sem exigir configuração completa — usado pelo botão
-// "Pular" da última etapa (Open Finance). Marca `seenOnboarding` pra o modal
-// não reabrir sozinho a cada login, mesmo sem IA/Open Finance configurados.
+// Finishes onboarding without requiring full configuration — used by the
+// "Skip" button on the last step (Open Finance). Marks `seenOnboarding` so the
+// modal does not reopen on every login, even without AI/Open Finance set up.
 export const POST: RequestHandler = async ({ locals, platform }) => {
 	if (!locals.userId) return json({ error: 'Não autenticado.' }, { status: 401 });
 

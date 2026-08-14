@@ -34,7 +34,7 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 	// data arrives without waiting for the daily cron.
 	if (pluggy && pluggyItems.some((item) => !item.lastSyncedAt)) {
 		const syncPromise = syncUserItems(db, platform!.env.MASTER_KEY, locals.userId).catch((err) => {
-			console.error('[layout/app] sync de recuperação falhou', {
+			console.error('[layout/app] recovery sync failed', {
 				userId: locals.userId,
 				error: err instanceof Error ? err.message : String(err)
 			});

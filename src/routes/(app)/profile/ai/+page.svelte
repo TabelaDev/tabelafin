@@ -53,7 +53,7 @@ Regras:
 	</header>
 
 	<form method="POST" use:enhance class="flex flex-col gap-6">
-		<!-- Categorização -->
+		<!-- Categorisation -->
 		<Card>
 			<Card.Content>
 				<div class="flex flex-col gap-3">
@@ -95,7 +95,7 @@ Regras:
 			</Card.Content>
 		</Card>
 
-		<!-- Relatório mensal -->
+		<!-- Monthly report -->
 		<Card>
 			<Card.Content>
 				<div class="flex flex-col gap-3">
@@ -128,7 +128,7 @@ Regras:
 			</Card.Content>
 		</Card>
 
-		<!-- Chat IA -->
+		<!-- AI Chat -->
 		<Card>
 			<Card.Content>
 				<div class="flex flex-col gap-3">

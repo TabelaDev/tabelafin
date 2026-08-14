@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
 
-	// Credenciais são OPCIONAIS.
+	// Credentials are OPTIONAL.
 	const [aiCredentials, pluggyCredentials] = await Promise.all([
 		getAiCredentials(db, userId),
 		getPluggyCredentials(db, userId)
@@ -29,8 +29,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 
 	const userAccounts = await getAccountsByUser(db, userId);
 
-	// Tipo de conta por id — o cartão de crédito tem lógica própria (ver
-	// INTERNAL_TRANSFER_CATEGORIES e o tratamento de sinal no loop abaixo).
+	// Account type by id — the credit card has its own logic (see
+	// INTERNAL_TRANSFER_CATEGORIES and the sign handling in the loop below).
 	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
 
 	// "Recent" means up to today: an invoice transaction dated in the future (an
@@ -119,9 +119,9 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.filter((a) => a.type === 'checking')
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 
-	// Saldo total = patrimônio líquido: ativos (contas + investimentos) menos a
-	// dívida do cartão de crédito (a fatura em aberto, que agrega as parcelas
-	// futuras). O cartão NÃO é um ativo — é passivo.
+	// Total balance = net worth: assets (accounts + investments) minus the
+	// credit card debt (the open invoice, which aggregates future instalments).
+	// The card is NOT an asset — it is a liability.
 	const creditCardBalance = userAccounts
 		.filter((a) => a.type === 'credit_card')
 		.reduce((sum, a) => sum + a.cachedBalance, 0);

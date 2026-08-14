@@ -6,11 +6,11 @@ import {
 	generateDeviceToken
 } from '$lib/server/pluggy/device-token';
 
-// Gera um código de pareamento de longo prazo para a extensão do navegador
-// (ver docs/pluggy-integration.md). Chamado pela página de perfil / onboarding
-// com a sessão do app; o código aparece UMA vez e é colado no popup da
-// extensão. A partir daí a extensão usa este token no header Authorization ao
-// enviar o token do Meu Pluggy pra /api/pluggy/token.
+// Generates a long-lived pairing code for the browser extension
+// (see docs/pluggy-integration.md). Called by the profile/onboarding page with
+// the app session; the code is shown once and pasted into the extension popup.
+// From then on the extension uses this token in the Authorization header when
+// sending the Meu Pluggy token to /api/pluggy/token.
 export const POST: RequestHandler = async ({ locals, platform }) => {
 	if (!locals.userId) return json({ error: 'Não autenticado.' }, { status: 401 });
 

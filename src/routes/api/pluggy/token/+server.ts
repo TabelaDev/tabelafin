@@ -9,13 +9,14 @@ import { fetchItems } from '$lib/server/pluggy/client';
 import { syncUserItems } from '$lib/server/pluggy/sync';
 import { DEVICE_TOKEN_KV_PREFIX } from '$lib/server/pluggy/device-token';
 
-// Recebe o token do Meu Pluggy capturado pela extensão (docs/pluggy-integration.md).
+// Receives the Meu Pluggy token captured by the extension
+// (docs/pluggy-integration.md).
 //
-// A autenticação é por device token (pareado uma vez), não pelo cookie de
-// sessão — a extensão roda fora do app e o cookie é HttpOnly + SameSite=Lax.
-// O token do Meu Pluggy expira em ~24h; a extensão reenvia um token fresco
-// toda vez que o usuário abre o Meu Pluggy, então este endpoint é um "upsert"
-// idempotente que também dispara um sync em background (waitUntil).
+// Authentication is via device token (paired once), not the session cookie —
+// the extension runs outside the app and the cookie is HttpOnly + SameSite=Lax.
+// The Meu Pluggy token expires in ~24 h; the extension resends a fresh token
+// every time the user opens Meu Pluggy, so this endpoint is an idempotent
+// "upsert" that also fires a background sync (waitUntil).
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const auth = request.headers.get('authorization') ?? '';
 	const deviceToken = auth.replace(/^Bearer\s+/i, '').trim();
@@ -30,8 +31,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	const db = getDb(platform!.env.DB);
 
-	// Validar o token também serve pra descobrir as conexões (items) do usuário —
-	// a extensão só entrega o token, os items vêm daqui.
+	// Validating the token also discovers the user's connections (items) — the
+	// extension only delivers the token; the items come from here.
 	let items;
 	try {
 		items = await fetchItems(token);
@@ -91,8 +92,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		});
 	}
 
-	// O usuário agora tem credencial + conexões: onboarding pode ser considerado
-	// visto (senão o modal reabriria a cada login mesmo depois de conectar).
+	// The user now has credentials + connections: onboarding can be considered
+	// seen (otherwise the modal would reopen on every login even after
+	// connecting).
 	await setUserSeenOnboarding(db, userId, true);
 
 	const syncPromise = syncUserItems(db, masterKey, userId).catch((err) => {

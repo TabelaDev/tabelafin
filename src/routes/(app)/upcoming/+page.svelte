@@ -155,7 +155,7 @@
 			</Card.Content>
 		</Card>
 	{:else}
-		<!-- Resumo por conta -->
+		<!-- Summary by account -->
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 			<Card>
 				<Card.Content>
@@ -187,7 +187,7 @@
 			{/each}
 		</div>
 
-		<!-- Gastos futuros por mês de fatura -->
+		<!-- Future spending by invoice month -->
 		{#if byMonth.length > 1}
 			<Card>
 				<Card.Content>
@@ -204,7 +204,7 @@
 			</Card>
 		{/if}
 
-		<!-- Filtros -->
+		<!-- Filters -->
 		<div class="flex flex-wrap items-center gap-2">
 			<Input
 				bind:value={searchQuery}
@@ -219,7 +219,7 @@
 			</p>
 		</div>
 
-		<!-- Lista -->
+		<!-- List -->
 		<div class="overflow-x-auto border border-rule bg-paper-raised">
 			<Table
 				columns={[

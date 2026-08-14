@@ -225,7 +225,7 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 	const accountIds = new Set(
 		rows.map((r) => r.accountId).filter((id): id is string => Boolean(id))
 	);
-	if (accountIds.size < 2) return; // precisa de pelo menos 2 contas pra existir espelho
+	if (accountIds.size < 2) return; // needs at least 2 accounts for a mirror to exist
 
 	const accountRows = await db
 		.select({ id: financeAccounts.id, type: financeAccounts.type })

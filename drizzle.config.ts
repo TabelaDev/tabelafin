@@ -1,8 +1,8 @@
 import { defineConfig } from 'drizzle-kit';
 
-// Fluxo D1: `drizzle-kit generate` só emite o SQL em ./drizzle;
-// quem aplica é o wrangler (`wrangler d1 migrations apply tabelafin-db --local|--remote`).
-// Por isso não há `driver` nem credenciais aqui.
+// D1 workflow: `drizzle-kit generate` only emits the SQL to ./drizzle;
+// the wrangler applies it (`wrangler d1 migrations apply tabelafin-db --local|--remote`).
+// That's why there's no `driver` or credentials here.
 export default defineConfig({
 	out: './drizzle',
 	schema: './src/lib/server/db/schema.ts',

@@ -1,5 +1,5 @@
-// Template de relatório mensal do TabelaFin
-// Compilado client-side via typst.ts (WASM)
+// TabelaFin monthly report template
+// Compiled client-side via typst.ts (WASM)
 
 #set page(
   paper: "a4",
@@ -89,7 +89,7 @@
 
 #v(0.5cm)
 
-// --- GRÁFICO DE BARRAS (básico) ---
+// --- BAR CHART (basic) ---
 = Distribuição de Gastos
 
 #{

@@ -11,7 +11,7 @@
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
-	// Pill de status IA/Open Finance é fechável; a escolha persiste.
+	// AI/Open Finance status pill is dismissible; the choice persists.
 	const STATUS_HIDDEN_KEY = 'tabelafin.status-hidden';
 	let statusVisible = $state(true);
 	let statusInitialized = $state(false);
@@ -37,8 +37,8 @@
 		{ href: resolve('/reports'), label: 'Relatórios', icon: reportsIcon }
 	];
 
-	// Inline SVG icons com width/height explícitos — Tailwind não vê `class`
-	// dentro de string JS, então o tamanho vem do atributo, não da classe.
+	// Inline SVG icons with explicit width/height — Tailwind does not see `class`
+	// inside JS strings, so the size comes from the attribute, not the class.
 	const NAV_PATHS: Record<string, string> = {
 		grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
 		list: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
@@ -105,11 +105,10 @@
 	{@render children()}
 </AppShell>
 
-<!-- Chat IA widget — flutuante, recolhível. Desktop: deslocado pra direita
-     da sidebar (w-60 = 15rem) pra não tampar tema/logout; mobile: acima da
-     bottom nav e da pill. As classes usam important pra vencer o CSS
-     scoped do componente (FloatingActionPill/StatusPill mantêm posição
-     própria fixa). -->
+<!-- AI chat widget — floating, collapsible. Desktop: offset to the right of
+     the sidebar (w-60 = 15rem) so it does not overlap theme/logout; mobile:
+     above the bottom nav and the pill. The classes use !important to beat the
+     scoped CSS (FloatingActionPill/StatusPill keep their own fixed position). -->
 {#if !data.hideAi}
 	<ChatWidget
 		bind:open={chatOpen}
@@ -129,7 +128,7 @@
 	</FloatingActionPill>
 {/if}
 
-<!-- Status IA/Open Finance — pill fixo, fechável; escolha persiste -->
+<!-- AI/Open Finance status — fixed, dismissible pill; choice persists -->
 <StatusPill
 	closable
 	bind:visible={statusVisible}
@@ -157,17 +156,19 @@
 	{/if}
 </StatusPill>
 
-<!-- Onboarding de primeiro acesso — abre sozinho pra quem nunca viu -->
+<!-- First-visit onboarding — opens by itself for users who never saw it -->
 <OnboardingModal autoOpen={!data.seenOnboarding} />
 
-<!-- Importação em massa de extratos: montada no layout, e não na página que a
-     abre, porque a fila segue rodando depois de fechar o modal e navegar. -->
+<!-- Bulk statement import: mounted in the layout, not the page that opens
+     it, because the queue keeps running after the modal closes and the user
+     navigates. -->
 <StatementImportModal />
 
 <style>
-	/* Perfil no rodapé da sidebar — mesmo look dos itens de nav, agrupado com o
-	   tema e o sair. O margin negativo anula o padding do wrapper do AppShell
-	   (.twui-appshell-sidebar-profile) pra linha alinhar com o resto do footer. */
+	/* Profile in the sidebar footer — same look as the nav items, grouped with
+	   the theme toggle and logout. The negative margin cancels the AppShell
+	   wrapper padding (.twui-appshell-sidebar-profile) so the row aligns with
+	   the rest of the footer. */
 	.profile-link {
 		display: flex;
 		align-items: center;

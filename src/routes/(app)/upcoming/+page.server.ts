@@ -11,8 +11,9 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
 
-	// Lançamentos futuros: parcelas de cartão que o Nubank pré-lança com data
-	// de fatura à frente (date > hoje). Igual à aba "próximas faturas" do app.
+	// Future entries: card instalments that Nubank pre-posts with an invoice date
+	// in the future (date > today). Same as the "upcoming invoices" tab in the
+	// Nubank app.
 	const now = new Date();
 	const future = await db
 		.select()

@@ -66,7 +66,7 @@
 #set text(font: "JetBrains Mono", size: 10pt, fill: rgb("#1a1a2e"))
 #set par(justify: true, leading: 0.65em)
 
-// Capa
+// Cover
 #align(center + horizon)[
   #text(size: 28pt, weight: "bold", fill: rgb("#6c5ce7"))[TabelaFin]
   #v(0.5cm)
@@ -79,14 +79,14 @@
 
 #pagebreak()
 
-// Resumo
+// Summary
 = Resumo Executivo
 
 ${summary.narrative ?? 'Relatório financeiro do mês.'}
 
 #v(0.5cm)
 
-// Indicadores
+// Indicators
 = Indicadores do Mês
 
 #{
@@ -108,7 +108,7 @@ ${summary.narrative ?? 'Relatório financeiro do mês.'}
 
 #v(0.5cm)
 
-// Gastos por Categoria
+// Spending by Category
 = Gastos por Categoria
 
 #{
@@ -128,7 +128,7 @@ ${summary.narrative ?? 'Relatório financeiro do mês.'}
 
 #v(0.5cm)
 
-// Sugestões
+// Suggestions
 = Sugestões de Economia
 
 ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
@@ -190,7 +190,7 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 						<p class="font-mono text-sm text-danger">{error}</p>
 					{/if}
 
-					<!-- Preview do relatório -->
+					<!-- Report preview -->
 					<div class="bg-paper-inset border border-rule p-4">
 						<p class="font-mono text-sm text-ink">
 							{data.latestReport.summary.narrative ?? 'Relatório financeiro do mês.'}

@@ -1,8 +1,9 @@
-// Service worker da extensão — recebe o token capturado pelo content script e
-// envia pro app via /api/pluggy/token (autenticado pelo device token pareado).
+// Extension service worker — receives the token captured by the content script
+// and sends it to the app via /api/pluggy/token (authenticated by the paired
+// device token).
 //
-// O token do Meu Pluggy expira em ~24h; este fluxo roda toda vez que o usuário
-// abre o Meu Pluggy, então o app fica com um token fresco sem nenhuma ação.
+// The Meu Pluggy token expires in ~24h; this flow runs every time the user
+// opens Meu Pluggy, so the app always has a fresh token with no action needed.
 const DEFAULT_ORIGIN = 'https://tabelafin.ianptkcs-023.workers.dev';
 
 async function pushToken(token) {

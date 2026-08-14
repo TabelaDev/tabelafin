@@ -12,7 +12,7 @@ export interface UserCategory {
 }
 
 // The default categories every new user is seeded with on signup — they mirror
-// antiga TRANSACTION_CATEGORIES + cores do CATEGORY_COLORS.
+// the old TRANSACTION_CATEGORIES + CATEGORY_COLORS.
 export const DEFAULT_CATEGORIES: { name: string; color: string }[] = [
 	{ name: 'Alimentação', color: 'ctp-peach' },
 	{ name: 'Transporte', color: 'ctp-sky' },
@@ -49,7 +49,7 @@ export async function getCategory(
 }
 
 // Inserts the default categories if the user has none yet. Called on
-// cadastro (createUser) — idempotente.
+// signup (createUser) — idempotent.
 export async function ensureDefaultCategories(db: Db, userId: string): Promise<void> {
 	const existing = await getCategoriesByUser(db, userId);
 	if (existing.length > 0) return;

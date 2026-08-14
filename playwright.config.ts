@@ -4,10 +4,10 @@ const PORT = 5175;
 
 export default defineConfig({
 	testDir: './e2e',
-	// Os testes compartilham o mesmo dev server (webServer) e o mesmo D1 local;
-	// rodar com vários workers causa falhas intermitentes de login/navegação por
-	// competição (a suíte inteira roda em ~18s com 1 worker, então não vale o
-	// paralelismo).
+	// Tests share the same dev server (webServer) and the same local D1;
+	// running with multiple workers causes intermittent login/navigation failures
+	// due to race conditions (the full suite runs in ~18s with 1 worker, so
+	// parallelism isn't worth it).
 	fullyParallel: false,
 	workers: 1,
 	forbidOnly: !!process.env.CI,

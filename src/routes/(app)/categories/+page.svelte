@@ -8,7 +8,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	// Gastos (expense) vs Receitas (income) por categoria — o toggle mora no card.
+	// Expenses (expense) vs Income by category — the toggle lives in the card.
 	let direction: 'expense' | 'income' = $state('expense');
 	const isExpense = $derived(direction === 'expense');
 

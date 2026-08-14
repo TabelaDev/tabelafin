@@ -6,8 +6,8 @@
 	"main": "worker/entry.js",
 	"alias": {
 		"$lib": "./src/lib",
-		// typst.ts WASM modules só rodam client-side (via CDN).
-		// No server, mapeamos pra módulos vazios pra evitar erro de resolução.
+		// typst.ts WASM modules only run client-side (via CDN).
+		// On the server, we map them to empty modules to avoid resolution errors.
 		"@myriaddreamin/typst-ts-web-compiler": "./worker/empty-module.js",
 		"@myriaddreamin/typst-ts-renderer": "./worker/empty-module.js"
 	},
@@ -18,14 +18,14 @@
 		"ORIGIN": "https://tabelafin.ianptkcs-023.workers.dev",
 		"VAPID_PUBLIC_KEY": "BLRtiZgDBYkAVW92C0WIfRmlehgF0g4vI7i6xC8VKYHziKVdcyxv3jtj0BIoin5LU255BX4pknqJENcPfswYAns",
 		"VAPID_SUBJECT": "https://tabelafin.ianptkcs-023.workers.dev",
-		// Better Auth: URL base pra callbacks de sessão
+		// Better Auth: base URL for session callbacks
 		"BETTER_AUTH_URL": "https://tabelafin.ianptkcs-023.workers.dev"
-		// Segredos (não commitados): BETTER_AUTH_SECRET, MASTER_KEY, VAPID_PRIVATE_KEY
-		// Configurados via `wrangler secret put <NOME>`
+		// Secrets (not committed): BETTER_AUTH_SECRET, MASTER_KEY, VAPID_PRIVATE_KEY
+		// Configured via `wrangler secret put <NAME>`
 	},
-	// Cron diário (sync Pluggy: accounts/transactions/investments) + cron
-	// mensal (dia 1, relatório do mês anterior + push) — ver ESCOPO.md §3.2/§3.6.
-	// O handler `scheduled` em worker/entry.js distingue os dois por `event.cron`.
+	// Daily cron (Pluggy sync: accounts/transactions/investments) + monthly cron
+	// (day 1, previous month report + push) — see ESCOPO.md §3.2/§3.6.
+	// The `scheduled` handler in worker/entry.js distinguishes the two via `event.cron`.
 	"triggers": { "crons": ["0 6 * * *", "0 7 1 * *"] },
 	"d1_databases": [
 		{
@@ -36,14 +36,14 @@
 		}
 	],
 	"kv_namespaces": [{ "binding": "SESSIONS", "id": "34086589c9b34c1ab5c5b59e236662f0" }],
-	// Homologação: recursos isolados (D1/KV próprios, vars apontando pro
-	// subdomínio de staging), sem crons — disparo manual no painel pra testar.
-	// Secrets via `wrangler secret put <NOME> --env staging`.
+	// Staging: isolated resources (own D1/KV, vars pointing to staging subdomain),
+	// no crons — manual trigger from the dashboard for testing.
+	// Secrets via `wrangler secret put <NAME> --env staging`.
 	"env": {
 		"staging": {
 			"name": "tabelafin-staging",
-			// Environments herdam `triggers.crons` do top-level; lista vazia zera
-			// (staging não tem cron — disparo manual no painel pra testar).
+			// Environments inherit `triggers.crons` from top-level; empty list zeroes them out
+			// (staging has no cron — manual trigger from the dashboard for testing).
 			"triggers": { "crons": [] },
 			"vars": {
 				"ORIGIN": "https://tabelafin-staging.ianptkcs-023.workers.dev",

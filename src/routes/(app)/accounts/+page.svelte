@@ -93,7 +93,7 @@
 		</p>
 	</header>
 
-	<!-- Cards de resumo -->
+	<!-- Summary cards -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
 		<Card>
 			<Card.Content>
@@ -136,8 +136,8 @@
 		</Card>
 	</div>
 
-	<!-- Por que a lista é tão longa: cada produto de investimento do Open
-	     Finance vira uma conta própria. -->
+	<!-- Why the list is so long: every Open Finance investment product becomes
+	     its own account. -->
 	{#if investmentCount > 0}
 		<Accordion
 			items={[
@@ -150,7 +150,7 @@
 		/>
 	{/if}
 
-	<!-- Filtros -->
+	<!-- Filters -->
 	<div class="flex flex-wrap items-center gap-2 lg:flex-nowrap">
 		<Input bind:value={searchQuery} placeholder="Buscar conta..." class="w-full min-w-40 sm:w-64" />
 		<Select class="w-48" options={typeOptions} bind:value={typeFilter} />
@@ -172,7 +172,7 @@
 		</a>
 	</div>
 
-	<!-- Tabela de contas -->
+	<!-- Accounts table -->
 	<div class="overflow-x-auto border border-rule bg-paper-raised">
 		<Table
 			widths={[4, 1, 1.5, 1]}

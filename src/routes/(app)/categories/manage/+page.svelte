@@ -65,7 +65,7 @@
 		>
 	</header>
 
-	<!-- Nova categoria -->
+	<!-- New category -->
 	<Card>
 		<Card.Content>
 			<form
@@ -99,7 +99,7 @@
 		</Card.Content>
 	</Card>
 
-	<!-- Lista de categorias -->
+	<!-- Category list -->
 	<Card>
 		<Card.Content>
 			<div class="flex flex-col gap-2">

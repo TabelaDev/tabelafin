@@ -10,7 +10,7 @@ interface Rule {
 
 // Rules in priority order — the first one that matches wins.
 const RULES: Rule[] = [
-	// Investimentos
+	// Investments
 	{
 		keywords: [
 			'cdb',
@@ -25,7 +25,7 @@ const RULES: Rule[] = [
 		category: 'Investimentos'
 	},
 
-	// Transferências
+	// Transfers
 	{ keywords: ['pix', 'ted', 'doc', 'transferência', 'transferencia'], category: 'Transferências' },
 
 	// Food
@@ -49,7 +49,7 @@ const RULES: Rule[] = [
 		category: 'Alimentação'
 	},
 
-	// Transporte
+	// Transport
 	{
 		keywords: [
 			'uber',
@@ -67,7 +67,7 @@ const RULES: Rule[] = [
 		category: 'Transporte'
 	},
 
-	// Moradia
+	// Housing
 	{
 		keywords: [
 			'aluguel',
@@ -85,7 +85,7 @@ const RULES: Rule[] = [
 		category: 'Moradia'
 	},
 
-	// Saúde
+	// Health
 	{
 		keywords: [
 			'farmácia',
@@ -104,7 +104,7 @@ const RULES: Rule[] = [
 		category: 'Saúde'
 	},
 
-	// Lazer
+	// Leisure
 	{
 		keywords: [
 			'netflix',
@@ -139,7 +139,7 @@ const RULES: Rule[] = [
 		category: 'Educação'
 	},
 
-	// Assinaturas
+	// Subscriptions
 	{
 		keywords: [
 			'assinatura',
@@ -153,7 +153,7 @@ const RULES: Rule[] = [
 		category: 'Assinaturas'
 	},
 
-	// Compras
+	// Shopping
 	{
 		keywords: [
 			'amazon',
@@ -169,7 +169,7 @@ const RULES: Rule[] = [
 		category: 'Compras'
 	},
 
-	// Renda
+	// Income
 	{
 		keywords: [
 			'salário',

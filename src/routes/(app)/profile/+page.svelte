@@ -30,7 +30,7 @@
 		</p>
 	</header>
 
-	<!-- Dados da conta -->
+	<!-- Account details -->
 	<Card>
 		<Card.Content>
 			<div class="flex flex-col gap-3">
@@ -87,7 +87,7 @@
 		</Card.Content>
 	</Card>
 
-	<!-- Extensão do navegador (captura o token do Meu Pluggy) -->
+	<!-- Browser extension (captures the Meu Pluggy token) -->
 	<Card>
 		<Card.Content>
 			<div class="flex items-center justify-between gap-4">
@@ -144,7 +144,7 @@
 		</Card.Content>
 	</Card>
 
-	<!-- Importar extratos do Gmail via Takeout -->
+	<!-- Import Gmail statements via Takeout -->
 	<Card>
 		<Card.Content>
 			<div class="flex items-center justify-between gap-4">
@@ -160,7 +160,7 @@
 		</Card.Content>
 	</Card>
 
-	<!-- Ocultar IA -->
+	<!-- Hide AI -->
 	<Card>
 		<Card.Content>
 			<form
@@ -170,7 +170,7 @@
 				use:enhance={() => {
 					return async ({ result }) => {
 						await applyAction(result);
-						// Recarrega o layout (pill de status/chat) após mudar a preferência.
+						// Reloads the layout (status pill/chat) after changing the preference.
 						if (result.type === 'success') await invalidateAll();
 					};
 				}}
@@ -201,7 +201,7 @@
 	</div>
 
 	{#if !data.hideAi}
-		<!-- Categorização por IA (chave/modelo) -->
+		<!-- AI categorisation (key/model) -->
 		<Card>
 			<Card.Content>
 				<div class="flex items-center justify-between gap-4">
@@ -241,7 +241,7 @@
 			</Card.Content>
 		</Card>
 
-		<!-- Configuração de IA (prompts) -->
+		<!-- AI configuration (prompts) -->
 		<a href={resolve('/profile/ai')} class="block">
 			<Card>
 				<Card.Content>

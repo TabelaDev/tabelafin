@@ -135,7 +135,7 @@
 		</Card.Content>
 	</Card>
 
-	<!-- Categorizar -->
+	<!-- Categorise -->
 	<Card>
 		<Card.Content>
 			<h2 class="font-mono text-sm font-semibold">Categorizar</h2>
@@ -144,7 +144,7 @@
 				entram categorizadas.
 			</p>
 
-			<!-- Outside the branch on purpose: a successful categorize flips
+			<!-- Outside the branch on purpose: a successful categorise flips
 			     hasCategory, so a confirmation rendered inside the {:else} arm would
 			     be replaced by the badge before it could ever be seen. -->
 			{#if categorizeDone}
@@ -152,8 +152,8 @@
 			{/if}
 
 			{#if hasCategory}
-				<!-- Já categorizada: mostra travado, com opção de remover pra
-				     re-categorizar. -->
+				<!-- Already categorised: shows locked, with an option to remove to
+				     re-categorise. -->
 				<div class="mt-3 flex items-center justify-between gap-3">
 					<div class="flex items-center gap-2">
 						<CategoryBadge
@@ -184,7 +184,7 @@
 					</form>
 				</div>
 			{:else}
-				<!-- Sem categoria: select ativo pra escolher. -->
+				<!-- No category: active select to choose. -->
 				<form
 					method="POST"
 					action="?/categorize"
@@ -224,8 +224,8 @@
 		</Card.Content>
 	</Card>
 
-	<!-- Recorrência a partir da transação: espelha o card de categorizar —
-	     formulário enquanto não existe, estado travado depois de criada. -->
+	<!-- Recurrence from transaction: mirrors the categorise card —
+	     form while it does not exist, locked state after creation. -->
 	<Card>
 		<Card.Content>
 			<h2 class="font-mono text-sm font-semibold">Recorrência</h2>

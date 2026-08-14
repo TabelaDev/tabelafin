@@ -1,5 +1,5 @@
 // Maps Better Auth errors onto messages a user can act on.
-// Erros internos (DB, network, etc.) viram mensagens genéricas.
+// Internal errors (DB, network, etc.) become generic messages.
 export function friendlyAuthError(e: unknown): string {
 	if (!(e instanceof Error)) return 'Ocorreu um erro inesperado.';
 
@@ -28,7 +28,7 @@ export function friendlyAuthError(e: unknown): string {
 		return 'Sessão expirada. Faça login novamente.';
 	}
 
-	// Erros de rede/infra
+	// Network/infra errors
 	if (msg.includes('fetch') || msg.includes('network') || msg.includes('timeout')) {
 		return 'Erro de conexão. Tente novamente.';
 	}
@@ -36,6 +36,6 @@ export function friendlyAuthError(e: unknown): string {
 		return 'Erro interno. Tente novamente em alguns instantes.';
 	}
 
-	// Fallback — nunca vazar mensagem de erro interna
+	// Fallback — never leak internal error messages
 	return 'Ocorreu um erro. Tente novamente.';
 }

@@ -13,7 +13,7 @@ export function computeDedupeHash(accountId: string, amount: number, date: Date)
 	const day = date.toISOString().slice(0, 10); // YYYY-MM-DD, time ignored
 	const input = `${accountId}:${amount.toFixed(2)}:${day}`;
 
-	// FNV-1a de 32 bits.
+	// 32-bit FNV-1a.
 	let hash = 0x811c9dc5;
 	for (let i = 0; i < input.length; i++) {
 		hash ^= input.charCodeAt(i);

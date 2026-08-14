@@ -6,16 +6,16 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system: "reading someone's source file" — mesma estética do
- * portfolio. Mono leva a estrutura (labels, datas, valores); bordas afiadas e
- * bem definidas; accent green (data-accent no app.html), nunca azul — glow e
- * gradiente da landing saem da mesma cor.
+ * Design system: "reading someone's source file" — same aesthetic as the
+ * portfolio. Mono carries the structure (labels, dates, values); sharp, clearly
+ * defined borders; accent green (data-accent in app.html), never blue — the
+ * landing's glow and gradient come from the same colour.
  * Palette: Catppuccin (Latte / Mocha).
  */
 
-/* ── Catppuccin Latte (tema claro) ───────────────────────────────────────── */
+/* ── Catppuccin Latte (light theme) ──────────────────────────────────────── */
 :root {
-	/* Tokens vêm da lib @tabeladev/tabelawebui (theme.css) — uma fonte de verdade. */
+	/* Tokens come from @tabeladev/tabelawebui (theme.css) — a single source of truth. */
 	--ctp-base: var(--twui-latte-base, #eff1f5);
 	--ctp-mantle: var(--twui-latte-mantle, #e6e9ef);
 	--ctp-crust: var(--twui-latte-crust, #dce0e8);
@@ -43,7 +43,7 @@
 	--ctp-blue: var(--twui-blue, #1e66f5);
 	--ctp-lavender: var(--twui-lavender, #7287fd);
 
-	/* Tokens do design system (espelham a lib) */
+	/* Design-system tokens (mirror the lib) */
 	--paper: var(--twui-paper);
 	--paper-raised: var(--twui-paper-raised);
 	--ink: var(--twui-ink);
@@ -56,8 +56,8 @@
 	--signal-soft: var(--twui-signal-soft);
 	--danger: var(--twui-danger);
 	--danger-soft: color-mix(in oklab, var(--twui-danger) 14%, var(--twui-paper));
-	/* Landing: acento escurecido — o green Latte cru dá 2.96:1 sobre a Base e
-	   reprova AA em texto pequeno; este dá 5.80:1. */
+	/* Landing: darkened accent — raw Latte green is 2.96:1 on Base and fails AA
+	   on small text; this one is 5.80:1. */
 	--accent-ink: #276b1a;
 	--shadow-glow:
 		0 0 0 1px var(--ctp-green),
@@ -68,14 +68,14 @@
 		transparent 70%
 	);
 
-	--radius: 0.375rem; /* afiado */
+	--radius: 0.375rem; /* sharp */
 
-	/* A lib aponta a serif pra "Newsreader"; aqui ela vem self-hosted do
-	   @fontsource-variable, que registra a família como "Newsreader Variable". */
+	/* The lib points the serif at "Newsreader"; here it is self-hosted via
+	   @fontsource-variable, which registers the family as "Newsreader Variable". */
 	--twui-font-serif: 'Newsreader Variable', ui-serif, Georgia, serif;
 }
 
-/* ── Catppuccin Mocha (tema escuro) ──────────────────────────────────────── */
+/* ── Catppuccin Mocha (dark theme) ──────────────────────────────────────── */
 .dark {
 	--ctp-base: var(--twui-mocha-base, #1e1e2e);
 	--ctp-mantle: var(--twui-mocha-mantle, #181825);
@@ -115,7 +115,7 @@
 	--signal: var(--twui-signal);
 	--signal-soft: var(--twui-signal-soft);
 
-	/* Landing — o green Mocha já é ~11:1 sobre a Base */
+	/* Landing — Mocha green is already ~11:1 on Base */
 	--accent-ink: var(--ctp-green);
 	--shadow-glow:
 		0 0 0 1px var(--ctp-green),
@@ -130,16 +130,16 @@
 	--danger-soft: color-mix(in oklab, var(--twui-danger) 14%, var(--twui-paper));
 }
 
-/* Estética do app é mono: sobrescreve a serif default da lib só no
-   ChatMessage (que usa --twui-font-serif no corpo das mensagens). As seções
-   de landing mantêm a serif da lib (Newsreader) — mesmo modelo da landing
-   do TabelaRPGDK. */
+/* The app's aesthetic is mono: overrides the lib's default serif only on
+   ChatMessage (which uses --twui-font-serif in the message body). The landing
+   sections keep the lib's serif (Newsreader) — same pattern as the
+   TabelaRPGDK landing. */
 .twui-chat-message-bubble {
 	--twui-font-serif:
 		'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* Expor as cores como utilitários Tailwind */
+/* Expose the colours as Tailwind utilities */
 @theme inline {
 	--font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	--font-sans: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -211,9 +211,9 @@
 	color: var(--paper);
 }
 
-/* Inputs/selects nativos (busca, filtros) ganham borda accent no focus —
-   regra global porque usar `focus:border-accent` junto de `border-rule`
-   gera conflito de border-color no Tailwind v4 (cssConflict). */
+/* Native inputs/selects (search, filters) get an accent border on focus —
+   a global rule because combining `focus:border-accent` with `border-rule`
+   triggers a border-color conflict in Tailwind v4 (cssConflict). */
 input:focus,
 select:focus,
 textarea:focus {
@@ -237,9 +237,9 @@ button:focus-visible,
 	}
 	html {
 		@apply font-sans;
-		/* Reserva sempre o espaço do scrollbar vertical — evita que o conteúdo
-		   "encolha/empurre" quando uma página mais alta que a viewport aparece
-		   e o scrollbar entra/sai. */
+		/* Always reserves the vertical scrollbar gutter — keeps the content from
+		   "shrinking/shifting" when a page taller than the viewport appears and
+		   the scrollbar comes and goes. */
 		scrollbar-gutter: stable;
 	}
 	button:not(:disabled) {
@@ -247,9 +247,9 @@ button:focus-visible,
 	}
 }
 
-/* Dropdown do Select (twui): esconde a scrollbar nativa — o scroll continua
-   por teclado/roda, mas sem a barra feia no visual mono. Fica aqui enquanto
-   não roda o twui 0.14.1 (que já traz o fix no componente). */
+/* Select dropdown (twui): hides the native scrollbar — scrolling still works
+   by keyboard/wheel, but without the ugly bar in the mono look. Stays here
+   until twui 0.14.1 ships (which brings the fix inside the component). */
 .twui-select-popover {
 	scrollbar-width: none;
 }

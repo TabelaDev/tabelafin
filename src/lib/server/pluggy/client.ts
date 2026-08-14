@@ -33,7 +33,7 @@ async function myApiFetch(path: string, token: string): Promise<Response> {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Itens (conexões bancárias)
+// Items (bank connections)
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface PluggyItem {
@@ -59,7 +59,7 @@ export async function fetchItems(token: string): Promise<PluggyItem[]> {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Contas
+// Accounts
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface PluggyAccount {
@@ -156,7 +156,7 @@ export async function fetchTransactions(
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Investimentos
+// Investments
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface PluggyInvestment {

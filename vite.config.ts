@@ -30,9 +30,9 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			// config: 'wrangler.adapter.jsonc' — não a wrangler.jsonc real. Ver
-			// comentário nesse arquivo: evita que o adapter sobrescreva
-			// worker/entry.js (o wrapper que adiciona o handler `scheduled`).
+			// config: 'wrangler.adapter.jsonc' — not the real wrangler.jsonc. See
+			// comment in that file: prevents the adapter from overwriting
+			// worker/entry.js (the wrapper that adds the `scheduled` handler).
 			adapter: adapter({ config: 'wrangler.adapter.jsonc' }),
 			typescript: {
 				config: (config) => {
@@ -65,9 +65,9 @@ export default defineConfig({
 				]
 			},
 			workbox: {
-				// /api e /auth nunca devem ser servidos do cache (sessão/BYOK por request).
-				// Navegações (page routes) são server-rendered no Cloudflare Workers,
-				// não estáticas — sempre ir pra rede.
+				// /api and /auth must never be served from cache (session/BYOK per request).
+				// Navigations (page routes) are server-rendered on Cloudflare Workers,
+				// not static — always go to the network.
 				runtimeCaching: [
 					{
 						urlPattern: ({ url }) =>
@@ -79,11 +79,11 @@ export default defineConfig({
 						handler: 'NetworkOnly'
 					}
 				],
-				// generateSW não permite código custom direto no SW gerado, mas
-				// aceita importScripts — usado aqui pro listener de `push`
-				// (notificação de relatório mensal pronto, ver static/sw-push.js e
-				// src/lib/server/push/reports.ts). Trocar pra `injectManifest`
-				// não foi necessário.
+				// generateSW doesn't allow custom code directly in the generated SW, but
+				// accepts importScripts — used here for the `push` listener
+				// (monthly report ready notification, see static/sw-push.js and
+				// src/lib/server/push/reports.ts). Switching to `injectManifest`
+				// wasn't necessary.
 				importScripts: ['sw-push.js']
 			}
 		})

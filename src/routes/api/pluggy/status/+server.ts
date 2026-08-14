@@ -4,9 +4,10 @@ import { getDb } from '$lib/server/db';
 import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { getPluggyItemsByUser } from '$lib/server/db/pluggy-items';
 
-// Estado da conexão Open Finance — usado pelo onboarding ("já conectei, verifica?")
-// e pela página de perfil. Autenticado pela sessão do app (a extensão não
-// consulta isto; o popup mostra o status local do último envio).
+// Open Finance connection state — used by the onboarding ("already connected,
+// verify?") and the profile page. Authenticated via the app session (the
+// extension does not call this; the popup shows local status of the last
+// submission).
 export const GET: RequestHandler = async ({ locals, platform }) => {
 	if (!locals.userId) return json({ error: 'Não autenticado.' }, { status: 401 });
 

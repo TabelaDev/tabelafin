@@ -55,8 +55,8 @@
 	const donutOptions = $derived<ApexOptions>({
 		labels: donutLabels,
 		legend: { position: 'bottom', horizontalAlign: 'center' },
-		// Tooltip igual aos outros gráficos: valor em moeda, mono (o estilo vem
-		// from Chart's base). `tooltip.y.formatter` only renders the value; Apex
+		// Tooltip same as other charts: currency value, mono (style comes from
+		// Chart's base). `tooltip.y.formatter` only renders the value; Apex
 		// already appends the slice's percentage on a donut.
 		tooltip: {
 			y: {
@@ -90,7 +90,7 @@
 			.slice(0, 4)
 	);
 
-	// Negativo = gasto (vermelho), positivo = entrada (verde).
+	// Negative = spending (red), positive = income (green).
 	function amountClass(amount: number): string {
 		return amount < 0 ? 'text-ctp-red' : 'text-ctp-green';
 	}
@@ -115,7 +115,7 @@
 		</a>
 	</header>
 
-	<!-- Cards de resumo -->
+	<!-- Summary cards -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
 		<Card>
 			<Card.Content>
@@ -167,9 +167,9 @@
 		</Card>
 	</div>
 
-	<!-- Gráficos: grid 2x3 — evolução ocupa 2 colunas × 2 linhas; top categorias
-	     e composição empilhadas na coluna da direita. Sem gráficos laterais,
-	     evolução ocupa a largura toda e o grid não força a 2ª linha. -->
+	<!-- Charts: 2x3 grid — evolution takes 2 columns × 2 rows; top categories
+	     and composition stacked in the right column. Without side charts,
+	     evolution takes full width and the grid does not force a 2nd row. -->
 	<div class="grid grid-cols-1 gap-3 lg:grid-cols-3 {hasSideCharts && 'lg:grid-rows-2'}">
 		{#if data.summary.monthValues.length > 0}
 			<Card class={evolutionClass}>
@@ -221,7 +221,7 @@
 		{/if}
 	</div>
 
-	<!-- Contas — primeiro; ver todas leva pra página dedicada -->
+	<!-- Accounts — first; "see all" leads to the dedicated page -->
 	<Card>
 		<Card.Header>
 			<div class="flex items-center justify-between">
@@ -258,7 +258,7 @@
 		</Card.Content>
 	</Card>
 
-	<!-- Transações recentes — tabela real -->
+	<!-- Recent transactions — real table -->
 	<Card>
 		<Card.Header>
 			<div class="flex items-center justify-between">

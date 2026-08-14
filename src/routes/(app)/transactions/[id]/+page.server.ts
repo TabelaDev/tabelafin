@@ -75,7 +75,7 @@ export const actions: Actions = {
 		const [tx] = await db.select().from(transactions).where(eq(transactions.id, params.id));
 		if (!tx || tx.userId !== locals.userId) error(404, 'Transação não encontrada');
 
-		// Categoria escolhida manualmente — nunca é sobrescrita por IA/regras.
+		// Manually categorised — never overwritten by AI/rules.
 		await db
 			.update(transactions)
 			.set({ category, categorySource: 'user' })
@@ -138,7 +138,7 @@ export const actions: Actions = {
 		if (existing)
 			return fail(409, { error: 'Já existe uma recorrência ativa para esta descrição.' });
 
-		// Valor absoluto (recorrência é sempre um gasto/saída fixa).
+		// Absolute amount (recurrence is always a fixed expense/outflow).
 		const amount = Math.abs(tx.amount);
 
 		await createRecurringExpense(db, locals.userId, {

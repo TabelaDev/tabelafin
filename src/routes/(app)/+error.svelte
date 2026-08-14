@@ -46,7 +46,7 @@
 
 <style>
 	/* Inside the (app) shell the <main> already has padding and a background; the
-	   min-h-svh sozinho, aqui só garante o fundo consistente. */
+	   min-h-svh alone here only ensures a consistent background. */
 	:global(.app-error) {
 		min-height: auto;
 		background: transparent;

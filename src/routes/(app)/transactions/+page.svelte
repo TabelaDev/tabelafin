@@ -184,8 +184,8 @@
 				body
 			});
 			const result = (await res.json()) as { data?: { error?: string } };
-			// SvelteKit responde fetch de form action como
-			// { type, status, data } — o payload fica em `result.data`.
+			// SvelteKit responds to form action fetches as
+			// { type, status, data } — the payload is in `result.data`.
 			if (!res.ok || result.data?.error) {
 				bulkError = result.data?.error ?? 'Não foi possível categorizar.';
 				return;
@@ -229,7 +229,7 @@
 		</p>
 	</header>
 
-	<!-- Filtros -->
+	<!-- Filters -->
 	<div class="flex flex-wrap items-center gap-2 lg:flex-nowrap">
 		<Input
 			bind:value={searchQuery}
@@ -266,7 +266,7 @@
 		</a>
 	</div>
 
-	<!-- Categorização em massa — aparece quando há linhas selecionadas -->
+	<!-- Bulk categorisation — appears when rows are selected -->
 	{#if selectedIds.length > 0}
 		<div class="flex flex-wrap items-center gap-2 border border-accent bg-accent-soft p-3">
 			<span class="font-mono text-sm font-semibold text-accent">
@@ -300,7 +300,7 @@
 		</div>
 	{/if}
 
-	<!-- Tabela -->
+	<!-- Table -->
 	<div class="overflow-x-auto border border-rule bg-paper-raised">
 		<Table
 			columns={[
@@ -335,8 +335,8 @@
 						{formatCurrency(Number(row.amount))}
 					</span>
 				{:else if key === 'action'}
-					<!-- Ação explícita de abrir o detalhe — clicar na linha seleciona,
-					     clicar no botão navega (sem conflito). -->
+					<!-- Explicit action to open the detail — clicking the row selects,
+				     clicking the button navigates (no conflict). -->
 					<a
 						href={resolve(`/transactions/${row.id}`)}
 						class="inline-flex items-center justify-center text-accent transition-colors hover:opacity-70"
