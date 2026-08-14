@@ -43,6 +43,10 @@ export async function setUserSeenOnboarding(db: Db, id: string, seen: boolean) {
 	await db.update(users).set({ seenOnboarding: seen }).where(eq(users.id, id));
 }
 
+export async function setUserName(db: Db, id: string, name: string) {
+	await db.update(users).set({ name }).where(eq(users.id, id));
+}
+
 export async function updateUserAiToggles(
 	db: Db,
 	id: string,

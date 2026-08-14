@@ -2,7 +2,8 @@
 	import { resolve } from '$app/paths';
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { Button, Card, Divider } from '@tabeladev/tabelawebui';
+	import type { ActionResult } from '@sveltejs/kit';
+	import { Button, Card, Divider, Input } from '@tabeladev/tabelawebui';
 	import { openOnboarding } from '$lib/stores/onboarding-store';
 	import { openStatementImport } from '$lib/stores/statement-import-store';
 	import type { PageData } from './$types';
@@ -10,6 +11,33 @@
 	let { data }: { data: PageData } = $props();
 	let hideAiForm = $state<HTMLFormElement | null>(null);
 	let showExtInstall = $state(false);
+
+	// Editable full name (needed to spot self-transfers — see the sync).
+	let editingName = $state(false);
+	let editName = $state('');
+	let nameError = $state('');
+	let nameDone = $state(false);
+
+	function startEditName() {
+		editName = data.user?.name ?? '';
+		nameError = '';
+		nameDone = false;
+		editingName = true;
+	}
+
+	const handleNameForm = () => {
+		return async ({ result }: { result: ActionResult }) => {
+			await applyAction(result);
+			if (result.type === 'failure') {
+				nameError = String(result.data?.error ?? 'Não foi possível salvar.');
+				return;
+			}
+			nameError = '';
+			nameDone = true;
+			editingName = false;
+			await invalidateAll();
+		};
+	};
 
 	function submitHideAi() {
 		if (hideAiForm) {
@@ -37,17 +65,51 @@
 				<h2 class="font-mono text-sm font-semibold">Dados da conta</h2>
 				<div class="flex flex-col gap-2">
 					<div class="flex items-center gap-2">
-						<span class="font-mono text-xs text-ink-faint">Nome:</span>
-						<span class="font-mono text-sm">{data.user?.name || 'Não informado'}</span>
+						<span class="font-mono text-xs text-ink-faint">Nome completo:</span>
+						{#if editingName}
+							<form
+								method="POST"
+								action="?/updateName"
+								use:enhance={handleNameForm}
+								class="flex items-center gap-2"
+							>
+								<Input name="name" bind:value={editName} class="w-56" required />
+								<Button type="submit" size="sm" variant="primary">Salvar</Button>
+								<Button
+									type="button"
+									size="sm"
+									variant="ghost"
+									onclick={() => (editingName = false)}>Cancelar</Button
+								>
+							</form>
+						{:else}
+							<span class="font-mono text-sm">{data.user?.name || 'Não informado'}</span>
+							<Button type="button" size="sm" variant="ghost" onclick={startEditName}>Editar</Button
+							>
+						{/if}
 					</div>
+					{#if nameError}
+						<p class="text-sm text-danger">{nameError}</p>
+					{/if}
+					{#if nameDone}
+						<p class="text-sm text-ctp-green">
+							Nome salvo — self-transfers serão corrigidos no próximo sync.
+						</p>
+					{/if}
 					<div class="flex items-center gap-2">
 						<span class="font-mono text-xs text-ink-faint">E-mail:</span>
 						<span class="font-mono text-sm">{data.user?.email}</span>
 					</div>
+					<p class="font-mono text-xs text-ink-faint">
+						O nome completo é usado pra identificar Pix/TED entre suas próprias contas e não
+						contá-los como renda.
+					</p>
 				</div>
 			</div>
 		</Card.Content>
 	</Card>
+
+	<Divider label="Open Finance" />
 
 	<!-- Open Finance -->
 	<Card>
@@ -160,6 +222,8 @@
 		</Card.Content>
 	</Card>
 
+	<Divider label="IA" />
+
 	<!-- Hide AI -->
 	<Card>
 		<Card.Content>
@@ -195,10 +259,6 @@
 			</form>
 		</Card.Content>
 	</Card>
-
-	<div class="my-6">
-		<Divider label="IA" />
-	</div>
 
 	{#if !data.hideAi}
 		<!-- AI categorisation (key/model) -->

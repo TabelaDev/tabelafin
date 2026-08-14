@@ -41,3 +41,27 @@ export function isInternalTransfer(
 	if (byCategory) return true;
 	return description ? INTERNAL_TRANSFER_DESCRIPTIONS.has(description) : false;
 }
+
+// Lowercase, strip accents, collapse whitespace — the way the user's full name
+// appears on the bank side varies in case ("IAN PATRICK DA COSTA SOARES" vs
+// "Ian Patrick da Costa Soares") and occasionally accents.
+export function normalizeName(value: string): string {
+	return value
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase()
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
+// A transaction is a self-transfer (moving money between the user's own
+// accounts) when the description names the user themselves as the counterparty.
+// Pluggy usually labels those "Same person transfer", but sometimes the generic
+// "Transfers"/"Transfer - PIX" leaks through and would count as income. The full
+// legal name is specific enough that a substring match has ~no false positives.
+export function isSelfTransferByDescription(description: string | null, fullName: string): boolean {
+	if (!description) return false;
+	const name = normalizeName(fullName);
+	if (!name) return false;
+	return normalizeName(description).includes(name);
+}

@@ -26,8 +26,17 @@
 		<Card.Content>
 			<form method="POST" use:enhance class="flex flex-col gap-4">
 				<div class="flex flex-col gap-2">
-					<Label for="name">Nome</Label>
-					<Input id="name" name="name" type="text" placeholder="Seu nome" required />
+					<Label for="name">Nome completo</Label>
+					<Input
+						id="name"
+						name="name"
+						type="text"
+						placeholder="Como aparece no seu banco"
+						required
+					/>
+					<p class="text-xs text-ink-soft">
+						Usado pra identificar Pix/TED entre suas próprias contas e não contá-los como renda.
+					</p>
 				</div>
 
 				<div class="flex flex-col gap-2">

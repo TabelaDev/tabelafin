@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { pairMirrors } from './sync';
-import { isInternalTransfer } from './internal-transfers';
+import {
+	isInternalTransfer,
+	isSelfTransferByDescription,
+	normalizeName
+} from './internal-transfers';
 
 const day = (d: number) => new Date(`2026-08-${String(d).padStart(2, '0')}T12:00:00Z`);
 
@@ -99,5 +103,64 @@ describe('isInternalTransfer', () => {
 		expect(isInternalTransfer('Credit card payment')).toBe(true);
 		expect(isInternalTransfer('Transfers', 'Pagamento de fatura')).toBe(true);
 		expect(isInternalTransfer('Transfers', 'Dio 12/12')).toBe(false);
+	});
+});
+
+// The name-based self-transfer rule — the gap Pluggy leaves when it labels a
+// self Pix as generic "Transfers"/"Transfer - PIX" instead of "Same person
+// transfer", which would otherwise count as income.
+describe('isSelfTransferByDescription', () => {
+	const FULL = 'Ian Patrick da Costa Soares';
+
+	it('matches a Pix received from and sent to the user themselves', () => {
+		expect(isSelfTransferByDescription('Pix recebido de Ian Patrick da Costa Soares', FULL)).toBe(
+			true
+		);
+		expect(isSelfTransferByDescription('Pix enviado para Ian Patrick da Costa Soares', FULL)).toBe(
+			true
+		);
+		expect(isSelfTransferByDescription('TED recebida de IAN PATRICK DA COSTA SOARES', FULL)).toBe(
+			true
+		);
+		// The name can sit after a CPF on the "enviada" side.
+		expect(
+			isSelfTransferByDescription(
+				'Transferência enviada|66.544.208 IAN PATRICK DA COSTA SOARES',
+				FULL
+			)
+		).toBe(true);
+	});
+
+	it('ignores third parties and merchant charges', () => {
+		expect(isSelfTransferByDescription('Pix recebido de Julia Correa M Nascimento', FULL)).toBe(
+			false
+		);
+		expect(
+			isSelfTransferByDescription(
+				'Transferência Recebida|Claudia Keily Pinto Machado Nascimento',
+				FULL
+			)
+		).toBe(false);
+		expect(isSelfTransferByDescription('MP *NAVE', FULL)).toBe(false);
+	});
+
+	it('normalises accents and case', () => {
+		expect(
+			isSelfTransferByDescription('Pix recebido de José da Costa Soares', 'José da Costa Soares')
+		).toBe(true);
+	});
+
+	it('is a no-op without a name set', () => {
+		expect(isSelfTransferByDescription('Pix recebido de Ian Patrick da Costa Soares', '')).toBe(
+			false
+		);
+		expect(isSelfTransferByDescription(null, FULL)).toBe(false);
+	});
+});
+
+describe('normalizeName', () => {
+	it('lowercases, strips accents and collapses whitespace', () => {
+		expect(normalizeName('IAN PATRICK   DA COSTA SOARES')).toBe('ian patrick da costa soares');
+		expect(normalizeName('José da Silva')).toBe('jose da silva');
 	});
 });
