@@ -7,7 +7,10 @@ import {
 	getCategoriesByUser,
 	updateCategory
 } from '$lib/server/db/user-categories';
-import { renameCategoryOnTransactions } from '$lib/server/db/transactions';
+import {
+	clearCategoryOnTransactions,
+	renameCategoryOnTransactions
+} from '$lib/server/db/transactions';
 
 // The available colour palette — the same Catppuccin classes used in badges, with
 // a Portuguese label for the dropdown.
@@ -80,8 +83,10 @@ export const actions: Actions = {
 		if (!name) return { error: 'Categoria inválida.' };
 
 		const db = getDb(platform!.env.DB);
-		// Uncategorised transactions (null) are shown as "Outros" on the screens.
 		await deleteCategory(db, locals.userId, name);
+		// The category is gone, so its transactions lose the bucket — back to
+		// "Outros" (uncategorised), never deleted.
+		await clearCategoryOnTransactions(db, locals.userId, name);
 		return { success: true };
 	}
 };

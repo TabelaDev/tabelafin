@@ -2,7 +2,8 @@
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Button, Card, Input, Select } from '@tabeladev/tabelawebui';
+	import type { ActionResult } from '@sveltejs/kit';
+	import { Button, Card, Dialog, Input, Select } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -42,6 +43,37 @@
 				)
 			: data.categories
 	);
+
+	// Delete confirmation — the "Excluir" button only opens the dialog; the
+	// confirm button submits the row's own `?/remove` form.
+	let showDeleteDialog = $state(false);
+	let pendingDelete = $state<{ name: string; form: HTMLFormElement } | null>(null);
+
+	function openDelete(name: string, form: HTMLFormElement) {
+		pendingDelete = { name, form };
+		showDeleteDialog = true;
+	}
+
+	function confirmDelete() {
+		pendingDelete?.form.requestSubmit();
+		pendingDelete = null;
+		showDeleteDialog = false;
+	}
+
+	// Dismissing the dialog by X/Esc/overlay cancels the deletion (clears the
+	// pending target so it is not submitted later).
+	$effect(() => {
+		if (!showDeleteDialog) pendingDelete = null;
+	});
+
+	// Reuses `use:enhance` + `applyAction` so the `?/remove` action result is
+	// applied and the list is invalidated after a successful deletion.
+	const handleRemove = () => {
+		return async ({ result }: { result: ActionResult }) => {
+			await applyAction(result);
+			if (result.type === 'success') await invalidateAll();
+		};
+	};
 </script>
 
 <svelte:head>
@@ -142,22 +174,18 @@
 								<Button size="sm" variant="outline" onclick={() => startEdit(cat.name, cat.color)}>
 									Editar
 								</Button>
-								<form
-									method="POST"
-									action="?/remove"
-									use:enhance={() => {
-										return async ({ result }) => {
-											await applyAction(result);
-											if (result.type === 'success') await invalidateAll();
-										};
-									}}
-								>
+								<form method="POST" action="?/remove" use:enhance={handleRemove}>
 									<input type="hidden" name="name" value={cat.name} />
 									<Button
-										type="submit"
+										type="button"
 										size="sm"
 										variant="ghost"
 										class="text-ctp-red hover:text-ctp-red"
+										onclick={(e) =>
+											openDelete(
+												cat.name,
+												(e.currentTarget as HTMLElement).closest('form') as HTMLFormElement
+											)}
 									>
 										Excluir
 									</Button>
@@ -178,3 +206,15 @@
 		</Card.Content>
 	</Card>
 </div>
+
+<Dialog bind:open={showDeleteDialog} title="Excluir categoria?">
+	<p class="text-justify font-mono text-sm text-ink-soft">
+		Excluir a categoria <span class="text-ink">{pendingDelete?.name}</span>? As transações que a
+		usam
+		<strong>não são apagadas</strong> — elas passam a aparecer como "Outros".
+	</p>
+	{#snippet footer()}
+		<Button variant="ghost" onclick={() => (showDeleteDialog = false)}>Cancelar</Button>
+		<Button variant="danger" onclick={confirmDelete}>Excluir</Button>
+	{/snippet}
+</Dialog>
