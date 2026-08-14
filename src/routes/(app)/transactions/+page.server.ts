@@ -94,6 +94,21 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	const future = rows.filter((t) => t.date.getTime() > now.getTime());
 	const current = rows.filter((t) => t.date.getTime() <= now.getTime());
 
+	// For display, credit card purchases have their sign flipped: the API reports
+	// them positive ("MP *NAVE" +782,54) but they are SPENDING. Flipping keeps the
+	// colour (green=income/red=spending) and the total consistent with the
+	// dashboard.
+	const withDisplayAmount = (tx: (typeof current)[number]) => {
+		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
+		// For display, credit card transactions have their sign flipped: the API
+		// reports purchases positive ("MP *NAVE" +782,54 = spending) and refunds
+		// negative ("Estorno de Uber" -1,44 = money back). Flipping unconditionally
+		// makes a purchase negative (red) and a refund positive (green) —
+		// consistent with the dashboard.
+		const displayAmount = accType === 'credit_card' ? -tx.amount : tx.amount;
+		return { ...tx, displayAmount };
+	};
+
 	// Tags per row (many-to-many) — used by the badges and the tag filter.
 	const withDisplay = (tx: (typeof current)[number]) => withDisplayAmount(tx);
 	const tagMap = await getTagsForTransactions(
@@ -119,21 +134,6 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 
 	// The account name, for grouping the upcoming invoices by card.
 	const accountById = new Map(userAccounts.map((a) => [a.id, a]));
-
-	// For display, credit card purchases have their sign flipped: the API reports
-	// them positive ("MP *NAVE" +782,54) but they are SPENDING. Flipping keeps the
-	// colour (green=income/red=spending) and the total consistent with the
-	// dashboard.
-	const withDisplayAmount = (tx: (typeof current)[number]) => {
-		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
-		// For display, credit card transactions have their sign flipped: the API
-		// reports purchases positive ("MP *NAVE" +782,54 = spending) and refunds
-		// negative ("Estorno de Uber" -1,44 = money back). Flipping unconditionally
-		// makes a purchase negative (red) and a refund positive (green) —
-		// consistent with the dashboard.
-		const displayAmount = accType === 'credit_card' ? -tx.amount : tx.amount;
-		return { ...tx, displayAmount };
-	};
 
 	// The user's categories (name + colour) — used by the badges and the filter.
 	const userCategories = await getCategoriesByUser(db, userId);
