@@ -33,7 +33,7 @@
 		{ href: resolve('/upcoming'), label: 'Próximas', icon: upcomingIcon },
 		{ href: resolve('/accounts'), label: 'Contas', icon: accountsIcon },
 		{ href: resolve('/categories'), label: 'Categorias', icon: categoriesIcon },
-		{ href: resolve('/tags'), label: 'Tags', icon: tagsIcon },
+		{ href: resolve('/eventos'), label: 'Eventos', icon: eventosIcon },
 		{ href: resolve('/recurring'), label: 'Recorrências', icon: recurringIcon },
 		{ href: resolve('/reports'), label: 'Relatórios', icon: reportsIcon }
 	];
@@ -44,6 +44,9 @@
 		grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
 		list: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
 		tag: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="0.5" fill="currentColor"/>',
+		layers:
+			'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+		flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
 		wallet:
 			'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M21 12a2 2 0 0 0-2-2h-4a2 2 0 0 0 0 4h4a2 2 0 0 0 2-2Z"/>',
 		calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
@@ -73,10 +76,10 @@
 	{@html iconSvg('wallet')}
 {/snippet}
 {#snippet categoriesIcon()}
-	{@html iconSvg('tag')}
+	{@html iconSvg('layers')}
 {/snippet}
-{#snippet tagsIcon()}
-	{@html iconSvg('tag')}
+{#snippet eventosIcon()}
+	{@html iconSvg('flag')}
 {/snippet}
 {#snippet recurringIcon()}
 	{@html iconSvg('repeat')}

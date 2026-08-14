@@ -77,7 +77,7 @@
 		</div>
 
 		<div class="flex flex-col gap-1.5">
-			<Label for="tags">Tags (opcional, além da categoria)</Label>
+			<Label for="tags">Eventos (opcional, além da categoria)</Label>
 			<TagInput
 				id="tags"
 				name="tags"
