@@ -325,3 +325,37 @@ export const categorizationRules = sqliteTable(
 		uniqueIndex('categorization_rules_user_description').on(table.userId, table.description)
 	]
 );
+
+// Tags — ad-hoc groupings orthogonal to categories (a one-off "Viagem SP"
+// without creating a category for it). Manual only: the AI/rules never read or
+// write tags, and categories stay the recurring bucket.
+export const tags = sqliteTable(
+	'tags',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(table) => [uniqueIndex('tags_user_name').on(table.userId, table.name)]
+);
+
+// Junction — a transaction can carry many tags; a tag many transactions.
+export const transactionTags = sqliteTable(
+	'transaction_tags',
+	{
+		transactionId: text('transaction_id')
+			.notNull()
+			.references(() => transactions.id, { onDelete: 'cascade' }),
+		tagId: text('tag_id')
+			.notNull()
+			.references(() => tags.id, { onDelete: 'cascade' })
+	},
+	(table) => [primaryKey({ columns: [table.transactionId, table.tagId] })]
+);
