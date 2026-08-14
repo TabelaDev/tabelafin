@@ -3,7 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
-	import { Badge, Button, Card, Select } from '@tabeladev/tabelawebui';
+	import { Badge, Button, Card, Select, TagInput } from '@tabeladev/tabelawebui';
 	import { formatCurrency } from '$lib/lib/format';
 	import type { PageData } from './$types';
 
@@ -15,6 +15,9 @@
 	let categorizeDone = $state(false);
 	let recurringFrequency = $state('monthly');
 	let recurringError = $state('');
+	let tags = $state<string[]>(data.tags);
+	let tagsError = $state('');
+	let tagsDone = $state(false);
 
 	// The transaction's current category — decides whether the categorise card is
 	// locked (already categorised) or active (choose/clear).
@@ -221,6 +224,52 @@
 					</Button>
 				</form>
 			{/if}
+		</Card.Content>
+	</Card>
+
+	<!-- Tags -->
+	<Card>
+		<Card.Content>
+			<h2 class="font-mono text-sm font-semibold">Tags</h2>
+			<p class="mt-1 font-mono text-xs text-ink-soft">
+				Agrupam gastos pontuais sem criar categoria ("Viagem SP", "PC novo") — além da categoria,
+				não no lugar dela.
+			</p>
+
+			<form
+				method="POST"
+				action="?/tags"
+				use:enhance={() => {
+					tagsError = '';
+					tagsDone = false;
+					return async ({ result }) => {
+						await applyAction(result);
+						if (result.type === 'failure') {
+							tagsError = String(result.data?.error ?? 'Não foi possível salvar.');
+							return;
+						}
+						await invalidateAll();
+						tagsDone = true;
+					};
+				}}
+				class="mt-3 flex flex-col gap-3"
+			>
+				<TagInput
+					name="tags"
+					bind:value={tags}
+					options={data.userTags}
+					placeholder="Adicione uma tag…"
+				/>
+				{#if tagsError}
+					<p class="text-sm text-danger">{tagsError}</p>
+				{/if}
+				{#if tagsDone}
+					<p class="text-sm text-ctp-green">Tags salvas.</p>
+				{/if}
+				<div class="flex gap-2">
+					<Button type="submit" variant="outline">Salvar tags</Button>
+				</div>
+			</form>
 		</Card.Content>
 	</Card>
 

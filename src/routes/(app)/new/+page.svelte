@@ -2,7 +2,7 @@
 	import { enhance, applyAction } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Button, Input, Label, Select, DatePicker } from '@tabeladev/tabelawebui';
+	import { Button, Input, Label, Select, DatePicker, TagInput } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let {
@@ -14,6 +14,7 @@
 	} = $props();
 	let submitting = $state(false);
 	let date = $state(new Date().toISOString().slice(0, 10));
+	let tags = $state<string[]>([]);
 
 	const today = new Date().toISOString().slice(0, 10);
 </script>
@@ -73,6 +74,18 @@
 				filter
 				filterPlaceholder="Buscar categoria…"
 			/>
+		</div>
+
+		<div class="flex flex-col gap-1.5">
+			<Label for="tags">Tags (opcional, além da categoria)</Label>
+			<TagInput
+				id="tags"
+				name="tags"
+				bind:value={tags}
+				options={data.userTags.map((t) => t.name)}
+				placeholder="Ex.: Viagem SP, PC novo…"
+			/>
+			<p class="text-xs text-ink-soft">Agrupa gastos pontuais sem criar categoria.</p>
 		</div>
 
 		{#if form?.error}

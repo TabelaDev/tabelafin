@@ -11,6 +11,7 @@ import {
 } from '$lib/server/db/recurring-expenses';
 import { deleteRuleForDescription } from '$lib/server/db/categorization-rules';
 import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
+import { getTagsByUser, getTagsForTransaction, setTransactionTags } from '$lib/server/db/tags';
 
 export const load: PageServerLoad = async ({ locals, platform, params }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -29,6 +30,11 @@ export const load: PageServerLoad = async ({ locals, platform, params }) => {
 		: null;
 
 	const categories = await getCategoriesByUser(db, locals.userId);
+
+	const [userTags, txTags] = await Promise.all([
+		getTagsByUser(db, locals.userId),
+		getTagsForTransaction(db, params.id)
+	]);
 
 	// Drives the recurrence card's state. Because it matches on description, the
 	// card reads "already created" on every transaction sharing that
@@ -59,7 +65,9 @@ export const load: PageServerLoad = async ({ locals, platform, params }) => {
 		account: account
 			? { name: account.name, institution: account.institution, type: account.type }
 			: null,
-		categories
+		categories,
+		userTags: userTags.map((t) => t.name),
+		tags: txTags.map((t) => t.name)
 	};
 };
 
@@ -194,6 +202,26 @@ export const actions: Actions = {
 		// category — so "Remover" could not actually lead to re-categorising.
 		await deleteRuleForDescription(db, locals.userId, tx.description);
 
+		return { success: true };
+	},
+
+	// Replaces the transaction's tag set (the TagInput submits them as a
+	// comma-separated value). Creates tags on the fly, never touches categories.
+	tags: async ({ request, locals, platform, params }) => {
+		if (!locals.userId) redirect(303, '/login');
+
+		const form = await request.formData();
+		const raw = String(form.get('tags') ?? '');
+		const tagNames = raw
+			.split(',')
+			.map((t) => t.trim())
+			.filter(Boolean);
+
+		const db = getDb(platform!.env.DB);
+		const [tx] = await db.select().from(transactions).where(eq(transactions.id, params.id));
+		if (!tx || tx.userId !== locals.userId) error(404, 'Transação não encontrada');
+
+		await setTransactionTags(db, locals.userId, tx.id, tagNames);
 		return { success: true };
 	}
 };

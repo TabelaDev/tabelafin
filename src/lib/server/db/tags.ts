@@ -1,7 +1,7 @@
 // Tags — ad-hoc groupings orthogonal to categories (a one-off "Viagem SP"
 // without a category). Manual only: AI/rules never touch tags. A transaction
 // carries many tags (junction table `transaction_tags`).
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNull, lt } from 'drizzle-orm';
 import type { getDb } from './index';
 import { financeAccounts, tags, transactionTags, transactions } from './schema';
 import { classifyMovement, isNotInternalTransfer } from './transactions';
@@ -47,7 +47,12 @@ export async function getOrCreateTag(db: Db, userId: string, name: string): Prom
 	throw new Error('Não foi possível criar a tag.');
 }
 
-export async function renameTag(db: Db, userId: string, tagId: string, newName: string): Promise<void> {
+export async function renameTag(
+	db: Db,
+	userId: string,
+	tagId: string,
+	newName: string
+): Promise<void> {
 	await db
 		.update(tags)
 		.set({ name: newName })
@@ -133,8 +138,22 @@ export interface TagTotal {
 // Per-tag aggregate for the /tags page (and the chat/report context): number of
 // transactions and the signed expense/income split. Uses the same
 // classifyMovement as the dashboard so a tag's totals agree with the category
-// totals.
-export async function getTagTotals(db: Db, userId: string): Promise<TagTotal[]> {
+// totals. `from`/`to` bound the window when provided (chat/report need the
+// current month only).
+export async function getTagTotals(
+	db: Db,
+	userId: string,
+	from?: Date,
+	to?: Date
+): Promise<TagTotal[]> {
+	const conditions = [
+		eq(tags.userId, userId),
+		isNull(transactions.supersededByTransactionId),
+		isNotInternalTransfer
+	];
+	if (from) conditions.push(gte(transactions.date, from));
+	if (to) conditions.push(lt(transactions.date, to));
+
 	const rows = await db
 		.select({
 			tagId: tags.id,
@@ -147,18 +166,17 @@ export async function getTagTotals(db: Db, userId: string): Promise<TagTotal[]> 
 		.innerJoin(tags, eq(tags.id, transactionTags.tagId))
 		.innerJoin(transactions, eq(transactions.id, transactionTags.transactionId))
 		.leftJoin(financeAccounts, eq(financeAccounts.id, transactions.accountId))
-		.where(
-			and(
-				eq(tags.userId, userId),
-				isNull(transactions.supersededByTransactionId),
-				isNotInternalTransfer
-			)
-		);
+		.where(and(...conditions));
 
 	const totals = new Map<string, TagTotal>();
 	for (const row of rows) {
-		const current =
-			totals.get(row.tagId) ?? { tagId: row.tagId, name: row.name, count: 0, expense: 0, income: 0 };
+		const current = totals.get(row.tagId) ?? {
+			tagId: row.tagId,
+			name: row.name,
+			count: 0,
+			expense: 0,
+			income: 0
+		};
 		const { expense, income } = classifyMovement(
 			row.accountId ? row.accountType : undefined,
 			row.amount

@@ -7,6 +7,7 @@ import { getAccountsByUser } from '$lib/server/db/accounts';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
 import { isNotInternalTransfer, visibleTransactions } from '$lib/server/db/transactions';
+import { getTagsByUser, getTagsForTransactions, setTransactionTags } from '$lib/server/db/tags';
 
 export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -18,6 +19,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	const month = url.searchParams.get('month');
 	const search = url.searchParams.get('q');
 	const type = url.searchParams.get('type');
+	const tag = url.searchParams.get('tag');
 	// Internal transfers (moving your own money: paying the card invoice,
 	// investing, transferring between own accounts) are hidden by default, the
 	// same as on the dashboard. This list used to include them while the
@@ -92,6 +94,29 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	const future = rows.filter((t) => t.date.getTime() > now.getTime());
 	const current = rows.filter((t) => t.date.getTime() <= now.getTime());
 
+	// Tags per row (many-to-many) — used by the badges and the tag filter.
+	const withDisplay = (tx: (typeof current)[number]) => withDisplayAmount(tx);
+	const tagMap = await getTagsForTransactions(
+		db,
+		[...current, ...future].map((t) => t.id)
+	);
+	const withTags = (tx: ReturnType<typeof withDisplay>) => ({
+		...tx,
+		tags: tagMap.get(tx.id) ?? []
+	});
+
+	const filterByTag = (tx: ReturnType<typeof withTags>) =>
+		!tag || tx.tags.some((t) => t.name === tag);
+	let currentWithTags = current.map((t) => withTags(withDisplay(t)));
+	let futureWithTags = future.map((t) => withTags(withDisplay(t)));
+	if (tag) {
+		currentWithTags = currentWithTags.filter(filterByTag);
+		futureWithTags = futureWithTags.filter(filterByTag);
+	}
+
+	// The user's tags, for the filter dropdown.
+	const userTags = await getTagsByUser(db, userId);
+
 	// The account name, for grouping the upcoming invoices by card.
 	const accountById = new Map(userAccounts.map((a) => [a.id, a]));
 
@@ -114,13 +139,14 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	const userCategories = await getCategoriesByUser(db, userId);
 
 	return {
-		transactions: current.map(withDisplayAmount),
-		future: future.map((tx) => ({
-			...withDisplayAmount(tx),
+		transactions: currentWithTags,
+		future: futureWithTags.map((tx) => ({
+			...tx,
 			accountName: tx.accountId ? (accountById.get(tx.accountId)?.name ?? null) : null
 		})),
 		categories: userCategories,
-		filters: { category, month, search, type, internal: showInternal ? 'yes' : '' }
+		userTags,
+		filters: { category, month, search, type, tag, internal: showInternal ? 'yes' : '' }
 	};
 };
 
@@ -208,5 +234,36 @@ export const actions: Actions = {
 		}
 
 		return { success: true, count: toUpdate.length, ruleCount: descriptions.length };
+	},
+
+	// Bulk tag assignment: replaces the tag set of every selected transaction
+	// with the given tags (creates them on the fly). Ownership-checked per id.
+	bulkTag: async ({ request, locals, platform }) => {
+		if (!locals.userId) redirect(303, '/login');
+
+		const form = await request.formData();
+		const idsRaw = String(form.get('ids') ?? '');
+		const raw = String(form.get('tags') ?? '');
+		const tagNames = raw
+			.split(',')
+			.map((t) => t.trim())
+			.filter(Boolean);
+		const ids = idsRaw
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+		if (ids.length === 0) return fail(400, { error: 'Selecione pelo menos uma transação.' });
+
+		const db = getDb(platform!.env.DB);
+		const owned = await db
+			.select({ id: transactions.id })
+			.from(transactions)
+			.where(and(eq(transactions.userId, locals.userId), inArray(transactions.id, ids)));
+
+		for (const row of owned) {
+			await setTransactionTags(db, locals.userId, row.id, tagNames);
+		}
+
+		return { success: true, count: owned.length };
 	}
 };

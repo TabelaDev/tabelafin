@@ -9,6 +9,7 @@ import { financeAccounts } from '$lib/server/db/schema';
 import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { transactions } from '$lib/server/db/schema';
 import { classifyMovement, isNotInternalTransfer } from '$lib/server/db/transactions';
+import { getTagTotals } from '$lib/server/db/tags';
 import { decryptSecret } from '$lib/server/crypto';
 
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
@@ -100,6 +101,10 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	const totalBalance = userAccounts.reduce((sum, a) => sum + a.cachedBalance, 0);
 	const recurringTotal = recurringExpensesList.reduce((sum, e) => sum + e.amount, 0);
 
+	// Tags, month-scoped like the rest of the context — lets the AI answer
+	// "quanto gastei na viagem SP".
+	const tagTotals = await getTagTotals(db, userId, monthStart);
+
 	const contextParts = [
 		`Mês atual: ${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
 		`Renda do mês: R$ ${monthIncome.toFixed(2)}`,
@@ -109,6 +114,12 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		`Gastos por categoria: ${
 			Object.entries(categoryTotals)
 				.map(([cat, val]) => `${cat}: R$ ${val.toFixed(2)}`)
+				.join(', ') || 'nenhum'
+		}`,
+		`Gastos por tag: ${
+			tagTotals
+				.map((t) => `${t.name}: R$ ${t.expense.toFixed(2)}`)
+				.filter((line) => !line.includes('R$ 0.00'))
 				.join(', ') || 'nenhum'
 		}`
 	];

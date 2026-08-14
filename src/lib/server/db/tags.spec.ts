@@ -11,9 +11,7 @@ function recordingDb(ownsTransaction: boolean) {
 		statements.push({ sql, params });
 		if (sql.includes('from "transactions"') || sql.includes('from `transactions`')) {
 			return {
-				rows: ownsTransaction
-					? [{ id: 'tx-1' }]
-					: []
+				rows: ownsTransaction ? [{ id: 'tx-1' }] : []
 			};
 		}
 		// Any other select (tags lookup) returns a fake existing tag so
@@ -47,9 +45,7 @@ describe('setTransactionTags', () => {
 		expect(deletes).toHaveLength(1);
 		expect(deletes[0].sql).toContain('transaction_tags');
 
-		const inserts = statements.filter((s) =>
-			s.sql.trimStart().toLowerCase().startsWith('insert')
-		);
+		const inserts = statements.filter((s) => s.sql.trimStart().toLowerCase().startsWith('insert'));
 		expect(inserts).toHaveLength(1);
 		expect(inserts[0].sql).toContain('transaction_tags');
 		// Both resolved tags land in the same multi-row INSERT.

@@ -4,7 +4,16 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Table, Button, Select, DatePicker, Input, Dialog, Toggle } from '@tabeladev/tabelawebui';
+	import {
+		Table,
+		Button,
+		Select,
+		DatePicker,
+		Input,
+		Dialog,
+		Toggle,
+		TagInput
+	} from '@tabeladev/tabelawebui';
 	import { formatCurrency } from '$lib/lib/format';
 	import type { PageData } from './$types';
 
@@ -18,12 +27,14 @@
 		category: data.filters.category ?? '',
 		month: data.filters.month ?? '',
 		type: data.filters.type ?? '',
+		tag: data.filters.tag ?? '',
 		internal: data.filters.internal ?? ''
 	});
 	let searchQuery = $state(initialFilters().search);
 	let category = $state(initialFilters().category);
 	let month = $state(initialFilters().month);
 	let type = $state(initialFilters().type);
+	let tag = $state(initialFilters().tag);
 	let showInternal = $state(initialFilters().internal === 'yes');
 
 	// Client-side search — no page reload per keystroke, so focus is preserved.
@@ -43,12 +54,14 @@
 		const c = page.url.searchParams.get('category') ?? '';
 		const m = page.url.searchParams.get('month') ?? '';
 		const t = page.url.searchParams.get('type') ?? '';
+		const g = page.url.searchParams.get('tag') ?? '';
 		const i = (page.url.searchParams.get('internal') ?? '') === 'yes';
 		untrack(() => {
 			if (s !== searchQuery) searchQuery = s;
 			if (c !== category) category = c;
 			if (m !== month) month = m;
 			if (t !== type) type = t;
+			if (g !== tag) tag = g;
 			if (i !== showInternal) showInternal = i;
 		});
 	});
@@ -63,6 +76,9 @@
 	});
 	$effect(() => {
 		if (type !== (data.filters.type ?? '')) applyFilter('type', type);
+	});
+	$effect(() => {
+		if (tag !== (data.filters.tag ?? '')) applyFilter('tag', tag);
 	});
 	$effect(() => {
 		const current = (data.filters.internal ?? '') === 'yes';
@@ -95,6 +111,8 @@
 	let bulkCategory = $state('');
 	let bulkSubmitting = $state(false);
 	let bulkError = $state('');
+	let bulkTags = $state<string[]>([]);
+	let bulkTagSubmitting = $state(false);
 
 	const selectedIds = $derived(selected.map((r) => String(r.id)).filter(Boolean));
 
@@ -117,6 +135,7 @@
 			description: tx.description,
 			category: tx.category,
 			amount: tx.displayAmount,
+			tags: tx.tags.map((t) => t.name),
 			// Not a column — carried along so the dialog knows which rows the
 			// server will actually touch (it preserves manual categories).
 			categorySource: tx.categorySource
@@ -197,6 +216,30 @@
 			bulkSubmitting = false;
 		}
 	}
+
+	async function submitBulkTag() {
+		if (selectedIds.length === 0) return;
+		bulkTagSubmitting = true;
+		bulkError = '';
+		try {
+			const body = new FormData();
+			body.set('ids', selectedIds.join(','));
+			body.set('tags', bulkTags.join(','));
+			const res = await fetch('/transactions?/bulkTag', {
+				method: 'POST',
+				body
+			});
+			const result = (await res.json()) as { data?: { error?: string } };
+			if (!res.ok || result.data?.error) {
+				bulkError = result.data?.error ?? 'Não foi possível salvar as tags.';
+				return;
+			}
+			await invalidateAll();
+			clearSelection();
+		} finally {
+			bulkTagSubmitting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -209,9 +252,13 @@
 		<p class="font-mono text-sm text-ink-soft">
 			<span class="text-ink-faint">//</span>
 			{visible.length} registros
-			{#if type && visible.length > 0}
+			{#if (type || tag) && visible.length > 0}
 				· total
-				<span class={type === 'income' ? 'text-ctp-green' : 'text-ctp-red'}>
+				<span
+					class={visible.reduce((sum, t) => sum + t.displayAmount, 0) >= 0
+						? 'text-ctp-green'
+						: 'text-ctp-red'}
+				>
 					<!-- Sum first, then take the magnitude. Summing Math.abs of each
 					     row made a refund add to the expense total instead of
 					     reducing it. -->
@@ -245,6 +292,16 @@
 			bind:value={category}
 			filter
 			filterPlaceholder="Buscar categoria…"
+		/>
+		<Select
+			class="w-44"
+			options={[
+				{ value: '', label: 'Todas as tags' },
+				...data.userTags.map((t) => ({ value: t.name, label: t.name }))
+			]}
+			bind:value={tag}
+			filter
+			filterPlaceholder="Buscar tag…"
 		/>
 		<Select
 			class="w-44"
@@ -293,6 +350,20 @@
 			>
 				{bulkSubmitting ? 'Aplicando…' : 'Aplicar'}
 			</Button>
+			<TagInput
+				class="w-64"
+				bind:value={bulkTags}
+				options={data.userTags.map((t) => t.name)}
+				placeholder="Tags…"
+				aria-label="Tags em lote"
+			/>
+			<Button
+				variant="outline"
+				disabled={bulkTags.length === 0 || bulkTagSubmitting}
+				onclick={submitBulkTag}
+			>
+				{bulkTagSubmitting ? 'Aplicando…' : 'Aplicar tags'}
+			</Button>
 			<Button variant="ghost" onclick={clearSelection}>Cancelar</Button>
 			{#if bulkError}
 				<span class="font-mono text-sm text-danger">{bulkError}</span>
@@ -307,11 +378,12 @@
 				{ key: 'date', label: 'Data', sortable: true },
 				{ key: 'description', label: 'Descrição' },
 				{ key: 'category', label: 'Categoria' },
+				{ key: 'tags', label: 'Tags' },
 				{ key: 'amount', label: 'Valor', sortable: true },
 				{ key: 'action', label: '' }
 			]}
 			rows={visibleRows}
-			widths={[1, 3, 1, 1, 0.5]}
+			widths={[1.2, 2.5, 1.2, 1.2, 1, 0.5]}
 			pageSize={10}
 			pageSizeOptions={[10, 25, 50]}
 			selection="multiple"
@@ -329,6 +401,20 @@
 						/>
 					{:else}
 						<span class="text-xs text-ink-faint">[sem categoria]</span>
+					{/if}
+				{:else if key === 'tags'}
+					{#if Array.isArray(row.tags) && (row.tags as string[]).length > 0}
+						<div class="flex flex-wrap gap-1">
+							{#each row.tags as tagName (tagName)}
+								<a
+									href={resolve(`/transactions?tag=${encodeURIComponent(tagName)}`)}
+									class="border border-rule bg-paper px-1.5 py-0.5 font-mono text-xs text-ink-soft hover:text-accent hover:underline"
+									onclick={(e) => e.stopPropagation()}>{tagName}</a
+								>
+							{/each}
+						</div>
+					{:else}
+						<span class="text-xs text-ink-faint">—</span>
 					{/if}
 				{:else if key === 'amount'}
 					<span class={Number(row.amount) >= 0 ? 'text-ctp-green' : 'text-ctp-red'}>
@@ -363,7 +449,7 @@
      through to the categorise-only path. -->
 <Dialog bind:open={showRuleDialog} title="Criar regra automática?">
 	<div class="flex flex-col gap-3">
-		<p class="font-mono text-sm text-ink-soft">
+		<p class="text-justify font-mono text-sm text-ink-soft">
 			Além de categorizar as {selectedIds.length} transações selecionadas, o app pode criar uma regra
 			por descrição — assim transações futuras com a mesma descrição já entram como
 			<span class="text-ink">{bulkCategory}</span>.

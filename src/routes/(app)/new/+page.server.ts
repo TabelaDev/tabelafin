@@ -3,13 +3,17 @@ import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { insertManualTransaction } from '$lib/server/db/transactions';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { getTagsByUser, setTransactionTags } from '$lib/server/db/tags';
 import { categorizeByRules } from '$lib/server/ai/rules';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
 	const db = getDb(platform!.env.DB);
-	const categories = await getCategoriesByUser(db, locals.userId);
-	return { categories };
+	const [categories, userTags] = await Promise.all([
+		getCategoriesByUser(db, locals.userId),
+		getTagsByUser(db, locals.userId)
+	]);
+	return { categories, userTags };
 };
 
 export const actions: Actions = {
@@ -48,13 +52,26 @@ export const actions: Actions = {
 				? category
 				: categorizeByRules(description);
 
-		await insertManualTransaction(db, {
+		const tagsRaw = form.get('tags');
+		const tagNames =
+			typeof tagsRaw === 'string'
+				? tagsRaw
+						.split(',')
+						.map((t) => t.trim())
+						.filter(Boolean)
+				: [];
+
+		const saved = await insertManualTransaction(db, {
 			userId: locals.userId,
 			date: parsedDate,
 			description: description.trim(),
 			amount: parsedAmount,
 			category: finalCategory
 		});
+
+		if (saved && tagNames.length > 0) {
+			await setTransactionTags(db, locals.userId, saved.id, tagNames);
+		}
 
 		redirect(303, '/dashboard');
 	}

@@ -7,6 +7,7 @@ import { getAllUsers } from '$lib/server/db/users';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getAccountsByUser } from '$lib/server/db/accounts';
 import { classifyMovement, getTransactionsInRange } from '$lib/server/db/transactions';
+import { getTagTotals } from '$lib/server/db/tags';
 import { getMonthlyReport, insertMonthlyReport } from '$lib/server/db/monthly-reports';
 import {
 	deletePushSubscriptionById,
@@ -133,6 +134,10 @@ async function generateReportForUser(
 		totalExpense,
 		categoryTotals,
 		investmentBalance,
+		tagTotals: (await getTagTotals(db, userId, range.from, range.to)).map((t) => ({
+			name: t.name,
+			expense: t.expense
+		})),
 		previousMonth: previousSummary
 			? {
 					totalExpense: previousSummary.totalExpense,

@@ -18,6 +18,8 @@ export interface MonthlyReportInput {
 	categoryTotals: CategoryTotals;
 	investmentBalance: number;
 	previousMonth?: { totalExpense: number; categoryTotals: CategoryTotals } | null;
+	/** One-off groupings (tags) — included so the AI can mention them. */
+	tagTotals?: Array<{ name: string; expense: number }>;
 }
 
 function formatCurrency(value: number): string {
@@ -30,10 +32,20 @@ function formatCategoryTotals(totals: CategoryTotals): string {
 	return entries.map(([category, amount]) => `${category}: ${formatCurrency(amount)}`).join(', ');
 }
 
+function formatTagTotals(tags: Array<{ name: string; expense: number }>): string {
+	const withSpend = tags.filter((t) => t.expense !== 0).sort((a, b) => b.expense - a.expense);
+	if (withSpend.length === 0) return 'nenhuma tag com gasto';
+	return withSpend.map((t) => `${t.name}: ${formatCurrency(t.expense)}`).join(', ');
+}
+
 function buildPrompt(input: MonthlyReportInput): string {
 	const previousLine = input.previousMonth
 		? `Mês anterior, pra comparação: gasto total ${formatCurrency(input.previousMonth.totalExpense)}, por categoria: ${formatCategoryTotals(input.previousMonth.categoryTotals)}.`
 		: 'Não há dados do mês anterior pra comparar (primeiro relatório do usuário).';
+
+	const tagLine = input.tagTotals
+		? `\nGasto por tag (agrupamentos pontuais, ex.: viagem): ${formatTagTotals(input.tagTotals)}.`
+		: '';
 
 	return (
 		`Escreva um parágrafo curto (3-5 frases, em português do Brasil, tom direto e prático, ` +
@@ -43,7 +55,7 @@ function buildPrompt(input: MonthlyReportInput): string {
 		`Gasto total: ${formatCurrency(input.totalExpense)}.\n` +
 		`Gasto por categoria: ${formatCategoryTotals(input.categoryTotals)}.\n` +
 		`Saldo atual em investimentos: ${formatCurrency(input.investmentBalance)}.\n` +
-		`${previousLine}`
+		`${previousLine}${tagLine}`
 	);
 }
 
