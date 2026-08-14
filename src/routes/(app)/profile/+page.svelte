@@ -172,15 +172,14 @@
 						renova sozinho quando você abre o Meu Pluggy.
 					</p>
 				</div>
-				<Button variant="outline" size="sm" onclick={() => openOnboarding('pluggy')}>
-					{extensionLabel}
-				</Button>
-			</div>
-
-			<div class="mt-3">
-				<Button variant="outline" size="sm" onclick={() => (showInstallModal = true)}>
-					Instalar
-				</Button>
+				<div class="flex items-center gap-2">
+					<Button variant="outline" size="sm" onclick={() => (showInstallModal = true)}>
+						Instalar
+					</Button>
+					<Button variant="outline" size="sm" onclick={() => openOnboarding('pluggy')}>
+						{extensionLabel}
+					</Button>
+				</div>
 			</div>
 		</Card.Content>
 	</Card>
