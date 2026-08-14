@@ -9,6 +9,7 @@
 
 	let { data }: { data: PageData } = $props();
 	let hideAiForm = $state<HTMLFormElement | null>(null);
+	let showExtInstall = $state(false);
 
 	function submitHideAi() {
 		if (hideAiForm) {
@@ -101,6 +102,45 @@
 					Vincular / revisar
 				</Button>
 			</div>
+
+			<button
+				type="button"
+				class="mt-3 cursor-pointer font-mono text-xs text-accent underline underline-offset-4 hover:opacity-80"
+				onclick={() => (showExtInstall = !showExtInstall)}
+			>
+				{showExtInstall ? '▲ Ocultar como instalar' : '▼ Como instalar a extensão (passo a passo)'}
+			</button>
+
+			{#if showExtInstall}
+				<div class="mt-3 flex flex-col gap-2 border border-rule bg-paper p-4 text-sm text-ink-soft">
+					<p>
+						<strong>1.</strong> Baixe o código:
+						<a
+							class="text-accent underline underline-offset-4 hover:opacity-80"
+							href="https://github.com/TabelaDev/tabelafin"
+							target="_blank"
+							rel="noreferrer">github.com/TabelaDev/tabelafin</a
+						>
+						→ botão verde "Code" → "Download ZIP" → descompacte a pasta.
+					</p>
+					<p>
+						<strong>2.</strong> Dentro do projeto, a extensão é a pasta
+						<code class="border border-rule bg-paper-raised px-1 font-mono">extension/</code>.
+					</p>
+					<p>
+						<strong>3.</strong> No Chrome, abra
+						<code class="border border-rule bg-paper-raised px-1 font-mono"
+							>chrome://extensions</code
+						>.
+					</p>
+					<p><strong>4.</strong> Ative o "Modo desenvolvedor" (canto superior direito).</p>
+					<p>
+						<strong>5.</strong> Clique em "Carregar sem compactação" e escolha a pasta
+						<code class="border border-rule bg-paper-raised px-1 font-mono">extension/</code>.
+					</p>
+					<p><strong>6.</strong> Pronto — o ícone da extensão aparece na barra do navegador.</p>
+				</div>
+			{/if}
 		</Card.Content>
 	</Card>
 
