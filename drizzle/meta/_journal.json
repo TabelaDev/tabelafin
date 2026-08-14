@@ -50,6 +50,13 @@
       "when": 1786711409463,
       "tag": "0006_nice_jackpot",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1786741085284,
+      "tag": "0007_magical_the_stranger",
+      "breakpoints": true
     }
   ]
 }

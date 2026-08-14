@@ -92,6 +92,10 @@ export const pluggyCredentials = sqliteTable('pluggy_credentials', {
 	tokenNonce: text('token_nonce').notNull(),
 	// Encryption scheme version — see server/crypto.ts.
 	v: integer('v'),
+	// When the stored JWT expires (its `exp` claim). The token lasts ~24h; the
+	// extension refreshes it when the user opens Meu Pluggy. Lets the UI show
+	// "expirado" instead of claiming the Open Finance connection is alive.
+	tokenExpiresAt: integer('token_expires_at', { mode: 'timestamp' }),
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
 		.$defaultFn(() => new Date())

@@ -29,6 +29,16 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 	// modal over the app (see +layout.svelte).
 	const seenOnboarding = user?.seenOnboarding ?? false;
 
+	// The Meu Pluggy token lasts ~24h (its `exp` is stored on receipt). Saying
+	// "conectado" when the token already expired is a lie — the sync would fail.
+	// Null expiry (a credential stored before the column existed) is treated as
+	// connected until the extension refreshes the token.
+	const pluggyStatus: 'connected' | 'expired' | 'disconnected' = pluggy
+		? pluggy.tokenExpiresAt && pluggy.tokenExpiresAt.getTime() <= Date.now()
+			? 'expired'
+			: 'connected'
+		: 'disconnected';
+
 	// Pluggy connected but the items never synced (a connection made before the
 	// post-connection sync existed) — kicks off the sync in the background so the
 	// data arrives without waiting for the daily cron.
@@ -46,6 +56,7 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 		userId: locals.userId,
 		aiConfigured: Boolean(ai),
 		pluggyConfigured: Boolean(pluggy),
+		pluggyStatus,
 		hideAi: user?.hideAi ?? false,
 		seenOnboarding
 	};

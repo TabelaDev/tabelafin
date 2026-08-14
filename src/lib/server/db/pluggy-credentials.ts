@@ -10,6 +10,8 @@ export interface PluggyCredentialsInput {
 	tokenNonce: string;
 	/** Encryption scheme version — see server/crypto.ts. */
 	v?: number;
+	/** When the stored JWT expires (epoch ms) — see schema.ts. */
+	tokenExpiresAt?: Date | null;
 }
 
 export async function getPluggyCredentials(db: Db, userId: string) {
@@ -29,7 +31,8 @@ export async function upsertPluggyCredentials(db: Db, input: PluggyCredentialsIn
 			set: {
 				tokenEncrypted: input.tokenEncrypted,
 				tokenNonce: input.tokenNonce,
-				v: input.v
+				v: input.v,
+				tokenExpiresAt: input.tokenExpiresAt
 			}
 		})
 		.returning();

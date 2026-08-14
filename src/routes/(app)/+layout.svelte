@@ -154,7 +154,11 @@
 		<span class="text-ink-faint">·</span>
 	{/if}
 	<span class="text-ink-faint">Open Finance:</span>
-	{#if data.pluggyConfigured}
+	{#if data.pluggyStatus === 'expired'}
+		<a href={resolve('/profile')} class="text-danger hover:text-danger hover:underline"
+			>expirado (renove no Meu Pluggy)</a
+		>
+	{:else if data.pluggyConfigured}
 		<Status kind="success">conectado</Status>
 	{:else}
 		<a href={resolve('/profile')} class="text-danger hover:text-danger hover:underline"

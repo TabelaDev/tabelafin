@@ -5,7 +5,7 @@ import { upsertPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { upsertPluggyItem } from '$lib/server/db/pluggy-items';
 import { setUserSeenOnboarding } from '$lib/server/db/users';
 import { encryptSecret } from '$lib/server/crypto';
-import { fetchItems } from '$lib/server/pluggy/client';
+import { fetchItems, jwtExpiresAt } from '$lib/server/pluggy/client';
 import { syncUserItems } from '$lib/server/pluggy/sync';
 import { DEVICE_TOKEN_KV_PREFIX } from '$lib/server/pluggy/device-token';
 
@@ -75,11 +75,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		purpose: 'pluggy_credentials',
 		userId
 	});
+	const expiresAt = jwtExpiresAt(token);
 	await upsertPluggyCredentials(db, {
 		userId,
 		tokenEncrypted: encrypted.ciphertext,
 		tokenNonce: encrypted.nonce,
-		v: encrypted.v
+		v: encrypted.v,
+		tokenExpiresAt: expiresAt ? new Date(expiresAt) : null
 	});
 
 	for (const item of items) {

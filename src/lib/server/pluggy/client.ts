@@ -16,6 +16,23 @@ interface MyApiError {
 	code?: number;
 }
 
+/**
+ * Returns the `exp` of a JWT as epoch milliseconds, or null when the token
+ * cannot be parsed. The Meu Pluggy token is an Auth0 JWT that expires in ~24h;
+ * the expiry is stored when the token is received so the UI can say "expirado".
+ */
+export function jwtExpiresAt(jwt: string): number | null {
+	const payload = jwt.split('.')[1];
+	if (!payload) return null;
+	try {
+		const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+		const { exp } = JSON.parse(json) as { exp?: number };
+		return typeof exp === 'number' ? exp * 1000 : null;
+	} catch {
+		return null;
+	}
+}
+
 async function myApiFetch(path: string, token: string): Promise<Response> {
 	const res = await fetch(`${MY_API_URL}${path}`, {
 		headers: {
