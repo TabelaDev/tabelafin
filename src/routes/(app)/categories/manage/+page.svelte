@@ -3,7 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { ActionResult } from '@sveltejs/kit';
-	import { Button, Card, Dialog, Input, Select } from '@tabeladev/tabelawebui';
+	import { Button, Card, Dialog, Input, Label, Select } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -45,17 +45,31 @@
 	);
 
 	// Delete confirmation — the "Excluir" button only opens the dialog; the
-	// confirm button submits the row's own `?/remove` form.
+	// confirm button submits the row's own `?/remove` form. The dialog can also
+	// migrate the category's transactions + rules to another one.
 	let showDeleteDialog = $state(false);
 	let pendingDelete = $state<{ name: string; form: HTMLFormElement } | null>(null);
+	let deleteMigrateTo = $state('');
+
+	const migrationOptions = $derived(
+		data.categories
+			.filter((c) => c.name !== pendingDelete?.name)
+			.map((c) => ({ value: c.name, label: c.name }))
+	);
 
 	function openDelete(name: string, form: HTMLFormElement) {
 		pendingDelete = { name, form };
+		deleteMigrateTo = '';
 		showDeleteDialog = true;
 	}
 
 	function confirmDelete() {
-		pendingDelete?.form.requestSubmit();
+		const form = pendingDelete?.form;
+		// Carry the chosen target into the row's form (a hidden input exists on
+		// every `?/remove` form, left empty by default).
+		const hidden = form?.querySelector<HTMLInputElement>('input[name="migrateTo"]');
+		if (hidden) hidden.value = deleteMigrateTo;
+		form?.requestSubmit();
 		pendingDelete = null;
 		showDeleteDialog = false;
 	}
@@ -176,6 +190,7 @@
 								</Button>
 								<form method="POST" action="?/remove" use:enhance={handleRemove}>
 									<input type="hidden" name="name" value={cat.name} />
+									<input type="hidden" name="migrateTo" />
 									<Button
 										type="button"
 										size="sm"
@@ -208,11 +223,28 @@
 </div>
 
 <Dialog bind:open={showDeleteDialog} title="Excluir categoria?">
-	<p class="text-justify font-mono text-sm text-ink-soft">
-		Excluir a categoria <span class="text-ink">{pendingDelete?.name}</span>? As transações que a
-		usam
-		<strong>não são apagadas</strong> — elas passam a aparecer como "Outros".
-	</p>
+	<div class="flex flex-col gap-3">
+		<p class="text-justify font-mono text-sm text-ink-soft">
+			Excluir a categoria <span class="text-ink">{pendingDelete?.name}</span>? As transações que a
+			usam <strong>não são apagadas</strong>.
+		</p>
+
+		<div class="flex flex-col gap-2">
+			<Label for="migrateTo">Para onde mover as transações (e regras)?</Label>
+			<Select
+				id="migrateTo"
+				name="migrateTo"
+				options={[
+					{ value: '', label: 'Não mover — transações viram "Outros"' },
+					...migrationOptions
+				]}
+				bind:value={deleteMigrateTo}
+			/>
+			<p class="font-mono text-xs text-ink-faint">
+				Mover repassa transações e regras automáticas pra outra categoria.
+			</p>
+		</div>
+	</div>
 	{#snippet footer()}
 		<Button variant="ghost" onclick={() => (showDeleteDialog = false)}>Cancelar</Button>
 		<Button variant="danger" onclick={confirmDelete}>Excluir</Button>

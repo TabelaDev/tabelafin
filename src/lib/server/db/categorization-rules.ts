@@ -72,3 +72,19 @@ export async function deleteRuleForDescription(
 			and(eq(categorizationRules.userId, userId), eq(categorizationRules.description, description))
 		);
 }
+
+// Repoints every rule that maps a description to a category. Used when a
+// category is migrated into another one on deletion. Safe against the unique
+// index on (user_id, description): a description can only carry one rule, so
+// no two rows can collide after the rename.
+export async function renameCategoryOnRules(
+	db: Db,
+	userId: string,
+	oldName: string,
+	newName: string
+): Promise<void> {
+	await db
+		.update(categorizationRules)
+		.set({ category: newName })
+		.where(and(eq(categorizationRules.userId, userId), eq(categorizationRules.category, oldName)));
+}

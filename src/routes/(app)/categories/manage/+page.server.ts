@@ -11,6 +11,7 @@ import {
 	clearCategoryOnTransactions,
 	renameCategoryOnTransactions
 } from '$lib/server/db/transactions';
+import { renameCategoryOnRules } from '$lib/server/db/categorization-rules';
 
 // The available colour palette — the same Catppuccin classes used in badges, with
 // a Portuguese label for the dropdown.
@@ -82,11 +83,29 @@ export const actions: Actions = {
 		const name = String(form.get('name') ?? '').trim();
 		if (!name) return { error: 'Categoria inválida.' };
 
+		const migrateTo = String(form.get('migrateTo') ?? '').trim();
+
 		const db = getDb(platform!.env.DB);
+
+		if (migrateTo) {
+			// The target must be one of the user's own categories, and not the one
+			// being deleted.
+			const categories = await getCategoriesByUser(db, locals.userId);
+			const valid = categories.some((c) => c.name === migrateTo && c.name !== name);
+			if (!valid) return { error: 'Categoria de destino inválida.' };
+		}
+
 		await deleteCategory(db, locals.userId, name);
-		// The category is gone, so its transactions lose the bucket — back to
-		// "Outros" (uncategorised), never deleted.
-		await clearCategoryOnTransactions(db, locals.userId, name);
+		if (migrateTo) {
+			// Migrate: repoint the transactions AND the automatic rules from the
+			// deleted category to the target, so nothing falls to "Outros".
+			await renameCategoryOnTransactions(db, locals.userId, name, migrateTo);
+			await renameCategoryOnRules(db, locals.userId, name, migrateTo);
+		} else {
+			// No target chosen — the category is gone, so its transactions lose the
+			// bucket (back to "Outros"), never deleted.
+			await clearCategoryOnTransactions(db, locals.userId, name);
+		}
 		return { success: true };
 	}
 };
