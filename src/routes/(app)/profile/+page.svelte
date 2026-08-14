@@ -172,7 +172,7 @@
 						renova sozinho quando você abre o Meu Pluggy.
 					</p>
 				</div>
-				<div class="flex items-center gap-2">
+				<div class="flex flex-col items-stretch gap-2">
 					<Button variant="outline" size="sm" onclick={() => (showInstallModal = true)}>
 						Instalar
 					</Button>
