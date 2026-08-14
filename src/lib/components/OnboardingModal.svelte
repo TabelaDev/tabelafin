@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Dialog, Stepper, Button, Input, Label, Select } from '@tabeladev/tabelawebui';
+	import ExtensionInstallModal from '$lib/components/ExtensionInstallModal.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { AI_PROVIDERS, type AiProvider } from '$lib/lib/ai-providers';
 	import { onboarding, closeOnboarding } from '$lib/stores/onboarding-store';
@@ -30,7 +31,7 @@
 	let pairingLoading = $state(false);
 	let checking = $state(false);
 	let statusMsg = $state('');
-	let showInstall = $state(false);
+	let showInstallModal = $state(false);
 	let showHelp = $state(false);
 	let token = $state('');
 
@@ -285,44 +286,10 @@
 						<button
 							type="button"
 							class="cursor-pointer self-start font-mono text-xs text-accent underline underline-offset-4 hover:opacity-80"
-							onclick={() => (showInstall = !showInstall)}
+							onclick={() => (showInstallModal = true)}
 						>
-							{showInstall ? '▲ Ocultar o passo a passo' : '▼ Como instalar (passo a passo)'}
+							▼ Como instalar (passo a passo)
 						</button>
-						{#if showInstall}
-							<div
-								class="flex flex-col gap-2 border border-rule bg-paper p-4 text-sm text-ink-soft"
-							>
-								<p>
-									<strong>1.</strong> Baixe o código:
-									<a
-										class="text-accent underline underline-offset-4 hover:opacity-80"
-										href="https://github.com/TabelaDev/tabelafin"
-										target="_blank"
-										rel="noreferrer">github.com/TabelaDev/tabelafin</a
-									>
-									→ botão verde "Code" → "Download ZIP" → descompacte a pasta.
-								</p>
-								<p>
-									<strong>2.</strong> Dentro do projeto, a extensão é a pasta
-									<code class="border border-rule bg-paper-raised px-1 font-mono">extension/</code>.
-								</p>
-								<p>
-									<strong>3.</strong> No Chrome, abra
-									<code class="border border-rule bg-paper-raised px-1 font-mono"
-										>chrome://extensions</code
-									>.
-								</p>
-								<p><strong>4.</strong> Ative o "Modo desenvolvedor" (canto superior direito).</p>
-								<p>
-									<strong>5.</strong> Clique em "Carregar sem compactação" e escolha a pasta
-									<code class="border border-rule bg-paper-raised px-1 font-mono">extension/</code>.
-								</p>
-								<p>
-									<strong>6.</strong> Pronto — o ícone da extensão aparece na barra do navegador.
-								</p>
-							</div>
-						{/if}
 					</div>
 
 					<div class="flex flex-col gap-1">
@@ -489,3 +456,5 @@
 		</div>
 	{/if}
 </Dialog>
+
+<ExtensionInstallModal bind:open={showInstallModal} />

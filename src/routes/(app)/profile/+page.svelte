@@ -2,15 +2,27 @@
 	import { resolve } from '$app/paths';
 	import { enhance, applyAction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import type { ActionResult } from '@sveltejs/kit';
 	import { Button, Card, Divider, Input } from '@tabeladev/tabelawebui';
 	import { openOnboarding } from '$lib/stores/onboarding-store';
 	import { openStatementImport } from '$lib/stores/statement-import-store';
+	import ExtensionInstallModal from '$lib/components/ExtensionInstallModal.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let hideAiForm = $state<HTMLFormElement | null>(null);
-	let showExtInstall = $state(false);
+	let showInstallModal = $state(false);
+
+	// The extension button mirrors the Open Finance status (from the layout):
+	// not connected → pair it; token expired → renew it; alive → review it.
+	const extensionLabel = $derived(
+		page.data.pluggyStatus === 'expired'
+			? 'Renovar'
+			: page.data.pluggyStatus === 'connected'
+				? 'Revisar'
+				: 'Vincular'
+	);
 
 	// Editable full name (needed to spot self-transfers — see the sync).
 	let editingName = $state(false);
@@ -161,50 +173,21 @@
 					</p>
 				</div>
 				<Button variant="outline" size="sm" onclick={() => openOnboarding('pluggy')}>
-					Vincular / revisar
+					{extensionLabel}
 				</Button>
 			</div>
 
 			<button
 				type="button"
 				class="mt-3 cursor-pointer font-mono text-xs text-accent underline underline-offset-4 hover:opacity-80"
-				onclick={() => (showExtInstall = !showExtInstall)}
+				onclick={() => (showInstallModal = true)}
 			>
-				{showExtInstall ? '▲ Ocultar como instalar' : '▼ Como instalar a extensão (passo a passo)'}
+				▼ Como instalar a extensão (passo a passo)
 			</button>
-
-			{#if showExtInstall}
-				<div class="mt-3 flex flex-col gap-2 border border-rule bg-paper p-4 text-sm text-ink-soft">
-					<p>
-						<strong>1.</strong> Baixe o código:
-						<a
-							class="text-accent underline underline-offset-4 hover:opacity-80"
-							href="https://github.com/TabelaDev/tabelafin"
-							target="_blank"
-							rel="noreferrer">github.com/TabelaDev/tabelafin</a
-						>
-						→ botão verde "Code" → "Download ZIP" → descompacte a pasta.
-					</p>
-					<p>
-						<strong>2.</strong> Dentro do projeto, a extensão é a pasta
-						<code class="border border-rule bg-paper-raised px-1 font-mono">extension/</code>.
-					</p>
-					<p>
-						<strong>3.</strong> No Chrome, abra
-						<code class="border border-rule bg-paper-raised px-1 font-mono"
-							>chrome://extensions</code
-						>.
-					</p>
-					<p><strong>4.</strong> Ative o "Modo desenvolvedor" (canto superior direito).</p>
-					<p>
-						<strong>5.</strong> Clique em "Carregar sem compactação" e escolha a pasta
-						<code class="border border-rule bg-paper-raised px-1 font-mono">extension/</code>.
-					</p>
-					<p><strong>6.</strong> Pronto — o ícone da extensão aparece na barra do navegador.</p>
-				</div>
-			{/if}
 		</Card.Content>
 	</Card>
+
+	<ExtensionInstallModal bind:open={showInstallModal} />
 
 	<!-- Import Gmail statements via Takeout -->
 	<Card>
