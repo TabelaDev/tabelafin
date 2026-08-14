@@ -26,11 +26,16 @@ import { and, eq, gte, inArray, isNull, notInArray, or } from 'drizzle-orm';
 import { fetchAccounts, fetchInvestments, fetchItems, fetchTransactions } from './client';
 import { computeDedupeHash } from './dedupe';
 import { categorizeTransactions } from '$lib/server/ai/categorize';
+import { categorizeByRules } from '$lib/server/ai/rules';
 import { getRulesByUser } from '$lib/server/db/categorization-rules';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { getUserAiPrompts } from '$lib/server/db/user-ai-prompts';
 import { findUserById } from '$lib/server/db/users';
-import { INTERNAL_TRANSFER_CATEGORIES, INTERNAL_TRANSFER_DESCRIPTIONS } from './internal-transfers';
+import {
+	INTERNAL_TRANSFER_CATEGORIES,
+	INTERNAL_TRANSFER_DESCRIPTIONS,
+	isSelfTransferByDescription
+} from './internal-transfers';
 import type { AiProvider } from '$lib/lib/ai-providers';
 
 type Db = ReturnType<typeof getDb>;
@@ -126,6 +131,12 @@ export async function syncUserItems(
 	// opposite signs) — a business account into a personal one, Itaú into Nubank.
 	// Without this the same money counts twice, as both income and spending.
 	await markInternalTransfers(db, userId);
+
+	// ...and the ones Pluggy mislabels as generic "Transfers"/"Transfer - PIX"
+	// even though the description names the user themselves (Pix/TED between own
+	// accounts). By-name is deterministic; by-amount pairing alone is too fragile
+	// for round amounts that collide with salaries and CDB applications.
+	await markSelfTransfersByName(db, userId);
 
 	await categorizeNewTransactions(db, masterKey, userId);
 }
@@ -265,6 +276,42 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 	}
 }
 
+// Marks as internal transfers the transactions whose description names the user
+// themselves (Pix/TED between the user's own accounts) — Pluggy labels most as
+// "Same person transfer" but slips some as generic "Transfers"/"Transfer - PIX",
+// which would otherwise count as income. Scans the whole history (no window):
+// once the full name is set, the next sync backfills everything at once.
+async function markSelfTransfersByName(db: Db, userId: string): Promise<void> {
+	const user = await findUserById(db, userId);
+	if (!user || !user.name.trim()) return;
+
+	const rows = await db
+		.select({ id: transactions.id, description: transactions.description })
+		.from(transactions)
+		.where(
+			and(
+				eq(transactions.userId, userId),
+				isNull(transactions.supersededByTransactionId),
+				// Only rows not already recognised as internal take part — the
+				// isNull arms are load-bearing (see markInternalTransfers).
+				or(
+					isNull(transactions.pluggyCategory),
+					notInArray(transactions.pluggyCategory, [...INTERNAL_TRANSFER_CATEGORIES])
+				)
+			)
+		);
+
+	const toMark = rows
+		.filter((r) => isSelfTransferByDescription(r.description, user.name))
+		.map((r) => r.id);
+	if (toMark.length > 0) {
+		await db
+			.update(transactions)
+			.set({ pluggyCategory: 'Internal transfer' })
+			.where(inArray(transactions.id, toMark));
+	}
+}
+
 // One batch AI call per user per sync run (ESCOPO.md §3.3), covering every
 // transaction still without a category — never one call per transaction. If the
 // user has no ai_credentials configured yet (they finished the Pluggy onboarding
@@ -298,6 +345,26 @@ async function categorizeNewTransactions(db: Db, masterKey: string, userId: stri
 				.set({ category, categorySource: 'rule' })
 				.where(inArray(transactions.id, ids));
 		}
+	}
+
+	// The offline keyword rules (rules.ts) as a cheap fallback — the same rules
+	// the manual /new uses (pix → Transferências, ifood → Alimentação, …). They
+	// were never applied to synced transactions, so without AI everything the
+	// sync brought stayed "Outros" (a salary Pix, an iFood order, …).
+	const byKeyword = await getUncategorizedTransactions(db, userId);
+	const idsByRuleCategory = new Map<string, string[]>();
+	for (const tx of byKeyword) {
+		const category = categorizeByRules(tx.description);
+		if (!category) continue;
+		const ids = idsByRuleCategory.get(category) ?? [];
+		ids.push(tx.id);
+		idsByRuleCategory.set(category, ids);
+	}
+	for (const [category, ids] of idsByRuleCategory) {
+		await db
+			.update(transactions)
+			.set({ category, categorySource: 'rule' })
+			.where(inArray(transactions.id, ids));
 	}
 
 	const stillPending = await getUncategorizedTransactions(db, userId);
