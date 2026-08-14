@@ -256,12 +256,3 @@ button:focus-visible,
 .twui-select-popover::-webkit-scrollbar {
 	display: none;
 }
-
-/* Lock the page scroll while a modal is open: the dialog overlay is `fixed`,
-   so without this the content behind it keeps scrolling — a table visibly
-   slides under the dark backdrop. Stopgap until the twui Dialog locks the
-   scroll itself (request 20260814-dialog-scroll-lock). The app already reserves
-   the scrollbar gutter (html), so locking does not cause a layout shift. */
-body:has(.twui-dialog-overlay) {
-	overflow: hidden;
-}
