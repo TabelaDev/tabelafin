@@ -283,13 +283,9 @@
 							A extensão é uma pasta deste repositório — não é publicada na loja. "Instalar" é
 							carregar ela no Chrome como extensão não compactada.
 						</p>
-						<button
-							type="button"
-							class="cursor-pointer self-start font-mono text-xs text-accent underline underline-offset-4 hover:opacity-80"
-							onclick={() => (showInstallModal = true)}
-						>
-							▼ Como instalar (passo a passo)
-						</button>
+						<Button variant="outline" size="sm" onclick={() => (showInstallModal = true)}>
+							Instalar
+						</Button>
 					</div>
 
 					<div class="flex flex-col gap-1">

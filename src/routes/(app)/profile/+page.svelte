@@ -177,13 +177,11 @@
 				</Button>
 			</div>
 
-			<button
-				type="button"
-				class="mt-3 cursor-pointer font-mono text-xs text-accent underline underline-offset-4 hover:opacity-80"
-				onclick={() => (showInstallModal = true)}
-			>
-				▼ Como instalar a extensão (passo a passo)
-			</button>
+			<div class="mt-3">
+				<Button variant="outline" size="sm" onclick={() => (showInstallModal = true)}>
+					Instalar
+				</Button>
+			</div>
 		</Card.Content>
 	</Card>
 
