@@ -6,7 +6,7 @@ import { decryptSecret } from '$lib/server/crypto';
 import { getAllUsers } from '$lib/server/db/users';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getAccountsByUser } from '$lib/server/db/accounts';
-import { getTransactionsInRange } from '$lib/server/db/transactions';
+import { classifyMovement, getTransactionsInRange } from '$lib/server/db/transactions';
 import { getMonthlyReport, insertMonthlyReport } from '$lib/server/db/monthly-reports';
 import {
 	deletePushSubscriptionById,
@@ -94,25 +94,12 @@ async function generateReportForUser(
 	const categoryTotals: CategoryTotals = {};
 	for (const tx of transactions) {
 		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
-
-		if (accType === 'credit_card') {
-			// Credit card: a purchase (positive) is SPENDING, not income. The invoice
-			// payment is already excluded by the internal-transfer filter in
-			// getTransactionsInRange.
-			if (tx.amount > 0) {
-				totalExpense += tx.amount;
-				const category = tx.category ?? 'Outros';
-				categoryTotals[category] = (categoryTotals[category] ?? 0) + tx.amount;
-			}
-			continue;
-		}
-
-		if (tx.amount >= 0) {
-			totalIncome += tx.amount;
-		} else {
-			totalExpense += Math.abs(tx.amount);
+		const { expense, income } = classifyMovement(accType, tx.amount);
+		totalExpense += expense;
+		totalIncome += income;
+		if (expense !== 0) {
 			const category = tx.category ?? 'Outros';
-			categoryTotals[category] = (categoryTotals[category] ?? 0) + Math.abs(tx.amount);
+			categoryTotals[category] = (categoryTotals[category] ?? 0) + expense;
 		}
 	}
 	const investmentBalance = accounts

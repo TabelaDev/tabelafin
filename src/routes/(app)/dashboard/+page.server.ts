@@ -8,7 +8,11 @@ import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { getLatestMonthlyReport } from '$lib/server/db/monthly-reports';
 import { transactions } from '$lib/server/db/schema';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
-import { isNotInternalTransfer, visibleTransactions } from '$lib/server/db/transactions';
+import {
+	classifyMovement,
+	isNotInternalTransfer,
+	visibleTransactions
+} from '$lib/server/db/transactions';
 
 function startOfMonth(offset = 0): Date {
 	const now = new Date();
@@ -78,37 +82,19 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const categoryTotals: Record<string, number> = {};
 	for (const tx of monthTransactions) {
 		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
-
-		if (accType === 'credit_card') {
-			// Credit card: a purchase (positive) is SPENDING, not income. The invoice
-			// payment is already filtered by isNotInternalTransfer (the "Credit card
-			// payment" category).
-			if (tx.amount > 0) {
-				monthExpense += tx.amount;
-				const cat = tx.category ?? 'Outros';
-				categoryTotals[cat] = (categoryTotals[cat] ?? 0) + tx.amount;
-			}
-			continue;
-		}
-
-		if (tx.amount >= 0) {
-			monthIncome += tx.amount;
-		} else {
-			const abs = Math.abs(tx.amount);
-			monthExpense += abs;
+		const { expense, income } = classifyMovement(accType, tx.amount);
+		monthExpense += expense;
+		monthIncome += income;
+		if (expense !== 0) {
 			const cat = tx.category ?? 'Outros';
-			categoryTotals[cat] = (categoryTotals[cat] ?? 0) + abs;
+			categoryTotals[cat] = (categoryTotals[cat] ?? 0) + expense;
 		}
 	}
 
 	let prevExpense = 0;
 	for (const tx of prevMonthTransactions) {
 		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
-		if (accType === 'credit_card') {
-			if (tx.amount > 0) prevExpense += tx.amount;
-			continue;
-		}
-		if (tx.amount < 0) prevExpense += Math.abs(tx.amount);
+		prevExpense += classifyMovement(accType, tx.amount).expense;
 	}
 
 	const investmentBalance = userAccounts

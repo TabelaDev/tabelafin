@@ -8,6 +8,7 @@ import { getRecurringExpenses } from '$lib/server/db/recurring-expenses';
 import { financeAccounts } from '$lib/server/db/schema';
 import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { transactions } from '$lib/server/db/schema';
+import { classifyMovement, isNotInternalTransfer } from '$lib/server/db/transactions';
 import { decryptSecret } from '$lib/server/crypto';
 
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
@@ -66,6 +67,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 					and(
 						eq(transactions.userId, userId),
 						isNull(transactions.supersededByTransactionId),
+						isNotInternalTransfer,
 						gte(transactions.date, monthStart)
 					)
 				)
@@ -76,19 +78,22 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		]);
 
 	// Build context
-	const monthExpense = monthTransactions
-		.filter((t) => t.amount < 0)
-		.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
 
-	const monthIncome = monthTransactions
-		.filter((t) => t.amount > 0)
-		.reduce((sum, t) => sum + t.amount, 0);
+	// Sign-aware split (a card purchase is positive but is spending — see
+	// classifyMovement), consistent with the dashboard/categories.
+	const splits = monthTransactions.map((t) =>
+		classifyMovement(t.accountId ? accountTypeById.get(t.accountId) : undefined, t.amount)
+	);
+	const monthExpense = splits.reduce((sum, s) => sum + s.expense, 0);
+	const monthIncome = splits.reduce((sum, s) => sum + s.income, 0);
 
 	const categoryTotals: Record<string, number> = {};
-	for (const tx of monthTransactions) {
-		if (tx.amount < 0) {
+	for (const [index, tx] of monthTransactions.entries()) {
+		const { expense } = splits[index];
+		if (expense !== 0) {
 			const cat = tx.category ?? 'Outros';
-			categoryTotals[cat] = (categoryTotals[cat] ?? 0) + Math.abs(tx.amount);
+			categoryTotals[cat] = (categoryTotals[cat] ?? 0) + expense;
 		}
 	}
 

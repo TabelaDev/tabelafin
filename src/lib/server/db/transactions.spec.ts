@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
 import {
 	amountsMatchForDedupe,
+	classifyMovement,
 	isWithinSupersedeWindow,
 	renameCategoryOnTransactions
 } from './transactions';
@@ -61,6 +62,39 @@ describe('isWithinSupersedeWindow', () => {
 	it('rejects four days apart', () => {
 		expect(isWithinSupersedeWindow(base, new Date('2026-03-19T00:00:00.000Z'))).toBe(false);
 		expect(isWithinSupersedeWindow(base, new Date('2026-03-11T00:00:00.000Z'))).toBe(false);
+	});
+});
+
+// The shared spending/income split — the rule that decides whether a transaction
+// is a gasto or a receita. Credit cards invert the sign, so a plain `amount < 0`
+// check counts every card purchase as income (the bug this helper fixes).
+describe('classifyMovement', () => {
+	it('checking account: negative is expense', () => {
+		expect(classifyMovement('checking', -782.54)).toEqual({ expense: -782.54, income: 0 });
+	});
+
+	it('checking account: positive is income', () => {
+		expect(classifyMovement('checking', 2000)).toEqual({ expense: 0, income: 2000 });
+	});
+
+	it('credit card: positive purchase is spending, not income', () => {
+		expect(classifyMovement('credit_card', 782.54)).toEqual({ expense: 782.54, income: 0 });
+	});
+
+	// A R$10 purchase followed by its R$10 estorno nets to zero spending — the
+	// refund must not show up as income ("receita").
+	it('credit card: a refund nets against the purchase', () => {
+		expect(classifyMovement('credit_card', -10)).toEqual({ expense: -10, income: 0 });
+	});
+
+	it('no account (manual/PDF): checking convention', () => {
+		expect(classifyMovement(undefined, -25)).toEqual({ expense: -25, income: 0 });
+		expect(classifyMovement(null, 50)).toEqual({ expense: 0, income: 50 });
+	});
+
+	it('zero contributes nothing on either axis', () => {
+		expect(classifyMovement('checking', 0)).toEqual({ expense: 0, income: 0 });
+		expect(classifyMovement('credit_card', 0)).toEqual({ expense: 0, income: 0 });
 	});
 });
 

@@ -37,6 +37,31 @@ export function visibleTransactions(userId: string) {
 	return and(eq(transactions.userId, userId), isNull(transactions.supersededByTransactionId));
 }
 
+export interface MovementSplit {
+	/** Signed contribution to spending: positive = a purchase, negative = a refund. */
+	expense: number;
+	/** Contribution to income (always >= 0). */
+	income: number;
+}
+
+// Classifies a single transaction amount into expense vs income given the
+// account type. Credit cards invert the sign convention: the API reports a
+// purchase as positive and a refund (estorno) as negative — the opposite of a
+// checking account. Both are spending movement: a refund nets against the
+// purchases (R$10 purchase + R$10 estorno = R$0 gasto), never income.
+// `accountType` is undefined for manual/PDF rows (no account linked) — those
+// use the checking convention. Shared by every surface that sums spending
+// (dashboard, categories, reports, chat) so they always agree.
+export function classifyMovement(
+	accountType: string | null | undefined,
+	amount: number
+): MovementSplit {
+	if (accountType === 'credit_card') {
+		return { expense: amount, income: 0 };
+	}
+	return amount >= 0 ? { expense: 0, income: amount } : { expense: amount, income: 0 };
+}
+
 export interface NewPluggyTransactionInput {
 	userId: string;
 	accountId: string;
@@ -296,6 +321,21 @@ export async function renameCategoryOnTransactions(
 		.update(transactions)
 		.set({ category: newName })
 		.where(and(eq(transactions.userId, userId), eq(transactions.category, oldName)));
+}
+
+// Clears the category from a user's transactions (back to "Outros"). Used when a
+// category is deleted — the rows keep the merchant description, just lose the
+// bucket that no longer exists. Same ownership filter as the rename: category
+// names are not unique across users.
+export async function clearCategoryOnTransactions(
+	db: Db,
+	userId: string,
+	name: string
+): Promise<void> {
+	await db
+		.update(transactions)
+		.set({ category: null, categorySource: null })
+		.where(and(eq(transactions.userId, userId), eq(transactions.category, name)));
 }
 
 // Transactions ready for a categorisation batch (ESCOPO.md §3.3): no category
