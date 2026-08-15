@@ -3,7 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
-	import { Badge, Button, Card, Select, TagInput } from '@tabeladev/tabelawebui';
+	import { Badge, Button, Card, Select, TagInput, Toggle } from '@tabeladev/tabelawebui';
 	import { formatCurrency } from '$lib/lib/format';
 	import type { PageData } from './$types';
 
@@ -21,6 +21,10 @@
 	let tags = $state<string[]>(initialTags());
 	let tagsError = $state('');
 	let tagsDone = $state(false);
+	// Whether an automatic rule already exists for this description (so the
+	// toggle starts checked on re-open).
+	const initialTagRule = () => data.tagRuleNames.length > 0;
+	let createTagRule = $state(initialTagRule());
 
 	// The transaction's current category — decides whether the categorise card is
 	// locked (already categorised) or active (choose/clear).
@@ -263,6 +267,16 @@
 					options={data.userTags}
 					placeholder="Adicione uma tag…"
 				/>
+				<div class="flex flex-col gap-2">
+					<Toggle
+						bind:checked={createTagRule}
+						label="Sempre que esta descrição aparecer, aplicar estas tags"
+					/>
+					<input type="hidden" name="createRule" value={createTagRule ? 'on' : ''} />
+					<p class="font-mono text-xs text-ink-faint">
+						Vale pra novas transações com a mesma descrição (e volta pra aplicar nas antigas).
+					</p>
+				</div>
 				{#if tagsError}
 					<p class="text-sm text-danger">{tagsError}</p>
 				{/if}

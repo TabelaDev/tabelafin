@@ -12,6 +12,11 @@ import {
 import { deleteRuleForDescription } from '$lib/server/db/categorization-rules';
 import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
 import { getTagsByUser, getTagsForTransaction, setTransactionTags } from '$lib/server/db/tags';
+import {
+	applyTagRules,
+	getTagRulesForDescription,
+	setTagRulesForDescription
+} from '$lib/server/db/tag-rules';
 
 export const load: PageServerLoad = async ({ locals, platform, params }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -67,7 +72,10 @@ export const load: PageServerLoad = async ({ locals, platform, params }) => {
 			: null,
 		categories,
 		userTags: userTags.map((t) => t.name),
-		tags: txTags.map((t) => t.name)
+		tags: txTags.map((t) => t.name),
+		// Drives the "criar regra" toggle on the Tags card: checked when a rule
+		// for this description already exists.
+		tagRuleNames: await getTagRulesForDescription(db, locals.userId, tx.description)
 	};
 };
 
@@ -207,6 +215,8 @@ export const actions: Actions = {
 
 	// Replaces the transaction's tag set (the TagInput submits them as a
 	// comma-separated value). Creates tags on the fly, never touches categories.
+	// With the "criar regra" option on, it also (re)writes the automatic rule
+	// for this description and backfills the history with it.
 	tags: async ({ request, locals, platform, params }) => {
 		if (!locals.userId) redirect(303, '/login');
 
@@ -216,12 +226,22 @@ export const actions: Actions = {
 			.split(',')
 			.map((t) => t.trim())
 			.filter(Boolean);
+		const createRule = form.get('createRule') === 'on';
 
 		const db = getDb(platform!.env.DB);
 		const [tx] = await db.select().from(transactions).where(eq(transactions.id, params.id));
 		if (!tx || tx.userId !== locals.userId) error(404, 'Transação não encontrada');
 
 		await setTransactionTags(db, locals.userId, tx.id, tagNames);
+
+		if (createRule) {
+			await setTagRulesForDescription(db, locals.userId, tx.description, tagNames);
+			// Retroactively applies the rule to every past transaction with the
+			// same description — the user just taught the app something and
+			// expects the history to agree, same as categorising.
+			await applyTagRules(db, locals.userId);
+		}
+
 		return { success: true };
 	}
 };

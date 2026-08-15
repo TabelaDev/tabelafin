@@ -4,6 +4,7 @@ import { getDb } from '$lib/server/db';
 import { insertManualTransaction } from '$lib/server/db/transactions';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { getTagsByUser, setTransactionTags } from '$lib/server/db/tags';
+import { applyTagRules } from '$lib/server/db/tag-rules';
 import { categorizeByRules } from '$lib/server/ai/rules';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
@@ -72,6 +73,10 @@ export const actions: Actions = {
 		if (saved && tagNames.length > 0) {
 			await setTransactionTags(db, locals.userId, saved.id, tagNames);
 		}
+
+		// Automatic tag rules for this description also apply (a manual "Uber"
+		// gets the same "Viagem SP" tag the sync would give it).
+		await applyTagRules(db, locals.userId);
 
 		redirect(303, '/dashboard');
 	}

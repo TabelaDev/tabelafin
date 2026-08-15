@@ -36,6 +36,7 @@ import {
 	INTERNAL_TRANSFER_DESCRIPTIONS,
 	isSelfTransferByDescription
 } from './internal-transfers';
+import { applyTagRules } from '$lib/server/db/tag-rules';
 import type { AiProvider } from '$lib/lib/ai-providers';
 
 type Db = ReturnType<typeof getDb>;
@@ -137,6 +138,11 @@ export async function syncUserItems(
 	// accounts). By-name is deterministic; by-amount pairing alone is too fragile
 	// for round amounts that collide with salaries and CDB applications.
 	await markSelfTransfersByName(db, userId);
+
+	// Automatic tag rules (description → tag): add the tags the rules describe
+	// to every matching transaction. Idempotent — new rules also backfill the
+	// history.
+	await applyTagRules(db, userId);
 
 	await categorizeNewTransactions(db, masterKey, userId);
 }

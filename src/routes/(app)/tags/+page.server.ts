@@ -8,6 +8,15 @@ import {
 	getTagTotals,
 	renameTag
 } from '$lib/server/db/tags';
+import {
+	applyTagRules,
+	deleteTagRule,
+	deleteTagRulesByTagName,
+	getTagRulesByUser,
+	setTagRulesForDescription
+} from '$lib/server/db/tag-rules';
+import { tags } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -32,7 +41,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		};
 	});
 
-	return { tags };
+	return { tags, rules: await getTagRulesByUser(db, locals.userId) };
 };
 
 export const actions: Actions = {
@@ -70,9 +79,44 @@ export const actions: Actions = {
 		if (!tagId) return fail(400, { error: 'Tag inválida.' });
 
 		const db = getDb(platform!.env.DB);
+		// The rules that referenced this tag name go with it — otherwise the next
+		// sync would recreate the tag just to fulfil them.
+		const [tag] = await db.select({ name: tags.name }).from(tags).where(eq(tags.id, tagId));
+		if (tag) await deleteTagRulesByTagName(db, locals.userId, tag.name);
 		// Deleting a tag only removes the grouping — transactions keep everything
 		// else (categories, amounts).
 		await deleteTag(db, locals.userId, tagId);
+		return { success: true };
+	},
+
+	// Creates (or replaces) the rule for a description: every future transaction
+	// with that exact description gets these tags, and the history is backfilled.
+	addRule: async ({ request, locals, platform }) => {
+		if (!locals.userId) redirect(303, '/login');
+		const form = await request.formData();
+		const description = String(form.get('description') ?? '').trim();
+		const raw = String(form.get('tags') ?? '');
+		const tagNames = raw
+			.split(',')
+			.map((t) => t.trim())
+			.filter(Boolean);
+		if (!description) return fail(400, { error: 'Informe a descrição.' });
+		if (tagNames.length === 0) return fail(400, { error: 'Escolha ao menos uma tag.' });
+
+		const db = getDb(platform!.env.DB);
+		await setTagRulesForDescription(db, locals.userId, description, tagNames);
+		await applyTagRules(db, locals.userId);
+		return { success: true };
+	},
+
+	removeRule: async ({ request, locals, platform }) => {
+		if (!locals.userId) redirect(303, '/login');
+		const form = await request.formData();
+		const id = String(form.get('id') ?? '').trim();
+		if (!id) return fail(400, { error: 'Regra inválida.' });
+
+		const db = getDb(platform!.env.DB);
+		await deleteTagRule(db, locals.userId, id);
 		return { success: true };
 	}
 };

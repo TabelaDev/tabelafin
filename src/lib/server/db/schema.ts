@@ -363,3 +363,28 @@ export const transactionTags = sqliteTable(
 	},
 	(table) => [primaryKey({ columns: [table.transactionId, table.tagId] })]
 );
+
+// Automatic tag rules, one row per description + tag: whenever a transaction
+// arrives with that exact description, the tag is added automatically (mirrors
+// the categorisation rules, but for the many-to-many tag set — a description can
+// map to several tags). Created from the transaction detail (the Tags card) or
+// by hand on the tags page; applied idempotently by the sync.
+export const tagRules = sqliteTable(
+	'tag_rules',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		description: text('description').notNull(),
+		tagName: text('tag_name').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(table) => [
+		uniqueIndex('tag_rules_user_description_tag').on(table.userId, table.description, table.tagName)
+	]
+);

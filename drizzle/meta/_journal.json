@@ -57,6 +57,13 @@
       "when": 1786741085284,
       "tag": "0007_magical_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1786814656094,
+      "tag": "0008_shocking_reptil",
+      "breakpoints": true
     }
   ]
 }
