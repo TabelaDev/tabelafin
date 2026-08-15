@@ -8,6 +8,7 @@ export function horizontalBarOptions({
 	categories,
 	distributed = false,
 	showLegend = false,
+	showValues = true,
 	borderRadius = 0,
 	offsetX = 16,
 	fontSize = '10px',
@@ -16,6 +17,10 @@ export function horizontalBarOptions({
 	categories: string[];
 	distributed?: boolean;
 	showLegend?: boolean;
+	// When false the bars render without their value label — a qualitative,
+	// ranking-style chart (the dashboard's "top categorias"). The categories
+	// page keeps the exact values on.
+	showValues?: boolean;
 	borderRadius?: number;
 	offsetX?: number;
 	fontSize?: string;
@@ -40,13 +45,15 @@ export function horizontalBarOptions({
 			}
 		},
 		xaxis: { categories },
-		dataLabels: {
-			enabled: true,
-			offsetX,
-			textAnchor: 'start',
-			formatter: formatCurrencyLabel,
-			style: { fontFamily: 'JetBrains Mono, monospace', fontSize }
-		},
+		dataLabels: showValues
+			? {
+					enabled: true,
+					offsetX,
+					textAnchor: 'start',
+					formatter: formatCurrencyLabel,
+					style: { fontFamily: 'JetBrains Mono, monospace', fontSize }
+				}
+			: { enabled: false },
 		...(showLegend ? { legend: { show: true, position: 'top' } } : {})
 	};
 }

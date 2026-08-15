@@ -33,7 +33,9 @@
 	const barOptions = $derived<ApexOptions>(
 		horizontalBarOptions({
 			categories: data.summary.topCategories.map((c) => c.name),
-			barHeight: '60%'
+			barHeight: '60%',
+			// Qualitative: ranking by bar length only, no value label on the tip.
+			showValues: false
 		})
 	);
 
@@ -169,11 +171,11 @@
 		{#if data.summary.monthValues.length > 0}
 			<Card class={evolutionClass}>
 				<Card.Content>
-					<div>
+					<div class="mb-2">
 						<h2 class="font-mono text-sm font-semibold">Evolução do saldo</h2>
 						<p class="font-mono text-xs text-ink-soft">últimos 6 meses</p>
 					</div>
-					<div class="mt-2 min-h-56 flex-1">
+					<div class="min-h-56 flex-1">
 						<Chart type="area" series={areaSeries} options={areaOptions} />
 					</div>
 				</Card.Content>
@@ -182,8 +184,8 @@
 
 		{#if data.summary.topCategories.length > 0}
 			<Card class="lg:col-span-1">
-				<Card.Header>
-					<div class="flex items-center justify-between">
+				<Card.Content>
+					<div class="mb-2 flex items-center justify-between">
 						<div>
 							<h2 class="font-mono text-sm font-semibold">Top categorias</h2>
 							<p class="font-mono text-xs text-ink-soft">maiores gastos do mês</p>
@@ -192,9 +194,7 @@
 							>ver todas</a
 						>
 					</div>
-				</Card.Header>
-				<Card.Content>
-					<div class="mt-2 min-h-40 flex-1">
+					<div class="min-h-40 flex-1">
 						<Chart type="bar" series={barSeries} options={barOptions} />
 					</div>
 				</Card.Content>
@@ -204,11 +204,11 @@
 		{#if donutSeries.length > 0}
 			<Card class="lg:col-span-1">
 				<Card.Content>
-					<div>
+					<div class="mb-2">
 						<h2 class="font-mono text-sm font-semibold">Composição de gastos</h2>
 						<p class="font-mono text-xs text-ink-soft">por categoria</p>
 					</div>
-					<div class="mt-2 min-h-48 flex-1">
+					<div class="min-h-48 flex-1">
 						<Chart type="donut" series={donutSeries} options={donutOptions} />
 					</div>
 				</Card.Content>

@@ -73,9 +73,43 @@
 		</p>
 	</header>
 
+	<!-- Management entry points, side by side (like the profile's AI card). -->
+	<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+		<a href={resolve('/categories/manage')} class="block">
+			<Card>
+				<Card.Content>
+					<div class="flex items-center justify-between">
+						<div>
+							<h2 class="font-mono text-sm font-semibold">Categorias</h2>
+							<p class="mt-1 font-mono text-xs text-ink-soft">
+								Crie, renomeie ou exclua suas categorias.
+							</p>
+						</div>
+						<span class="font-mono text-sm text-accent">→</span>
+					</div>
+				</Card.Content>
+			</Card>
+		</a>
+		<a href={resolve('/categories/rules')} class="block">
+			<Card>
+				<Card.Content>
+					<div class="flex items-center justify-between">
+						<div>
+							<h2 class="font-mono text-sm font-semibold">Regras automáticas</h2>
+							<p class="mt-1 font-mono text-xs text-ink-soft">
+								Ensine o app a categorizar automaticamente pela descrição.
+							</p>
+						</div>
+						<span class="font-mono text-sm text-accent">→</span>
+					</div>
+				</Card.Content>
+			</Card>
+		</a>
+	</div>
+
 	<Card>
-		<Card.Header>
-			<div class="flex flex-wrap items-center justify-between gap-2">
+		<Card.Content>
+			<div class="mb-2 flex flex-wrap items-center justify-between gap-2">
 				<div>
 					<h2 class="font-mono text-sm font-semibold">
 						{isExpense ? 'Gastos' : 'Receitas'} por categoria
@@ -98,10 +132,8 @@
 					>
 				</div>
 			</div>
-		</Card.Header>
 
-		<Card.Content>
-			<div class="mt-2" style={`height: ${chartHeight}px`}>
+			<div style={`height: ${chartHeight}px`}>
 				{#if series[0].data.length > 0}
 					<Chart type="bar" {series} {options} onLegendClick={toggleCategory} />
 				{:else}
