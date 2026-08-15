@@ -69,8 +69,8 @@ describe('isWithinSupersedeWindow', () => {
 // is a gasto or a receita. Credit cards invert the sign, so a plain `amount < 0`
 // check counts every card purchase as income (the bug this helper fixes).
 describe('classifyMovement', () => {
-	it('checking account: negative is expense', () => {
-		expect(classifyMovement('checking', -782.54)).toEqual({ expense: -782.54, income: 0 });
+	it('checking account: negative is expense (reported positive)', () => {
+		expect(classifyMovement('checking', -782.54)).toEqual({ expense: 782.54, income: 0 });
 	});
 
 	it('checking account: positive is income', () => {
@@ -87,8 +87,16 @@ describe('classifyMovement', () => {
 		expect(classifyMovement('credit_card', -10)).toEqual({ expense: -10, income: 0 });
 	});
 
+	// A checking expense (-100) and a card purchase (+100) are BOTH R$100 of
+	// spending — summed they must not cancel out.
+	it('checking and card spending add up (uniform expense sign)', () => {
+		const checking = classifyMovement('checking', -100).expense;
+		const card = classifyMovement('credit_card', 100).expense;
+		expect(checking + card).toBe(200);
+	});
+
 	it('no account (manual/PDF): checking convention', () => {
-		expect(classifyMovement(undefined, -25)).toEqual({ expense: -25, income: 0 });
+		expect(classifyMovement(undefined, -25)).toEqual({ expense: 25, income: 0 });
 		expect(classifyMovement(null, 50)).toEqual({ expense: 0, income: 50 });
 	});
 

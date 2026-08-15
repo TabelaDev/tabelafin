@@ -59,7 +59,11 @@ export function classifyMovement(
 	if (accountType === 'credit_card') {
 		return { expense: amount, income: 0 };
 	}
-	return amount >= 0 ? { expense: 0, income: amount } : { expense: amount, income: 0 };
+	// Checking/manual convention: negative amount = spending. `expense` is
+	// returned POSITIVE for spending so summing it across account types gives the
+	// total, not a net (a card purchase is +100, a checking expense -100 — both
+	// must count as R$100 of spending, not cancel out).
+	return amount >= 0 ? { expense: 0, income: amount } : { expense: -amount, income: 0 };
 }
 
 export interface NewPluggyTransactionInput {
