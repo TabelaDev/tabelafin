@@ -116,7 +116,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 				.map(([cat, val]) => `${cat}: R$ ${val.toFixed(2)}`)
 				.join(', ') || 'nenhum'
 		}`,
-		`Gastos por evento: ${
+		`Gastos por tag: ${
 			tagTotals
 				.map((t) => `${t.name}: R$ ${t.expense.toFixed(2)}`)
 				.filter((line) => !line.includes('R$ 0.00'))

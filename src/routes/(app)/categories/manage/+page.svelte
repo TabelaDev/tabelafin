@@ -222,7 +222,7 @@
 	</Card>
 </div>
 
-<Dialog bind:open={showDeleteDialog} title="Excluir categoria?">
+<Dialog bind:open={showDeleteDialog} title="Excluir categoria?" size="lg">
 	<div class="flex flex-col gap-3">
 		<p class="text-justify font-mono text-sm text-ink-soft">
 			Excluir a categoria <span class="text-ink">{pendingDelete?.name}</span>? As transações que a

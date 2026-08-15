@@ -68,15 +68,15 @@
 </script>
 
 <svelte:head>
-	<title>Eventos — TabelaFin</title>
+	<title>Tags — TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-6">
 	<header>
-		<h1 class="font-mono text-2xl font-bold">Eventos</h1>
+		<h1 class="font-mono text-2xl font-bold">Tags</h1>
 		<p class="font-mono text-sm text-ink-soft">
 			<span class="text-ink-faint">//</span> Agrupam gastos pontuais sem criar categoria ("Viagem SP",
-			"PC novo"). O evento é além da categoria, não no lugar dela.
+			"PC novo"). A tag é além da categoria, não no lugar dela.
 		</p>
 	</header>
 
@@ -109,7 +109,7 @@
 				use:enhance={handleForm(() => (newName = ''))}
 				class="flex flex-wrap items-end gap-2"
 			>
-				<h2 class="w-full font-mono text-sm font-semibold">Novo evento</h2>
+				<h2 class="w-full font-mono text-sm font-semibold">Nova tag</h2>
 				<Input
 					name="name"
 					placeholder="Ex.: Viagem SP, PC novo…"
@@ -126,12 +126,11 @@
 	<Card>
 		<Card.Content>
 			<div class="flex flex-col gap-2">
-				<h2 class="font-mono text-sm font-semibold">Seus eventos</h2>
+				<h2 class="font-mono text-sm font-semibold">Suas tags</h2>
 
 				{#if data.tags.length === 0}
 					<p class="font-mono text-sm text-ink-soft">
-						Nenhum evento ainda. Crie um acima ou marque transações com eventos no
-						lançamento/edição.
+						Nenhuma tag ainda. Crie uma acima ou marque transações com tags no lançamento/edição.
 					</p>
 				{/if}
 
@@ -194,10 +193,10 @@
 	</Card>
 </div>
 
-<Dialog bind:open={showDeleteDialog} title="Excluir evento?">
+<Dialog bind:open={showDeleteDialog} title="Excluir tag?">
 	<p class="text-justify font-mono text-sm text-ink-soft">
-		Excluir o evento <span class="text-ink">{pendingDelete?.name}</span>? Nenhuma transação é
-		apagada — só o agrupamento some.
+		Excluir a tag <span class="text-ink">{pendingDelete?.name}</span>? Nenhuma transação é apagada —
+		só o agrupamento some.
 	</p>
 	{#snippet footer()}
 		<Button variant="ghost" onclick={() => (showDeleteDialog = false)}>Cancelar</Button>

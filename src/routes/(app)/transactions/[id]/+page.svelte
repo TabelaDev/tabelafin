@@ -233,7 +233,7 @@
 	<!-- Tags -->
 	<Card>
 		<Card.Content>
-			<h2 class="font-mono text-sm font-semibold">Eventos</h2>
+			<h2 class="font-mono text-sm font-semibold">Tags</h2>
 			<p class="mt-1 font-mono text-xs text-ink-soft">
 				Agrupam gastos pontuais sem criar categoria ("Viagem SP", "PC novo") — além da categoria,
 				não no lugar dela.
@@ -261,16 +261,16 @@
 					name="tags"
 					bind:value={tags}
 					options={data.userTags}
-					placeholder="Adicione um evento…"
+					placeholder="Adicione uma tag…"
 				/>
 				{#if tagsError}
 					<p class="text-sm text-danger">{tagsError}</p>
 				{/if}
 				{#if tagsDone}
-					<p class="text-sm text-ctp-green">Eventos salvos.</p>
+					<p class="text-sm text-ctp-green">Tags salvas.</p>
 				{/if}
 				<div class="flex gap-2">
-					<Button type="submit" variant="outline">Salvar eventos</Button>
+					<Button type="submit" variant="outline">Salvar tags</Button>
 				</div>
 			</form>
 		</Card.Content>

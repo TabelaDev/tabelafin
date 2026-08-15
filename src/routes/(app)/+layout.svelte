@@ -33,7 +33,7 @@
 		{ href: resolve('/upcoming'), label: 'Próximas', icon: upcomingIcon },
 		{ href: resolve('/accounts'), label: 'Contas', icon: accountsIcon },
 		{ href: resolve('/categories'), label: 'Categorias', icon: categoriesIcon },
-		{ href: resolve('/eventos'), label: 'Eventos', icon: eventosIcon },
+		{ href: resolve('/tags'), label: 'Tags', icon: tagsIcon },
 		{ href: resolve('/recurring'), label: 'Recorrências', icon: recurringIcon },
 		{ href: resolve('/reports'), label: 'Relatórios', icon: reportsIcon }
 	];
@@ -78,8 +78,8 @@
 {#snippet categoriesIcon()}
 	{@html iconSvg('layers')}
 {/snippet}
-{#snippet eventosIcon()}
-	{@html iconSvg('flag')}
+{#snippet tagsIcon()}
+	{@html iconSvg('tag')}
 {/snippet}
 {#snippet recurringIcon()}
 	{@html iconSvg('repeat')}

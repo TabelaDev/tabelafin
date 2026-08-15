@@ -40,12 +40,12 @@ export const actions: Actions = {
 		if (!locals.userId) redirect(303, '/login');
 		const form = await request.formData();
 		const name = String(form.get('name') ?? '').trim();
-		if (!name) return fail(400, { error: 'Informe o nome do evento.' });
+		if (!name) return fail(400, { error: 'Informe o nome da tag.' });
 
 		const db = getDb(platform!.env.DB);
 		const existing = await getTagsByUser(db, locals.userId);
 		if (existing.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
-			return fail(400, { error: `O evento "${name}" já existe.` });
+			return fail(400, { error: `A tag "${name}" já existe.` });
 		}
 		await getOrCreateTag(db, locals.userId, name);
 		return { success: true };

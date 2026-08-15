@@ -231,7 +231,7 @@
 			});
 			const result = (await res.json()) as { data?: { error?: string } };
 			if (!res.ok || result.data?.error) {
-				bulkError = result.data?.error ?? 'Não foi possível salvar os eventos.';
+				bulkError = result.data?.error ?? 'Não foi possível salvar as tags.';
 				return;
 			}
 			await invalidateAll();
@@ -296,12 +296,12 @@
 		<Select
 			class="w-44"
 			options={[
-				{ value: '', label: 'Todos os eventos' },
+				{ value: '', label: 'Todas as tags' },
 				...data.userTags.map((t) => ({ value: t.name, label: t.name }))
 			]}
 			bind:value={tag}
 			filter
-			filterPlaceholder="Buscar evento…"
+			filterPlaceholder="Buscar tag…"
 		/>
 		<Select
 			class="w-44"
@@ -354,15 +354,15 @@
 				class="w-64"
 				bind:value={bulkTags}
 				options={data.userTags.map((t) => t.name)}
-				placeholder="Eventos…"
-				aria-label="Eventos em lote"
+				placeholder="Tags…"
+				aria-label="Tags em lote"
 			/>
 			<Button
 				variant="outline"
 				disabled={bulkTags.length === 0 || bulkTagSubmitting}
 				onclick={submitBulkTag}
 			>
-				{bulkTagSubmitting ? 'Aplicando…' : 'Aplicar eventos'}
+				{bulkTagSubmitting ? 'Aplicando…' : 'Aplicar tags'}
 			</Button>
 			<Button variant="ghost" onclick={clearSelection}>Cancelar</Button>
 			{#if bulkError}
@@ -378,7 +378,7 @@
 				{ key: 'date', label: 'Data', sortable: true },
 				{ key: 'description', label: 'Descrição' },
 				{ key: 'category', label: 'Categoria' },
-				{ key: 'tags', label: 'Eventos' },
+				{ key: 'tags', label: 'Tags' },
 				{ key: 'amount', label: 'Valor', sortable: true },
 				{ key: 'action', label: '' }
 			]}

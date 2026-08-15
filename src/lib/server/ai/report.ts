@@ -34,7 +34,7 @@ function formatCategoryTotals(totals: CategoryTotals): string {
 
 function formatTagTotals(tags: Array<{ name: string; expense: number }>): string {
 	const withSpend = tags.filter((t) => t.expense !== 0).sort((a, b) => b.expense - a.expense);
-	if (withSpend.length === 0) return 'nenhum evento com gasto';
+	if (withSpend.length === 0) return 'nenhuma tag com gasto';
 	return withSpend.map((t) => `${t.name}: ${formatCurrency(t.expense)}`).join(', ');
 }
 
@@ -44,7 +44,7 @@ function buildPrompt(input: MonthlyReportInput): string {
 		: 'Não há dados do mês anterior pra comparar (primeiro relatório do usuário).';
 
 	const tagLine = input.tagTotals
-		? `\nGasto por evento (agrupamentos pontuais, ex.: viagem): ${formatTagTotals(input.tagTotals)}.`
+		? `\nGasto por tag (agrupamentos pontuais, ex.: viagem): ${formatTagTotals(input.tagTotals)}.`
 		: '';
 
 	return (
