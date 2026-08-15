@@ -115,8 +115,8 @@ export interface PluggyTransaction {
 	id: string;
 	description: string;
 	// The amount in the account's currency (amountInAccountCurrency when the
-	// transaction is foreign) — this is what the dashboard sums. For
-	// Nubank/XP/Itaú it is always BRL.
+	// transaction is foreign) — this is what the dashboard sums. On BRL accounts
+	// it is always BRL.
 	amount: number;
 	date: string; // ISO 8601
 	// The transaction's ORIGINAL currency (e.g. "USD" for a purchase abroad). Used

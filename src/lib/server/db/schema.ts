@@ -115,7 +115,7 @@ export const pluggyItems = sqliteTable('pluggy_items', {
 	lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' })
 });
 
-// Financial accounts (Nubank, XP...) pulled from Pluggy.
+// Financial accounts (checking, credit card, investment…) pulled from Pluggy.
 // Named "finance_accounts" to avoid colliding with Better Auth's "accounts".
 export const financeAccounts = sqliteTable('finance_accounts', {
 	id: text('id')

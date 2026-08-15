@@ -4,10 +4,10 @@
 // landed as the card purchase), transferring between accounts of the same owner.
 //
 // They come from `transactions.pluggy_category` (the API's raw `category`
-// field). Confirmed against my-api.pluggy.ai on 2026-08-09 (a real Nubank + XP
-// account).
+// field). Confirmed against my-api.pluggy.ai on 2026-08-09 (a real checking +
+// brokerage account).
 //
-// Note: the generic `Transfers` is deliberately NOT here — at Nubank it also
+// Note: the generic `Transfers` is deliberately NOT here — at some banks it also
 // covers genuine instalment purchases ("Dio 12/12", "Plano NuCel"), which are
 // real spending and have to stay on the dashboard.
 export const INTERNAL_TRANSFER_CATEGORIES = new Set([
@@ -20,10 +20,11 @@ export const INTERNAL_TRANSFER_CATEGORIES = new Set([
 ]);
 
 // Descriptions that mark an internal transfer even when the API category is the
-// generic "Transfers". Nubank posts the invoice payment as "Pagamento de fatura"
-// on the checking account (category "Transfers") and as "Pagamento recebido" on
-// the card (category "Credit card payment", already excluded above). Without
-// this the same spending lands twice: once as the card purchase and once as the
+// generic "Transfers". Some banks post the invoice payment as "Pagamento de
+// fatura" on the checking account (category "Transfers") and as "Pagamento
+// recebido" on the card (category "Credit card payment", already excluded
+// above). Without this the same spending lands twice: once as the card purchase
+// and once as the
 // payment.
 export const INTERNAL_TRANSFER_DESCRIPTIONS = new Set([
 	'Pagamento de fatura',

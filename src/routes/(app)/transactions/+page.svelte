@@ -14,7 +14,7 @@
 		Toggle,
 		TagInput
 	} from '@tabeladev/tabelawebui';
-	import { formatCurrency } from '$lib/lib/format';
+	import { formatCurrency, formatDate } from '$lib/lib/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -89,11 +89,6 @@
 		if (!cat) return 'ctp-overlay1';
 		return data.categories.find((c) => c.name === cat)?.color ?? 'ctp-overlay1';
 	};
-
-	function formatDate(ts: Date | string): string {
-		const d = typeof ts === 'string' ? new Date(ts) : ts;
-		return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
-	}
 
 	function applyFilter(key: string, value: string) {
 		const url = new URL(page.url);

@@ -5,7 +5,7 @@
 	import { horizontalBarOptions } from '$lib/client/charts';
 	import { Card, Table, Button } from '@tabeladev/tabelawebui';
 	import type { ApexOptions } from 'apexcharts';
-	import { formatCompactCurrency, formatCurrency } from '$lib/lib/format';
+	import { formatCompactCurrency, formatCurrency, formatDate } from '$lib/lib/format';
 	import { signedBalance } from '$lib/lib/accounts';
 	import type { PageData } from './$types';
 
@@ -69,11 +69,6 @@
 	// the balance trend takes the full width.
 	const hasSideCharts = $derived(data.summary.topCategories.length > 0 || donutSeries.length > 0);
 	const evolutionClass = $derived(hasSideCharts ? 'lg:col-span-2 lg:row-span-2' : 'lg:col-span-3');
-
-	function formatDate(ts: Date | string): string {
-		const d = typeof ts === 'string' ? new Date(ts) : ts;
-		return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
-	}
 
 	const categoryColor = (cat: string | null) => {
 		if (!cat) return 'ctp-overlay1';

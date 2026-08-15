@@ -58,3 +58,24 @@ export function formatCompactNumber(value: number, threshold = 100_000): string 
 		maximumFractionDigits: 1
 	}).format(normaliseZero(value));
 }
+
+// Date helpers shared by the pages (dashboard, upcoming, transactions). The
+// month key (YYYY-MM) is what everything groups by; monthLabel renders it for
+// display.
+export function formatDate(ts: Date | string): string {
+	const d = typeof ts === 'string' ? new Date(ts) : ts;
+	return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+export function toYearMonth(date: Date): string {
+	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function monthLabel(key: string): string {
+	const [y, m] = key.split('-').map(Number);
+	const label = new Date(y, m - 1, 1).toLocaleDateString('pt-BR', {
+		month: 'long',
+		year: 'numeric'
+	});
+	return label.charAt(0).toUpperCase() + label.slice(1);
+}

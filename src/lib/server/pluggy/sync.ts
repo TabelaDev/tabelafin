@@ -94,7 +94,7 @@ export async function syncUserItems(
 	);
 
 	// Reconciles the items connected in Meu Pluggy (fetchItems) with the local
-	// table: upserts new ones (a business account, an Itaú connection added after
+	// table: upserts new ones (a business account, a connection added after
 	// onboarding) and keeps the existing ones. Without this the sync would never
 	// see a new connection — it only processes pluggy_items already stored.
 	const pluggyItems = await fetchItems(token);
@@ -129,8 +129,8 @@ export async function syncUserItems(
 
 	// Flags as internal transfers the transactions that mirror each other between
 	// the user's own accounts (same amount, close dates, different accounts and
-	// opposite signs) — a business account into a personal one, Itaú into Nubank.
-	// Without this the same money counts twice, as both income and spending.
+	// opposite signs) — a business account into a personal one. Without this the
+	// same money counts twice, as both income and spending.
 	await markInternalTransfers(db, userId);
 
 	// ...and the ones Pluggy mislabels as generic "Transfers"/"Transfer - PIX"
@@ -494,7 +494,7 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 		}
 	}
 
-	// Investments (XP Wealth and friends, ESCOPO.md §2.3) do not come from
+	// Investments (brokerages and funds, ESCOPO.md §2.3) do not come from
 	// /accounts — they are a separate product at Pluggy (see fetchInvestments in
 	// client.ts). They become an "account" with type='investment' so they show up
 	// in the dashboard balance, with no transactions attached: the investment

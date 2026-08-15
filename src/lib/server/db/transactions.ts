@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
+import { and, eq, gt, gte, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
 import type { getDb } from './index';
 import { transactions } from './schema';
 import type { TransactionCategory } from '$lib/lib/categories';
@@ -375,4 +375,16 @@ export async function getTransactionsInRange(db: Db, userId: string, from: Date,
 				lte(transactions.date, new Date(to.getTime() - 1))
 			)
 		);
+}
+
+// Future entries: card instalments the bank pre-posts with an invoice date in
+// the future (date > today). Used by the "Próximas faturas" page — the current
+// version of each row only (`visibleTransactions`), ascending by date.
+export async function getFutureTransactions(db: Db, userId: string) {
+	const now = new Date();
+	return db
+		.select()
+		.from(transactions)
+		.where(and(visibleTransactions(userId), gt(transactions.date, now)))
+		.orderBy(transactions.date);
 }

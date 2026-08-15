@@ -1,31 +1,18 @@
 <script lang="ts">
 	import Chart from '$lib/components/Chart.svelte';
 	import { Card, Input, Select, Table } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency, formatCurrency, formatCurrencyLabel } from '$lib/lib/format';
+	import {
+		formatCompactCurrency,
+		formatCurrency,
+		formatCurrencyLabel,
+		formatDate,
+		toYearMonth,
+		monthLabel
+	} from '$lib/lib/format';
 	import type { ApexOptions } from 'apexcharts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-
-	function formatDate(ts: Date | string): string {
-		const d = typeof ts === 'string' ? new Date(ts) : ts;
-		return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
-	}
-
-	// Invoice month key, YYYY-MM. Everything on this page groups by it.
-	function monthKey(ts: Date | string): string {
-		const d = typeof ts === 'string' ? new Date(ts) : ts;
-		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-	}
-
-	function monthLabel(key: string): string {
-		const [y, m] = key.split('-').map(Number);
-		const label = new Date(y, m - 1, 1).toLocaleDateString('pt-BR', {
-			month: 'long',
-			year: 'numeric'
-		});
-		return label.charAt(0).toUpperCase() + label.slice(1);
-	}
 
 	// ── Filters (client-side) ─────────────────────────────────────────────────
 	// All of them derive from `data.future`, which already arrives whole. Doing
@@ -35,7 +22,7 @@
 	let monthFilter = $state('');
 	let accountFilter = $state('');
 
-	const monthKeys = $derived([...new Set(data.future.map((tx) => monthKey(tx.date)))].sort());
+	const monthKeys = $derived([...new Set(data.future.map((tx) => toYearMonth(tx.date)))].sort());
 
 	const monthOptions = $derived([
 		{ value: '', label: 'Todas as faturas' },
@@ -52,7 +39,7 @@
 
 	const filtered = $derived(
 		data.future.filter((tx) => {
-			if (monthFilter && monthKey(tx.date) !== monthFilter) return false;
+			if (monthFilter && toYearMonth(tx.date) !== monthFilter) return false;
 			if (accountFilter && tx.accountName !== accountFilter) return false;
 			if (
 				searchQuery.trim() &&
@@ -66,7 +53,7 @@
 
 	const filteredTotal = $derived(filtered.reduce((sum, tx) => sum + Math.abs(tx.amount), 0));
 
-	// Grouped by card account, the way the Nubank app shows each invoice. Reads
+	// Grouped by card account, the way the card issuer shows each invoice. Reads
 	// from `filtered` so the per-card cards follow the filters too.
 	const futureByAccount = $derived.by(() => {
 		const byId: Record<string, { name: string; total: number; count: number }> = {};
@@ -106,7 +93,7 @@
 		// in components, and this matches how futureByAccount groups just above.
 		const totals: Record<string, number> = {};
 		for (const tx of chartSource) {
-			const key = monthKey(tx.date);
+			const key = toYearMonth(tx.date);
 			totals[key] = (totals[key] ?? 0) + Math.abs(tx.amount);
 		}
 		return Object.entries(totals).sort(([a], [b]) => a.localeCompare(b));
@@ -205,7 +192,7 @@
 		{/if}
 
 		<!-- Filters -->
-		<div class="flex flex-wrap items-center gap-2">
+		<div class="flex flex-wrap items-center gap-2 lg:flex-nowrap">
 			<Input
 				bind:value={searchQuery}
 				placeholder="Buscar descrição..."
@@ -213,10 +200,6 @@
 			/>
 			<Select class="w-52" options={monthOptions} bind:value={monthFilter} />
 			<Select class="w-56" options={accountOptions} bind:value={accountFilter} />
-			<p class="font-mono text-xs text-ink-soft">
-				{filtered.length}
-				{filtered.length === 1 ? 'lançamento' : 'lançamentos'}
-			</p>
 		</div>
 
 		<!-- List -->
@@ -240,7 +223,7 @@
 					amount: tx.amount
 				}))}
 				rowKey="id"
-				pageSize={25}
+				pageSize={10}
 				pageSizeOptions={[10, 25, 50]}
 			>
 				{#snippet cell(row: Record<string, unknown>, key: string)}

@@ -87,9 +87,9 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 		rows = rows.filter((t) => t.description.toLowerCase().includes(q));
 	}
 
-	// Future entries (card instalments Nubank posts ahead of time, dated to the
-	// invoice) live in a separate list, the way the Nubank app shows "próximas
-	// faturas". The main list only shows dates up to today.
+	// Future entries (card instalments the bank pre-posts ahead of time, dated to
+	// the invoice) live in a separate list, the way the card issuer's app shows
+	// "próximas faturas". The main list only shows dates up to today.
 	const now = new Date();
 	const future = rows.filter((t) => t.date.getTime() > now.getTime());
 	const current = rows.filter((t) => t.date.getTime() <= now.getTime());
