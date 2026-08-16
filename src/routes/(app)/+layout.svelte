@@ -30,7 +30,7 @@
 	const NAV_ITEMS = [
 		{ href: resolve('/dashboard'), label: 'Dashboard', icon: dashboardIcon },
 		{ href: resolve('/transactions'), label: 'Transações', icon: transactionsIcon },
-		{ href: resolve('/upcoming'), label: 'Próximas', icon: upcomingIcon },
+		{ href: resolve('/upcoming'), label: 'Parcelas futuras', icon: upcomingIcon },
 		{ href: resolve('/accounts'), label: 'Contas', icon: accountsIcon },
 		{ href: resolve('/categories'), label: 'Categorias', icon: categoriesIcon },
 		{ href: resolve('/tags'), label: 'Tags', icon: tagsIcon },

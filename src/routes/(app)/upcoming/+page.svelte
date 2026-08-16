@@ -119,16 +119,17 @@
 </script>
 
 <svelte:head>
-	<title>Próximas faturas — TabelaFin</title>
+	<title>Parcelas futuras — TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4">
 	<header>
-		<h1 class="font-mono text-2xl font-bold">Próximas faturas</h1>
+		<h1 class="font-mono text-2xl font-bold">Parcelas futuras</h1>
 		<p class="font-mono text-sm text-ink-soft">
 			<span class="text-ink-faint">//</span>
 			{data.future.length}
-			{data.future.length === 1 ? 'lançamento futuro' : 'lançamentos futuros'}
+			{data.future.length === 1 ? 'parcela pré-datada' : 'parcelas pré-datadas'} — a fatura do banco também
+			inclui as compras à vista do ciclo
 		</p>
 	</header>
 
@@ -136,8 +137,7 @@
 		<Card>
 			<Card.Content>
 				<p class="py-8 text-center font-mono text-sm text-ink-soft">
-					Nenhum lançamento futuro. As próximas faturas do cartão aparecem aqui quando o banco
-					pré-lançar as parcelas.
+					Nenhuma parcela pré-datada. Elas aparecem aqui quando o banco pré-lançar as parcelas.
 				</p>
 			</Card.Content>
 		</Card>
@@ -147,7 +147,7 @@
 			<Card>
 				<Card.Content>
 					<p class="font-mono text-xs text-ink-soft">
-						{monthFilter ? `Fatura de ${monthLabel(monthFilter)}` : 'Total futuro'}
+						{monthFilter ? `Fatura de ${monthLabel(monthFilter)}` : 'Parcelas futuras'}
 					</p>
 					<p class="mt-1 font-mono text-xl font-bold text-accent">
 						{formatCompactCurrency(
