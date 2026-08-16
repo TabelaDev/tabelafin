@@ -112,17 +112,23 @@ export async function getTagsForTransactions(
 	const map = new Map<string, Tag[]>();
 	if (transactionIds.length === 0) return map;
 
-	const rows = await db
-		.select({ transactionId: transactionTags.transactionId, id: tags.id, name: tags.name })
-		.from(transactionTags)
-		.innerJoin(tags, eq(tags.id, transactionTags.tagId))
-		.where(inArray(transactionTags.transactionId, transactionIds))
-		.orderBy(tags.name);
+	// The list page can hand over every transaction the user has (hundreds of
+	// ids); D1 caps the bind parameters per statement, so the IN clause is chunked.
+	const CHUNK = 90;
+	for (let i = 0; i < transactionIds.length; i += CHUNK) {
+		const chunk = transactionIds.slice(i, i + CHUNK);
+		const rows = await db
+			.select({ transactionId: transactionTags.transactionId, id: tags.id, name: tags.name })
+			.from(transactionTags)
+			.innerJoin(tags, eq(tags.id, transactionTags.tagId))
+			.where(inArray(transactionTags.transactionId, chunk))
+			.orderBy(tags.name);
 
-	for (const row of rows) {
-		const list = map.get(row.transactionId) ?? [];
-		list.push({ id: row.id, name: row.name });
-		map.set(row.transactionId, list);
+		for (const row of rows) {
+			const list = map.get(row.transactionId) ?? [];
+			list.push({ id: row.id, name: row.name });
+			map.set(row.transactionId, list);
+		}
 	}
 	return map;
 }
