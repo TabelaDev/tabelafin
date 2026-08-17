@@ -2,10 +2,24 @@
 	import { resolve } from '$app/paths';
 	import { signedBalance } from '$lib/lib/accounts';
 	import { formatCompactCurrency, formatCurrency } from '$lib/lib/format';
-	import { Accordion, Badge, Button, Card, Input, Select, Table } from '@tabeladev/tabelawebui';
-	import type { PageData } from './$types';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import {
+		Accordion,
+		Badge,
+		Button,
+		Card,
+		Input,
+		Label,
+		Select,
+		Table
+	} from '@tabeladev/tabelawebui';
+	import type { ActionData, PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	let showForm = $state(false);
+	const manualAccounts = $derived(data.accounts.filter((a) => a.manual));
 
 	const typeLabel: Record<string, string> = {
 		checking: 'Conta corrente',
@@ -84,13 +98,22 @@
 {/snippet}
 
 <div class="flex flex-col gap-4">
-	<header>
-		<h1 class="font-mono text-2xl font-bold">Contas</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span>
-			{data.accounts.length}
-			{data.accounts.length === 1 ? 'conta' : 'contas'} sincronizadas
-		</p>
+	<header class="flex flex-wrap items-start justify-between gap-3">
+		<div>
+			<h1 class="font-mono text-2xl font-bold">Contas</h1>
+			<p class="font-mono text-sm text-ink-soft">
+				<span class="text-ink-faint">//</span>
+				{data.accounts.length}
+				{data.accounts.length === 1 ? 'conta' : 'contas'}
+			</p>
+		</div>
+		<Button
+			onclick={() => (showForm = !showForm)}
+			variant={showForm ? 'outline' : 'primary'}
+			size="sm"
+		>
+			{showForm ? 'Cancelar' : '+ Conta manual'}
+		</Button>
 	</header>
 
 	<!-- Summary cards -->
@@ -203,10 +226,130 @@
 			{#snippet empty()}
 				<p class="py-12 text-center font-mono text-sm text-ink-soft">
 					{data.accounts.length === 0
-						? 'Nenhuma conta ainda. Conecte via Open Finance.'
+						? 'Nenhuma conta ainda. Conecte via Open Finance ou crie uma conta manual.'
 						: 'Nenhuma conta encontrada para os filtros.'}
 				</p>
 			{/snippet}
 		</Table>
 	</div>
+
+	<!-- Manual accounts. Without these the app could not hold a balance at all
+	     without Open Finance, so "funciona sem conectar nada" was false: every
+	     total reads from finance_accounts, which only the sync ever wrote. -->
+	{#if showForm}
+		<Card>
+			<Card.Content>
+				<form
+					method="POST"
+					action="?/create"
+					use:enhance={() => {
+						return async ({ result }) => {
+							if (result.type === 'success') {
+								await invalidateAll();
+								showForm = false;
+							}
+						};
+					}}
+					class="flex flex-col gap-3"
+				>
+					<h2 class="font-mono text-sm font-semibold">Nova conta manual</h2>
+
+					<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+						<div class="flex flex-col gap-1">
+							<Label for="name">Nome</Label>
+							<Input id="name" name="name" placeholder="Ex: Carteira, Banco X" required />
+						</div>
+						<div class="flex flex-col gap-1">
+							<Label for="type">Tipo</Label>
+							<Select
+								id="type"
+								name="type"
+								options={[
+									{ value: 'checking', label: 'Conta corrente' },
+									{ value: 'credit_card', label: 'Cartão de crédito' },
+									{ value: 'investment', label: 'Investimentos' }
+								]}
+							/>
+						</div>
+						<div class="flex flex-col gap-1">
+							<Label for="balance">Saldo atual (R$)</Label>
+							<Input id="balance" name="balance" placeholder="0,00" required />
+						</div>
+					</div>
+
+					<p class="font-mono text-xs text-ink-faint">
+						Em cartão de crédito, informe o valor da fatura em aberto (positivo).
+					</p>
+
+					{#if form?.error}
+						<p class="font-mono text-sm text-danger">{form.error}</p>
+					{/if}
+
+					<div class="flex justify-end gap-2">
+						<Button type="button" variant="outline" size="sm" onclick={() => (showForm = false)}>
+							Cancelar
+						</Button>
+						<Button type="submit" size="sm">Adicionar</Button>
+					</div>
+				</form>
+			</Card.Content>
+		</Card>
+	{/if}
+
+	{#if manualAccounts.length > 0}
+		<Card>
+			<Card.Content>
+				<div class="flex flex-col gap-3">
+					<h2 class="font-mono text-sm font-semibold">Contas manuais</h2>
+					<p class="font-mono text-xs text-ink-soft">
+						O saldo destas é o que você informar. Contas do Open Finance são atualizadas pelo sync e
+						por isso não aparecem aqui.
+					</p>
+					{#each manualAccounts as account (account.id)}
+						<div class="flex flex-wrap items-end gap-2 border-t border-rule pt-3">
+							<span class="flex-1 font-mono text-sm">{account.name}</span>
+							<form
+								method="POST"
+								action="?/updateBalance"
+								use:enhance={() => {
+									return async ({ result }) => {
+										if (result.type === 'success') await invalidateAll();
+									};
+								}}
+								class="flex items-end gap-2"
+							>
+								<input type="hidden" name="accountId" value={account.id} />
+								<Input
+									name="balance"
+									value={String(account.cachedBalance).replace('.', ',')}
+									class="w-32"
+									aria-label="Saldo de {account.name}"
+								/>
+								<Button type="submit" variant="outline" size="sm">Salvar</Button>
+							</form>
+							<form
+								method="POST"
+								action="?/delete"
+								use:enhance={() => {
+									return async ({ result }) => {
+										if (result.type === 'success') await invalidateAll();
+									};
+								}}
+							>
+								<input type="hidden" name="accountId" value={account.id} />
+								<Button
+									type="submit"
+									variant="ghost"
+									size="sm"
+									aria-label="Remover conta {account.name}"
+								>
+									Remover
+								</Button>
+							</form>
+						</div>
+					{/each}
+				</div>
+			</Card.Content>
+		</Card>
+	{/if}
 </div>

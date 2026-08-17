@@ -4,15 +4,18 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { ActionResult } from '@sveltejs/kit';
-	import { Button, Card, Divider, Input } from '@tabeladev/tabelawebui';
+	import { Button, Card, Dialog, Divider, Input, Label } from '@tabeladev/tabelawebui';
 	import { openOnboarding } from '$lib/stores/onboarding-store';
 	import { openStatementImport } from '$lib/stores/statement-import-store';
 	import ExtensionInstallModal from '$lib/components/ExtensionInstallModal.svelte';
+	import StatementUpload from '$lib/components/StatementUpload.svelte';
+	import type { AiProvider } from '$lib/lib/ai-providers';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let hideAiForm = $state<HTMLFormElement | null>(null);
 	let showInstallModal = $state(false);
+	let showDelete = $state(false);
 
 	// The extension button mirrors the Open Finance status (from the layout):
 	// not connected → pair it; token expired → renew it; alive → review it.
@@ -202,6 +205,26 @@
 		</Card.Content>
 	</Card>
 
+	<!-- Single-PDF upload. The README and ESCOPO §2.4 have advertised this since
+	     the first release, but nothing ever rendered the component — the only way
+	     in was the bulk Takeout import above, which needs a .zip. Someone holding
+	     one statement had no door. -->
+	{#if data.aiConfigured && data.aiProvider && data.aiModel}
+		<Card>
+			<Card.Content>
+				<div class="flex flex-col gap-3">
+					<div>
+						<h2 class="font-mono text-sm font-semibold">Enviar um extrato em PDF</h2>
+						<p class="mt-1 font-mono text-xs text-ink-soft">
+							Para um banco sem Open Finance, ou uma fatura avulsa.
+						</p>
+					</div>
+					<StatementUpload provider={data.aiProvider as AiProvider} model={data.aiModel} />
+				</div>
+			</Card.Content>
+		</Card>
+	{/if}
+
 	<Divider label="IA" />
 
 	<!-- Hide AI -->
@@ -298,4 +321,66 @@
 			</Card>
 		</a>
 	{/if}
+
+	<!-- LGPD art. 18: the titular's rights, exercisable without asking anyone. -->
+	<Card>
+		<Card.Content>
+			<div class="flex flex-col gap-3">
+				<div>
+					<h2 class="font-mono text-sm font-semibold">Seus dados</h2>
+					<p class="mt-1 font-mono text-xs text-ink-soft">
+						Baixe tudo o que é seu, ou apague a conta de vez.
+					</p>
+				</div>
+
+				<div class="flex flex-wrap gap-2">
+					<Button href="/api/account/export" variant="outline" size="sm" download>
+						Baixar meus dados (JSON)
+					</Button>
+					<Button variant="outline" size="sm" onclick={() => (showDelete = true)}>
+						Excluir minha conta
+					</Button>
+				</div>
+
+				<p class="font-mono text-xs text-ink-faint">
+					O que fazemos com seus dados está na
+					<a href={resolve('/privacidade')} class="text-accent hover:underline">
+						política de privacidade
+					</a>.
+				</p>
+			</div>
+		</Card.Content>
+	</Card>
 </div>
+
+<!-- Account deletion. Typing the e-mail is the gate: this cascades across every
+     table and cannot be undone, so a misclick must not be able to trigger it. -->
+<Dialog bind:open={showDelete} title="Excluir minha conta">
+	<form method="POST" action="?/deleteAccount" use:enhance class="flex flex-col gap-4">
+		<p class="font-mono text-sm text-ink-soft">
+			Isso apaga <strong>permanentemente</strong> suas transações, contas, categorias, tags, recorrências,
+			relatórios, conversas e credenciais. Não dá pra desfazer.
+		</p>
+		<p class="font-mono text-sm text-ink-soft">
+			Se quiser guardar uma cópia, baixe seus dados antes.
+		</p>
+
+		<div class="flex flex-col gap-2">
+			<Label for="confirmEmail">
+				Digite <span class="font-semibold">{data.user?.email}</span> para confirmar
+			</Label>
+			<Input id="confirmEmail" name="confirmEmail" type="email" autocomplete="off" required />
+		</div>
+
+		{#if page.form?.deleteError}
+			<p class="font-mono text-sm text-danger">{page.form.deleteError}</p>
+		{/if}
+
+		<div class="flex justify-end gap-2">
+			<Button type="button" variant="outline" size="sm" onclick={() => (showDelete = false)}>
+				Cancelar
+			</Button>
+			<Button type="submit" size="sm">Excluir definitivamente</Button>
+		</div>
+	</form>
+</Dialog>

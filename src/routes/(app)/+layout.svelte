@@ -116,7 +116,7 @@
      the sidebar (w-60 = 15rem) so it does not overlap theme/logout; mobile:
      above the bottom nav and the pill. The classes use !important to beat the
      scoped CSS (FloatingActionPill/StatusPill keep their own fixed position). -->
-{#if !data.hideAi}
+{#if !data.hideAi && data.aiChatEnabled}
 	<ChatWidget
 		bind:open={chatOpen}
 		onclose={() => (chatOpen = false)}

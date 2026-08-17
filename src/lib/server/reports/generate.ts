@@ -54,6 +54,10 @@ export async function generateMonthlyReports(env: Env): Promise<void> {
 	const users = await getAllUsers(db);
 
 	for (const user of users) {
+		// The narrative is written by the user's own AI key, so the toggle in
+		// /profile/ai has to be honoured here — otherwise turning it off still
+		// bills them every first of the month.
+		if (!user.aiReportEnabled) continue;
 		try {
 			await generateReportForUser(db, env, user.id, range);
 		} catch (err) {

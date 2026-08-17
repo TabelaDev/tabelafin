@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button, Card } from '@tabeladev/tabelawebui';
 	import { formatCompactCurrency } from '$lib/lib/format';
+	import PushSubscribe from '$lib/components/PushSubscribe.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -161,11 +162,16 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 </svelte:head>
 
 <div class="flex flex-col gap-4">
-	<header>
-		<h1 class="font-mono text-2xl font-bold">Relatórios</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span> Gere relatórios em PDF das suas finanças.
-		</p>
+	<header class="flex flex-wrap items-start justify-between gap-3">
+		<div>
+			<h1 class="font-mono text-2xl font-bold">Relatórios</h1>
+			<p class="font-mono text-sm text-ink-soft">
+				<span class="text-ink-faint">//</span> Gere relatórios em PDF das suas finanças.
+			</p>
+		</div>
+		<!-- Renders itself only when the browser supports push and permission has
+		     not been granted yet, so it disappears once the user opts in. -->
+		<PushSubscribe vapidPublicKey={data.vapidPublicKey} />
 	</header>
 
 	{#if data.latestReport}
