@@ -13,13 +13,32 @@
 	},
 	"assets": { "binding": "ASSETS", "directory": ".svelte-kit/cloudflare" },
 	"workers_dev": true,
-	"preview_urls": true,
+	// Preview URLs are off: each deploy would otherwise publish a second public
+	// hostname bound to the SAME production D1 and KV, outside any custom domain
+	// or WAF, and with BETTER_AUTH_URL pointing at a different origin than the
+	// one being served.
+	"preview_urls": false,
+	// Workers Logs. Without this the ~20 console.error calls in the sync, the
+	// report cron and the AI paths go nowhere: a nightly cron that fails for
+	// every user leaves no trace, which is exactly the failure this app is
+	// prone to. 100% sampling — the request volume is tiny.
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	},
 	"vars": {
 		"ORIGIN": "https://tabelafin.ianptkcs-023.workers.dev",
 		"VAPID_PUBLIC_KEY": "BLRtiZgDBYkAVW92C0WIfRmlehgF0g4vI7i6xC8VKYHziKVdcyxv3jtj0BIoin5LU255BX4pknqJENcPfswYAns",
 		"VAPID_SUBJECT": "https://tabelafin.ianptkcs-023.workers.dev",
 		// Better Auth: base URL for session callbacks
-		"BETTER_AUTH_URL": "https://tabelafin.ianptkcs-023.workers.dev"
+		"BETTER_AUTH_URL": "https://tabelafin.ianptkcs-023.workers.dev",
+		// From address for the verification / password-reset e-mails. A var and
+		// not a secret — it is public by definition, it appears in every message
+		// sent. **Brevo will not deliver from an unverified sender**, so this
+		// address has to be verified in the Brevo account (a single address is
+		// enough; a whole domain is not required). Change it to an address on the
+		// custom domain once there is one — see "Domínio custom" in AGENTS.md.
+		"EMAIL_FROM": "ianptkcs@gmail.com"
 		// Secrets (not committed): BETTER_AUTH_SECRET, MASTER_KEY, VAPID_PRIVATE_KEY
 		// Configured via `wrangler secret put <NAME>`
 	},
@@ -49,7 +68,8 @@
 				"ORIGIN": "https://tabelafin-staging.ianptkcs-023.workers.dev",
 				"VAPID_PUBLIC_KEY": "BNGg4bHjsBjz2tVbuoyGXAaBMmbaUbKgYizkf82DAYVO3hBWm7nNSghb6qx0hDYjn-N_lHN6RHaqSeoRkc5ZtH8",
 				"VAPID_SUBJECT": "https://tabelafin-staging.ianptkcs-023.workers.dev",
-				"BETTER_AUTH_URL": "https://tabelafin-staging.ianptkcs-023.workers.dev"
+				"BETTER_AUTH_URL": "https://tabelafin-staging.ianptkcs-023.workers.dev",
+				"EMAIL_FROM": "ianptkcs@gmail.com"
 			},
 			"d1_databases": [
 				{

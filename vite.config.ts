@@ -34,6 +34,44 @@ export default defineConfig({
 			// comment in that file: prevents the adapter from overwriting
 			// worker/entry.js (the wrapper that adds the `scheduled` handler).
 			adapter: adapter({ config: 'wrangler.adapter.jsonc' }),
+			// Content-Security-Policy. Written here rather than as a header in
+			// hooks.server.ts because SvelteKit emits inline hydration scripts: only
+			// the framework knows their hashes, and a hand-written policy either
+			// blocks hydration or has to allow 'unsafe-inline', which defeats it.
+			// `mode: 'auto'` uses nonces on dynamically rendered pages and hashes on
+			// prerendered ones.
+			csp: {
+				mode: 'auto',
+				directives: {
+					'default-src': ['self'],
+					// 'wasm-unsafe-eval' is required by the Typst compiler that renders
+					// the report PDF in the browser. It permits WebAssembly compilation
+					// only — not eval() or inline script — so it does not reopen the
+					// hole the rest of this policy closes.
+					'script-src': ['self', 'wasm-unsafe-eval'],
+					// 'unsafe-inline' for styles only: Svelte emits scoped inline styles
+					// and the charts set style attributes from data. Style injection is
+					// not an execution primitive, so this is the one concession worth
+					// making.
+					'style-src': ['self', 'unsafe-inline'],
+					// data: covers the inline SVG icons; blob: the generated PDF.
+					'img-src': ['self', 'data:', 'blob:'],
+					'font-src': ['self', 'data:'],
+					// The app itself talks only to its own origin — the AI providers and
+					// Meu Pluggy are reached from the Worker, never from the browser.
+					// jsDelivr is the exception: reports/+page.svelte fetches the Typst
+					// WASM from there at runtime. Self-hosting it would be better (it
+					// also makes the PDF button work offline and on restricted
+					// networks), but that means adding two multi-megabyte packages as
+					// dependencies — worth doing, not worth blocking this on.
+					'connect-src': ['self', 'https://cdn.jsdelivr.net'],
+					'worker-src': ['self', 'blob:'],
+					'frame-ancestors': ['none'],
+					'base-uri': ['self'],
+					'form-action': ['self'],
+					'object-src': ['none']
+				}
+			},
 			typescript: {
 				config: (config) => {
 					config.include.push('../drizzle.config.ts');

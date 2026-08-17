@@ -41,6 +41,26 @@ Banco: `bun run db:generate` / `db:migrate` / `db:studio`.
 
 Antes de abrir PR: `bun run check && bun run lint && bun run test && bun run build`.
 
+## Domínio custom (pendente)
+
+Hoje o app roda em `tabelafin.ianptkcs-023.workers.dev`. Trocar por um domínio
+próprio **não é só mudar a var** — quatro coisas quebram juntas e precisam ser
+mudadas no mesmo deploy:
+
+1. `wrangler.jsonc` — `ORIGIN`, `BETTER_AUTH_URL` e `VAPID_SUBJECT`.
+2. `extension/manifest.json` — `host_permissions` lista o host antigo; a
+   extensão para de conseguir falar com o app.
+3. `extension/background.js` — `DEFAULT_ORIGIN`. Quem já pareou tem o host
+   antigo salvo em `chrome.storage.local`, então **todo mundo precisa re-parear**
+   (ou mudar o campo "App origin" no popup à mão).
+4. `src/lib/server/email.ts` — `FROM_EMAIL` usa `@tabelafin.com.br`, que precisa
+   estar verificado no Brevo pra qualquer e-mail sair.
+
+As subscriptions de Web Push também morrem: elas são atreladas à origem, então
+quem tinha ativado o aviso do relatório precisa ativar de novo.
+
+Quanto mais tarde, mais gente com pareamento e push pra refazer.
+
 ## Staging (homologação)
 
 Dois ambientes no Cloudflare Workers, via environments do wrangler: `tabelafin`

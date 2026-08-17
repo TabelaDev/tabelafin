@@ -7,4 +7,8 @@ MASTER_KEY=placeholder
 VAPID_PRIVATE_KEY=placeholder
 BETTER_AUTH_SECRET=placeholder
 BETTER_AUTH_URL=http://localhost:5173
+# Envio de e-mail transacional (verificação de conta e redefinição de senha).
+# Sem esta chave o app funciona normalmente, só não envia e-mail — e nesse caso
+# a verificação de e-mail não é exigida no login, pra não trancar contas novas.
+BREVO_API_KEY=placeholder
 DEEPSEEK_API_KEY=placeholder
