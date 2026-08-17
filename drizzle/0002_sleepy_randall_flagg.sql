@@ -1,1 +1,0 @@
-ALTER TABLE `transactions` ADD `pluggy_category` text;

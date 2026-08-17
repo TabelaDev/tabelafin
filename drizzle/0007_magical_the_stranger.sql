@@ -1,1 +1,0 @@
-ALTER TABLE `pluggy_credentials` ADD `token_expires_at` integer;

@@ -18,7 +18,7 @@
 	/>
 </svelte:head>
 
-<article class="prose-tabela mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+<article class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
 	<header class="flex flex-col gap-2">
 		<h1 class="font-mono text-2xl font-bold">Política de Privacidade</h1>
 		<p class="font-mono text-sm text-ink-soft">
