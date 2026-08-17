@@ -23,6 +23,14 @@ export interface AuthConfig {
 	// are the model names; the real table name comes from the Drizzle definition
 	// itself.
 	schema?: Partial<Record<'user' | 'session' | 'account', Record<string, unknown>>>;
+	// Delivery hooks. Both are optional so this module still drops into a project
+	// with no mail provider — omitting them keeps the previous behaviour
+	// (no verification, no reset). `requireEmailVerification` is separate from
+	// `sendVerificationEmail` on purpose: an app can want the mail sent without
+	// yet locking sign-in behind it.
+	sendVerificationEmail?: (input: { user: { email: string }; url: string }) => Promise<void>;
+	sendResetPassword?: (input: { user: { email: string }; url: string }) => Promise<void>;
+	requireEmailVerification?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,8 +50,19 @@ export function createAuth(config: AuthConfig): any {
 			...(config.schema && { schema: config.schema })
 		}),
 		emailAndPassword: {
-			enabled: true
+			enabled: true,
+			...(config.sendResetPassword && { sendResetPassword: config.sendResetPassword }),
+			...(config.requireEmailVerification && { requireEmailVerification: true })
 		},
+		...(config.sendVerificationEmail && {
+			emailVerification: {
+				sendVerificationEmail: config.sendVerificationEmail,
+				// The account is created signed-out until the address is confirmed;
+				// sending on sign-up means the user never has to ask for the mail.
+				sendOnSignUp: true,
+				autoSignInAfterVerification: true
+			}
+		}),
 		secret: config.secret,
 		baseURL: config.baseURL || 'http://localhost:5173',
 		advanced: {

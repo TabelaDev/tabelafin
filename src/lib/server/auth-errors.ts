@@ -21,8 +21,10 @@ export function friendlyAuthError(e: unknown): string {
 	if (msg.includes('password too short') || msg.includes('password must be')) {
 		return 'A senha deve ter pelo menos 8 caracteres.';
 	}
-	if (msg.includes('email not verified')) {
-		return 'E-mail ainda não verificado.';
+	// Says what to do, not just what is wrong: without the second sentence the
+	// user is told their e-mail is unverified and given no way forward.
+	if (msg.includes('email not verified') || msg.includes('not verified')) {
+		return 'E-mail ainda não verificado. Confira sua caixa de entrada (e o spam) pelo link de confirmação.';
 	}
 	if (msg.includes('session')) {
 		return 'Sessão expirada. Faça login novamente.';

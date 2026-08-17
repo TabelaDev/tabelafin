@@ -2,9 +2,14 @@
 	import { enhance } from '$app/forms';
 	import { Button, Input, Label, Card, Wordmark } from '@tabeladev/tabelawebui';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
+
+	// /reset-password redirects here with ?reset=1 so the success is confirmed on
+	// the screen where the new password is actually used.
+	const justReset = $derived(page.url.searchParams.get('reset') === '1');
 </script>
 
 <svelte:head>
@@ -45,7 +50,17 @@
 					<p class="text-sm text-danger">{form.error}</p>
 				{/if}
 
+				{#if justReset}
+					<p class="text-success text-sm">Senha redefinida. Entre com a nova senha.</p>
+				{/if}
+
 				<Button type="submit">Entrar</Button>
+
+				<p class="text-center text-sm text-ink-soft">
+					<a href={resolve('/forgot-password')} class="text-accent hover:underline"
+						>Esqueci minha senha</a
+					>
+				</p>
 
 				<p class="text-center text-sm text-ink-soft">
 					Não tem uma conta?
