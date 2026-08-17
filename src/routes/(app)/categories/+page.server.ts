@@ -56,8 +56,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.map((c) => ({
 			name: c.name,
 			color: c.color,
-			expense: Math.round((expenses[c.name] ?? 0) * 100) / 100,
-			income: Math.round((income[c.name] ?? 0) * 100) / 100
+			expense: expenses[c.name] ?? 0,
+			income: income[c.name] ?? 0
 		}))
 		.sort((a, b) => Math.max(b.expense, b.income) - Math.max(a.expense, a.income));
 
@@ -65,8 +65,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		categories.push({
 			name: 'Outros',
 			color: 'ctp-overlay1',
-			expense: Math.round((expenses['Outros'] ?? 0) * 100) / 100,
-			income: Math.round((income['Outros'] ?? 0) * 100) / 100
+			expense: expenses['Outros'] ?? 0,
+			income: income['Outros'] ?? 0
 		});
 	}
 

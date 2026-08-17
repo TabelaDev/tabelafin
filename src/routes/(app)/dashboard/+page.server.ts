@@ -122,9 +122,18 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		.map(([name, value]) => ({ name, value }));
 
 	// Monthly balance trend (last 6 months) — summed per month.
+	//
+	// `accountId` comes along so the sign can be normalised per account type: on a
+	// credit card a positive amount is a *purchase*, not income. Summing the raw
+	// column (as this did) made a month of card spending show up as a positive
+	// bar, contradicting the "Gastos do mês" card right above the chart.
 	const sixMonthsAgo = new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1);
 	const monthlyData = await db
-		.select({ yearMonth: sql`strftime('%Y-%m', date, 'unixepoch')`, amount: transactions.amount })
+		.select({
+			yearMonth: sql<string>`strftime('%Y-%m', date, 'unixepoch')`,
+			amount: transactions.amount,
+			accountId: transactions.accountId
+		})
 		.from(transactions)
 		.where(
 			and(
@@ -143,9 +152,15 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		monthLabels.push(d.toLocaleDateString('pt-BR', { month: 'short' }));
 		let balance = 0;
 		for (const row of monthlyData) {
-			if (row.yearMonth === label) balance += row.amount;
+			if (row.yearMonth !== label) continue;
+			const { income, expense } = classifyMovement(
+				row.accountId ? accountTypeById.get(row.accountId) : undefined,
+				row.amount
+			);
+			// Net for the month: what came in minus what went out.
+			balance += income - expense;
 		}
-		monthValues.push(Math.round(balance * 100) / 100);
+		monthValues.push(balance);
 	}
 
 	const latestReport = await getLatestMonthlyReport(db, userId);
@@ -158,12 +173,12 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		accounts: userAccounts,
 		recentTransactions,
 		summary: {
-			totalBalance: Math.round(totalBalance * 100) / 100,
-			checkingBalance: Math.round(checkingBalance * 100) / 100,
-			investmentBalance: Math.round(investmentBalance * 100) / 100,
-			monthIncome: Math.round(monthIncome * 100) / 100,
-			monthExpense: Math.round(monthExpense * 100) / 100,
-			prevExpense: Math.round(prevExpense * 100) / 100,
+			totalBalance: totalBalance,
+			checkingBalance: checkingBalance,
+			investmentBalance: investmentBalance,
+			monthIncome: monthIncome,
+			monthExpense: monthExpense,
+			prevExpense: prevExpense,
 			categoryTotals,
 			topCategories,
 			monthLabels,

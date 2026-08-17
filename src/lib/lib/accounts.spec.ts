@@ -35,12 +35,24 @@ describe('sumSignedBalance', () => {
 		expect(sumSignedBalance([])).toBe(0);
 	});
 
-	it('rounds the accumulated float noise to cents', () => {
+	// This used to assert that the helper *rounded away* float drift, because
+	// balances were reais in a `real` column. They are integer centavos now, so
+	// the sum is exact by construction — what matters is that no rounding sneaks
+	// back in and shifts a value.
+	it('sums exactly, without rounding', () => {
 		expect(
 			sumSignedBalance([
-				{ type: 'checking', cachedBalance: 0.1 },
-				{ type: 'checking', cachedBalance: 0.2 }
+				{ type: 'checking', cachedBalance: 10 },
+				{ type: 'checking', cachedBalance: 20 }
 			])
-		).toBe(0.3);
+		).toBe(30);
+	});
+
+	it('stays exact across many small balances', () => {
+		const accounts = Array.from({ length: 1000 }, () => ({
+			type: 'checking',
+			cachedBalance: 7
+		}));
+		expect(sumSignedBalance(accounts)).toBe(7000);
 	});
 });

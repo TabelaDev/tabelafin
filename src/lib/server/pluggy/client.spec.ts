@@ -65,8 +65,10 @@ describe('fetchAccounts', () => {
 		const accounts = await fetchAccounts(TOKEN, ['item-1', 'item-2']);
 
 		expect(accounts).toEqual([
-			{ id: 'acc-1', type: 'checking', name: 'Conta Corrente', currency: 'BRL', balance: 100 },
-			{ id: 'acc-2', type: 'credit_card', name: 'Cartão', currency: 'BRL', balance: 200 }
+			// The API answers in reais; the client converts to centavos at this
+			// boundary, so everything downstream is integers.
+			{ id: 'acc-1', type: 'checking', name: 'Conta Corrente', currency: 'BRL', balance: 10000 },
+			{ id: 'acc-2', type: 'credit_card', name: 'Cartão', currency: 'BRL', balance: 20000 }
 		]);
 		const [url] = fetchSpy.mock.calls[0];
 		expect(String(url)).toContain('itemId=item-1');
@@ -111,7 +113,8 @@ describe('fetchTransactions', () => {
 			{
 				id: 'tx-1',
 				description: 'Padaria',
-				amount: -15.5,
+				// reais in, centavos out — this is the conversion boundary.
+				amount: -1550,
 				date: '2026-07-30T00:00:00.000Z',
 				currency: 'BRL',
 				category: null
@@ -119,7 +122,7 @@ describe('fetchTransactions', () => {
 			{
 				id: 'tx-2',
 				description: 'Farmácia',
-				amount: -42,
+				amount: -4200,
 				date: '2026-07-31T00:00:00.000Z',
 				currency: 'BRL',
 				category: null
@@ -138,7 +141,7 @@ describe('fetchInvestments', () => {
 		const investments = await fetchInvestments(TOKEN, ['item-1']);
 
 		expect(investments).toEqual([
-			{ id: 'inv-1', name: 'Renda Fixa', balance: 1000, currency: 'BRL' }
+			{ id: 'inv-1', name: 'Renda Fixa', balance: 100000, currency: 'BRL' }
 		]);
 		const [url] = fetchSpy.mock.calls[0];
 		expect(String(url)).toContain('itemId=item-1');

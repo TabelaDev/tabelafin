@@ -1,4 +1,4 @@
-import { and, eq, gt, gte, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
+import { and, eq, gt, gte, inArray, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
 import type { getDb } from './index';
 import { transactions } from './schema';
 import type { TransactionCategory } from '$lib/lib/categories';
@@ -84,6 +84,36 @@ export async function getTransactionByPluggyId(db: Db, pluggyTransactionId: stri
 		.from(transactions)
 		.where(eq(transactions.pluggyTransactionId, pluggyTransactionId));
 	return row ?? null;
+}
+
+// Which of these Pluggy ids the app already has, as a Set.
+//
+// The sync used to ask that question one id at a time, so a first sync of a
+// real account spent one round trip per transaction just to discover it had
+// nothing to do — thousands of sequential queries against the Worker's
+// subrequest budget. One `IN (…)` per page answers the same thing.
+//
+// Chunked because SQLite caps the number of bound parameters per statement;
+// 200 keeps each statement comfortably inside that limit.
+const EXISTING_ID_CHUNK = 200;
+
+export async function getExistingPluggyIds(
+	db: Db,
+	pluggyTransactionIds: string[]
+): Promise<Set<string>> {
+	const found = new Set<string>();
+	for (let i = 0; i < pluggyTransactionIds.length; i += EXISTING_ID_CHUNK) {
+		const chunk = pluggyTransactionIds.slice(i, i + EXISTING_ID_CHUNK);
+		if (chunk.length === 0) continue;
+		const rows = await db
+			.select({ pluggyTransactionId: transactions.pluggyTransactionId })
+			.from(transactions)
+			.where(inArray(transactions.pluggyTransactionId, chunk));
+		for (const row of rows) {
+			if (row.pluggyTransactionId) found.add(row.pluggyTransactionId);
+		}
+	}
+	return found;
 }
 
 // Updates only the `pluggyCategory` of an existing transaction (used by the
@@ -259,6 +289,11 @@ export async function findSupersedeCandidate(
 // while the API reports a credit card purchase as positive. Matching the exact
 // value would therefore have missed every card duplicate — which is most of
 // them, since card invoices are what arrives as a statement.
+//
+// `===` is exact now that amounts are integer centavos. While they were floats
+// this comparison was a genuine defect: two values that print identically can
+// differ in the last bit, so the dedupe silently failed and the same purchase
+// appeared twice.
 export function amountsMatchForDedupe(a: number, b: number): boolean {
 	return Math.abs(a) === Math.abs(b);
 }
@@ -380,11 +415,15 @@ export async function getTransactionsInRange(db: Db, userId: string, from: Date,
 // Future entries: card instalments the bank pre-posts with an invoice date in
 // the future (date > today). Used by the "Próximas faturas" page — the current
 // version of each row only (`visibleTransactions`), ascending by date.
+// `isNotInternalTransfer` belongs here for the same reason it does on every
+// other money-summing query: a scheduled invoice payment or a future CDB
+// application is the user's own money moving between their accounts, not a new
+// commitment. Without it the upcoming screen double-counted both legs.
 export async function getFutureTransactions(db: Db, userId: string) {
 	const now = new Date();
 	return db
 		.select()
 		.from(transactions)
-		.where(and(visibleTransactions(userId), gt(transactions.date, now)))
+		.where(and(visibleTransactions(userId), isNotInternalTransfer, gt(transactions.date, now)))
 		.orderBy(transactions.date);
 }

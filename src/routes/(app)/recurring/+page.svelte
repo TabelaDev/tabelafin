@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { Button, Card, Input, Label, Select } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency } from '$lib/lib/format';
+	import { formatCompactCurrency, formatDate } from '$lib/lib/format';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -56,10 +56,11 @@
 		)}) 10%, transparent); color: var(--ctp-${color.replace('ctp-', '')});`;
 	};
 
-	function formatDate(ts: Date | string | null): string {
-		if (!ts) return '—';
-		const d = typeof ts === 'string' ? new Date(ts) : ts;
-		return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+	// Delegates to $lib/lib/format so the UTC-midnight convention is applied here
+	// too — a next-charge date is a calendar day, and rendering it in the
+	// browser's zone showed the 1st as the last day of the previous month.
+	function formatNullableDate(ts: Date | string | null): string {
+		return ts ? formatDate(ts) : '—';
 	}
 
 	function resetForm() {
@@ -241,10 +242,10 @@
 												{expense.occurrences === 1 ? 'ocorrência' : 'ocorrências'}
 											</span>
 											<span>·</span>
-											<span>última: {formatDate(expense.lastOccurrence)}</span>
+											<span>última: {formatNullableDate(expense.lastOccurrence)}</span>
 											{#if expense.nextChargeDate}
 												<span>·</span>
-												<span>próxima: {formatDate(expense.nextChargeDate)}</span>
+												<span>próxima: {formatNullableDate(expense.nextChargeDate)}</span>
 											{/if}
 										</div>
 									</div>

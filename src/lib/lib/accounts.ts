@@ -20,8 +20,10 @@ export function signedBalance(account: AccountBalance): number {
 	return account.type === 'credit_card' ? -account.cachedBalance : account.cachedBalance;
 }
 
-// Sums balances on the signed axis, rounded to cents so the float noise from
-// adding many values does not surface in the UI.
+// Sums balances on the signed axis. No rounding needed: balances are integer
+// centavos (see $lib/lib/money.ts), so the sum is exact — the
+// `Math.round(x * 100) / 100` that used to be here existed only to hide float
+// drift that can no longer happen.
 export function sumSignedBalance(accounts: AccountBalance[]): number {
-	return Math.round(accounts.reduce((sum, a) => sum + signedBalance(a), 0) * 100) / 100;
+	return accounts.reduce((sum, a) => sum + signedBalance(a), 0);
 }

@@ -45,7 +45,8 @@ describe('extractTransactionsFromPdf', () => {
 		expect(result[0]).toEqual({
 			date: '2026-07-15',
 			description: 'IFOOD *IFOOD',
-			amount: -45.9,
+			// The model answers in reais; parseExtraction converts to centavos.
+			amount: -4590,
 			category: 'Alimentação'
 		});
 
@@ -127,7 +128,7 @@ describe('extractTransactionsFromPdf', () => {
 		const result = await extractTransactionsFromPdf({ ...BASE_INPUT, provider: 'anthropic' });
 
 		expect(result).toEqual([
-			{ date: '2026-07-13', description: 'OK', amount: -50, category: 'Compras' }
+			{ date: '2026-07-13', description: 'OK', amount: -5000, category: 'Compras' }
 		]);
 	});
 

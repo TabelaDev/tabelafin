@@ -3,6 +3,8 @@
 // server/ai/parse.ts, but without tool use: the output here is free text (a short
 // paragraph), not structured data, so a plain completion call is enough.
 import type { AiProvider } from '$lib/lib/ai-providers';
+import { fetchWithRetry } from '$lib/server/http';
+import { toReais } from '$lib/lib/money';
 
 export interface CategoryTotals {
 	[category: string]: number;
@@ -22,8 +24,10 @@ export interface MonthlyReportInput {
 	tagTotals?: Array<{ name: string; expense: number }>;
 }
 
-function formatCurrency(value: number): string {
-	return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+// Takes integer centavos, like every other money value in the app, and renders
+// reais for the prompt — the model reasons about "R$ 45,90", not "4590".
+function formatCurrency(cents: number): string {
+	return toReais(cents).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function formatCategoryTotals(totals: CategoryTotals): string {
@@ -79,7 +83,7 @@ export async function generateMonthlySummary(input: MonthlyReportInput): Promise
 }
 
 async function generateWithAnthropic(input: MonthlyReportInput): Promise<string> {
-	const res = await fetch('https://api.anthropic.com/v1/messages', {
+	const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',
@@ -105,7 +109,7 @@ async function generateWithOpenAiCompatible(
 	apiUrl: string,
 	errorLabel: string
 ): Promise<string> {
-	const res = await fetch(apiUrl, {
+	const res = await fetchWithRetry(apiUrl, {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',

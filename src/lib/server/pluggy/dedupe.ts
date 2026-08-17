@@ -11,7 +11,9 @@
 // fingerprint, not a cryptographic hash.
 export function computeDedupeHash(accountId: string, amount: number, date: Date): string {
 	const day = date.toISOString().slice(0, 10); // YYYY-MM-DD, time ignored
-	const input = `${accountId}:${amount.toFixed(2)}:${day}`;
+	// `amount` is integer centavos, so it serialises exactly — the `.toFixed(2)`
+	// that used to be here existed to pin a float to two decimals.
+	const input = `${accountId}:${amount}:${day}`;
 
 	// 32-bit FNV-1a.
 	let hash = 0x811c9dc5;

@@ -6,6 +6,7 @@ import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { getTagsByUser, setTransactionTags } from '$lib/server/db/tags';
 import { applyTagRules } from '$lib/server/db/tag-rules';
 import { categorizeByRules } from '$lib/server/ai/rules';
+import { parseCents } from '$lib/lib/money';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -33,11 +34,14 @@ export const actions: Actions = {
 		if (typeof description !== 'string' || !description.trim()) {
 			return fail(400, { error: 'Informe a descrição.' });
 		}
-		if (typeof amount !== 'string' || isNaN(parseFloat(amount))) {
+		// parseCents rather than parseFloat: this is the boundary where a person's
+		// "1.234,56" becomes the integer the rest of the app works in. parseFloat
+		// also read "1.234,56" as 1.234 — a silent 1000× error for anyone who
+		// typed a thousands separator.
+		const parsedAmount = parseCents(amount);
+		if (parsedAmount === null) {
 			return fail(400, { error: 'Informe um valor válido.' });
 		}
-
-		const parsedAmount = parseFloat(amount);
 		const parsedDate = new Date(date + 'T00:00:00.000Z');
 		if (isNaN(parsedDate.getTime())) {
 			return fail(400, { error: 'Data inválida.' });

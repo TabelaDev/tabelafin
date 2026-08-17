@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { getAccountsByUser } from '$lib/server/db/accounts';
-import { getFutureTransactions } from '$lib/server/db/transactions';
+import { classifyMovement, getFutureTransactions } from '$lib/server/db/transactions';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -18,6 +18,17 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const userAccounts = await getAccountsByUser(db, userId);
 	const accountById = new Map(userAccounts.map((a) => [a.id, a]));
 
+	// Net commitment, not the sum of magnitudes. `Math.abs` made a pre-posted
+	// refund *raise* the amount owed instead of reducing it, so the screen
+	// promised a bigger bill than the card actually holds.
+	const total = future.reduce((sum, tx) => {
+		const { income, expense } = classifyMovement(
+			tx.accountId ? accountById.get(tx.accountId)?.type : undefined,
+			tx.amount
+		);
+		return sum + expense - income;
+	}, 0);
+
 	return {
 		future: future
 			.map((tx) => ({
@@ -25,6 +36,6 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 				accountName: tx.accountId ? (accountById.get(tx.accountId)?.name ?? null) : null
 			}))
 			.sort((a, b) => a.date.getTime() - b.date.getTime()),
-		total: future.reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
+		total: total
 	};
 };

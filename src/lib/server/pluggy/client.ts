@@ -8,6 +8,8 @@
 // offset/cursor pagination) — simpler than Pluggy's commercial API.
 //
 // Confirmed against my-api.pluggy.ai on 2026-08-04 through MCP/DevTools.
+import { fetchWithRetry } from '$lib/server/http';
+import { toCents } from '$lib/lib/money';
 
 const MY_API_URL = 'https://my-api.pluggy.ai';
 
@@ -34,7 +36,7 @@ export function jwtExpiresAt(jwt: string): number | null {
 }
 
 async function myApiFetch(path: string, token: string): Promise<Response> {
-	const res = await fetch(`${MY_API_URL}${path}`, {
+	const res = await fetchWithRetry(`${MY_API_URL}${path}`, {
 		headers: {
 			authorization: `Bearer ${token}`,
 			accept: 'application/json'
@@ -103,7 +105,8 @@ export async function fetchAccounts(token: string, itemIds: string[]): Promise<P
 		type: a.subtype === 'CREDIT_CARD' || a.type === 'CREDIT' ? 'credit_card' : 'checking',
 		name: a.name,
 		currency: a.currencyCode,
-		balance: a.balance
+		// The API speaks reais; everything past this boundary is centavos.
+		balance: toCents(a.balance)
 	}));
 }
 
@@ -162,7 +165,7 @@ export async function fetchTransactions(
 				// account's currency (USD 5.30 → R$ 28.06). Using that value is what
 				// makes the sums right — otherwise a purchase in dollars would be
 				// counted as reais.
-				amount: t.amountInAccountCurrency ?? t.amount,
+				amount: toCents(t.amountInAccountCurrency ?? t.amount),
 				date: t.date,
 				currency: t.currencyCode,
 				category: t.category ?? null
@@ -201,7 +204,7 @@ export async function fetchInvestments(
 			all.push({
 				id: i.id,
 				name: i.name,
-				balance: i.balance ?? i.value ?? 0,
+				balance: toCents(i.balance ?? i.value ?? 0),
 				currency: i.currencyCode ?? 'BRL'
 			});
 		}

@@ -1,4 +1,11 @@
-import { sqliteTable, text, integer, real, primaryKey, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import {
+	sqliteTable,
+	text,
+	integer,
+	index,
+	primaryKey,
+	uniqueIndex
+} from 'drizzle-orm/sqlite-core';
 
 // The `user` table — Better Auth's shape plus TabelaFin's own fields.
 // Better Auth owns authentication (email/password, sessions); the extra fields
@@ -112,7 +119,13 @@ export const pluggyItems = sqliteTable('pluggy_items', {
 	institutionName: text('institution_name').notNull(),
 	institutionType: text('institution_type').notNull(),
 	status: text('status').notNull(),
-	lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' })
+	lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' }),
+	// Set before each attempt, success or not — `last_synced_at` only moves on
+	// success. The recovery sync in (app)/+layout.server.ts needs the difference:
+	// without it, an item that always fails (expired token, login error) keeps
+	// `last_synced_at` null forever and re-triggers a full sync, including the
+	// batched AI call, on every single page load.
+	lastSyncAttemptAt: integer('last_sync_attempt_at', { mode: 'timestamp' })
 });
 
 // Financial accounts (checking, credit card, investment…) pulled from Pluggy.
@@ -132,39 +145,58 @@ export const financeAccounts = sqliteTable('finance_accounts', {
 	type: text('type').notNull(),
 	name: text('name').notNull(),
 	currency: text('currency').notNull().default('BRL'),
-	cachedBalance: real('cached_balance').notNull().default(0)
+	// Integer centavos — see $lib/lib/money.ts.
+	cachedBalance: integer('cached_balance').notNull().default(0)
 });
 
-export const transactions = sqliteTable('transactions', {
-	id: text('id')
-		.primaryKey()
-		.$defaultFn(() => crypto.randomUUID()),
-	userId: text('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	accountId: text('account_id').references(() => financeAccounts.id, {
-		onDelete: 'set null'
-	}),
-	pluggyTransactionId: text('pluggy_transaction_id').unique(),
-	statementUploadId: text('statement_upload_id').references(() => statementUploads.id, {
-		onDelete: 'set null'
-	}),
-	date: integer('date', { mode: 'timestamp' }).notNull(),
-	description: text('description').notNull(),
-	amount: real('amount').notNull(),
-	currency: text('currency').notNull().default('BRL'),
-	source: text('source').notNull(),
-	// The raw category as it comes from the Meu Pluggy API (e.g. "Investments",
-	// "Same person transfer", "Credit card payment"). Used to spot internal
-	// transfers and investment movements, which do NOT count as spending or
-	// income on the dashboard — distinct from `category`, which is TabelaFin's
-	// own categorisation by AI/rules.
-	pluggyCategory: text('pluggy_category'),
-	category: text('category'),
-	categorySource: text('category_source'),
-	dedupeHash: text('dedupe_hash'),
-	supersededByTransactionId: text('superseded_by_transaction_id')
-});
+export const transactions = sqliteTable(
+	'transactions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID()),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		accountId: text('account_id').references(() => financeAccounts.id, {
+			onDelete: 'set null'
+		}),
+		pluggyTransactionId: text('pluggy_transaction_id').unique(),
+		statementUploadId: text('statement_upload_id').references(() => statementUploads.id, {
+			onDelete: 'set null'
+		}),
+		date: integer('date', { mode: 'timestamp' }).notNull(),
+		description: text('description').notNull(),
+		// Integer centavos — see $lib/lib/money.ts for why.
+		amount: integer('amount').notNull(),
+		currency: text('currency').notNull().default('BRL'),
+		source: text('source').notNull(),
+		// The raw category as it comes from the Meu Pluggy API (e.g. "Investments",
+		// "Same person transfer", "Credit card payment"). Used to spot internal
+		// transfers and investment movements, which do NOT count as spending or
+		// income on the dashboard — distinct from `category`, which is TabelaFin's
+		// own categorisation by AI/rules.
+		pluggyCategory: text('pluggy_category'),
+		category: text('category'),
+		categorySource: text('category_source'),
+		dedupeHash: text('dedupe_hash'),
+		supersededByTransactionId: text('superseded_by_transaction_id')
+	},
+	(table) => [
+		// `transactions` is the one table that is both multi-tenant and unbounded,
+		// and until now it carried no non-unique index at all — so every dashboard
+		// load, every transaction list, every chat context and every report
+		// scanned every row of every user. These three cover the access patterns
+		// the app actually has:
+		//
+		//   (user_id, date)     — the month window, which is nearly every read
+		//   (user_id, category) — the category aggregations
+		//   (account_id)        — joining a transaction to its account
+		index('idx_transactions_user_date').on(table.userId, table.date),
+		index('idx_transactions_user_category').on(table.userId, table.category),
+		index('idx_transactions_account').on(table.accountId)
+	]
+);
 
 export const statementUploads = sqliteTable('statement_uploads', {
 	id: text('id')
@@ -240,7 +272,8 @@ export const recurringExpenses = sqliteTable('recurring_expenses', {
 		.notNull()
 		.references(() => users.id, { onDelete: 'cascade' }),
 	description: text('description').notNull(),
-	amount: real('amount').notNull(),
+	// Integer centavos — see $lib/lib/money.ts.
+	amount: integer('amount').notNull(),
 	category: text('category'),
 	// 'monthly' | 'yearly' | 'weekly' | 'quarterly'
 	frequency: text('frequency').notNull().default('monthly'),

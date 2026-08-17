@@ -1,8 +1,15 @@
-import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
-import { getAccountsByUser } from '$lib/server/db/accounts';
+import {
+	createManualAccount,
+	deleteAccount,
+	getAccountsByUser,
+	isManualAccount,
+	updateAccountBalance
+} from '$lib/server/db/accounts';
 import { signedBalance, sumSignedBalance } from '$lib/lib/accounts';
+import { parseCents } from '$lib/lib/money';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -25,14 +32,76 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	return {
 		// Sorted on the signed axis: by raw balance the card climbs to the top as
 		// if its open invoice were the user's largest account.
-		accounts: [...userAccounts].sort((a, b) => signedBalance(b) - signedBalance(a)),
+		accounts: [...userAccounts]
+			.sort((a, b) => signedBalance(b) - signedBalance(a))
+			// `manual` drives which rows offer edit/delete: a Pluggy-owned balance is
+			// overwritten by the next sync, so letting someone edit it would be a
+			// change that silently reverts.
+			.map((a) => ({ ...a, manual: isManualAccount(a) })),
 		summary: {
 			// `credit` stays the debt as a magnitude — its own card already renders
 			// the "-" and the "fatura em aberto" label. Only the total sums signed.
 			total: sumSignedBalance(userAccounts),
-			checking: Math.round(checking * 100) / 100,
-			investment: Math.round(investment * 100) / 100,
-			credit: Math.round(credit * 100) / 100
+			checking: checking,
+			investment: investment,
+			credit: credit
 		}
 	};
+};
+
+const ACCOUNT_TYPES = ['checking', 'credit_card', 'investment'] as const;
+type AccountType = (typeof ACCOUNT_TYPES)[number];
+
+export const actions: Actions = {
+	create: async ({ request, locals, platform }) => {
+		if (!locals.userId) redirect(303, '/login');
+
+		const form = await request.formData();
+		const name = String(form.get('name') ?? '').trim();
+		const type = String(form.get('type') ?? '');
+		const balance = parseCents(form.get('balance'));
+
+		if (!name) return fail(400, { error: 'Dê um nome pra conta.' });
+		if (!ACCOUNT_TYPES.includes(type as AccountType)) {
+			return fail(400, { error: 'Escolha um tipo de conta.' });
+		}
+		if (balance === null) return fail(400, { error: 'Informe um saldo válido.' });
+
+		const db = getDb(platform!.env.DB);
+		await createManualAccount(db, {
+			userId: locals.userId,
+			name,
+			type: type as AccountType,
+			balance
+		});
+		return { success: true };
+	},
+
+	updateBalance: async ({ request, locals, platform }) => {
+		if (!locals.userId) redirect(303, '/login');
+
+		const form = await request.formData();
+		const accountId = String(form.get('accountId') ?? '');
+		const balance = parseCents(form.get('balance'));
+		if (!accountId) return fail(400, { error: 'Conta inválida.' });
+		if (balance === null) return fail(400, { error: 'Informe um saldo válido.' });
+
+		const db = getDb(platform!.env.DB);
+		// Ownership is enforced in the WHERE clause, so a forged id updates nothing
+		// rather than someone else's row.
+		await updateAccountBalance(db, locals.userId, accountId, balance);
+		return { success: true };
+	},
+
+	delete: async ({ request, locals, platform }) => {
+		if (!locals.userId) redirect(303, '/login');
+
+		const form = await request.formData();
+		const accountId = String(form.get('accountId') ?? '');
+		if (!accountId) return fail(400, { error: 'Conta inválida.' });
+
+		const db = getDb(platform!.env.DB);
+		await deleteAccount(db, locals.userId, accountId);
+		return { success: true };
+	}
 };

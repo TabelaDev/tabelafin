@@ -9,6 +9,7 @@ import {
 	deleteRecurringExpense
 } from '$lib/server/db/recurring-expenses';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { parseCents } from '$lib/lib/money';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -46,16 +47,18 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		}
 	}
 
+	// Normalising a weekly/quarterly/yearly charge to a monthly figure divides,
+	// which lands between centavos — rounded per item so the running total stays
+	// an integer rather than drifting into fractional cents.
 	const monthlyTotal = activeExpenses.reduce((sum, e) => {
 		switch (e.frequency) {
 			case 'weekly':
-				return sum + e.amount * 4.33;
-			case 'monthly':
-				return sum + e.amount;
+				return sum + Math.round(e.amount * 4.33);
 			case 'quarterly':
-				return sum + e.amount / 3;
+				return sum + Math.round(e.amount / 3);
 			case 'yearly':
-				return sum + e.amount / 12;
+				return sum + Math.round(e.amount / 12);
+			case 'monthly':
 			default:
 				return sum + e.amount;
 		}
@@ -67,7 +70,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 			occurrences: occurrenceCounts[e.id] ?? 0,
 			lastOccurrence: lastOccurrences[e.id] ?? null
 		})),
-		monthlyTotal: Math.round(monthlyTotal * 100) / 100,
+		monthlyTotal: monthlyTotal,
 		categories: await getCategoriesByUser(db, locals.userId)
 	};
 };
@@ -91,8 +94,10 @@ export const actions: Actions = {
 			return fail(400, { error: 'Preencha os campos obrigatórios.' });
 		}
 
-		const parsedAmount = parseFloat(amount);
-		if (isNaN(parsedAmount) || parsedAmount <= 0) {
+		// parseCents: the boundary from what the person typed to the integer the
+		// rest of the app uses. parseFloat also mis-read "1.234,56" as 1.234.
+		const parsedAmount = parseCents(amount);
+		if (parsedAmount === null || parsedAmount <= 0) {
 			return fail(400, { error: 'Valor inválido.' });
 		}
 

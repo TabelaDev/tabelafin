@@ -9,13 +9,14 @@ import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import {
 	getAllPluggyItems,
 	getPluggyItemsByUser,
+	updateLastSyncAttemptAt,
 	updateLastSyncedAt,
 	upsertPluggyItem
 } from '$lib/server/db/pluggy-items';
 import { upsertAccount } from '$lib/server/db/accounts';
 import {
 	findSupersedeCandidate,
-	getTransactionByPluggyId,
+	getExistingPluggyIds,
 	getUncategorizedTransactions,
 	insertPluggyTransaction,
 	markSuperseded,
@@ -58,7 +59,7 @@ export async function syncAllUsers(env: Env): Promise<void> {
 
 	for (const userId of itemsByUser.keys()) {
 		try {
-			await syncUserItems(db, env.MASTER_KEY, userId, itemsByUser.get(userId));
+			await syncUserItems(db, env.MASTER_KEY, userId, { items: itemsByUser.get(userId) });
 		} catch (err) {
 			console.error('[pluggy/sync] falha ao sincronizar usuário', {
 				userId,
@@ -72,12 +73,23 @@ export async function syncAllUsers(env: Env): Promise<void> {
 // categorisation). Used by the daily cron (through syncAllUsers) and right after
 // connecting Open Finance during onboarding, so the data arrives immediately
 // instead of waiting for the next run.
+export interface SyncUserItemsOptions {
+	// Already-loaded items, so the caller does not pay for a second query.
+	items?: PluggyItemRow[];
+	// Skips the batched AI call at the end. Used by the recovery path in
+	// (app)/+layout.server.ts: that runs on a page load, and the user's own BYOK
+	// key pays for it — pulling the data is worth doing eagerly, spending their
+	// credit is not. The daily cron categorises whatever is left.
+	skipAiCategorization?: boolean;
+}
+
 export async function syncUserItems(
 	db: Db,
 	masterKey: string,
 	userId: string,
-	items?: PluggyItemRow[]
+	options: SyncUserItemsOptions = {}
 ): Promise<void> {
+	const { items, skipAiCategorization = false } = options;
 	const credentials = await getPluggyCredentials(db, userId);
 	if (!credentials) {
 		console.error('[pluggy/sync] usuário sem pluggy_credentials salvas, pulando', { userId });
@@ -111,6 +123,9 @@ export async function syncUserItems(
 	const userItems = items ?? (await getPluggyItemsByUser(db, userId));
 
 	for (const item of userItems) {
+		// Stamped before the try, so a throw still records that we tried — that is
+		// what stops the recovery path from retrying on every navigation.
+		await updateLastSyncAttemptAt(db, item.id, new Date());
 		try {
 			await syncItem(db, token, item);
 			await updateLastSyncedAt(db, item.id, new Date());
@@ -144,7 +159,7 @@ export async function syncUserItems(
 	// history.
 	await applyTagRules(db, userId);
 
-	await categorizeNewTransactions(db, masterKey, userId);
+	await categorizeNewTransactions(db, masterKey, userId, { skipAi: skipAiCategorization });
 }
 
 // MIRROR_WINDOW_MS: interbank transfers land D+0/D+1, so the two legs can sit
@@ -260,7 +275,10 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 		if (!row.accountId) continue;
 		const accType = accountTypeById.get(row.accountId);
 		if (accType === 'credit_card') continue;
-		const key = Math.abs(row.amount).toFixed(2);
+		// The grouping key is the integer magnitude. It used to be
+		// `.toFixed(2)` on a float — a second, different notion of "same amount"
+		// from the one the dedupe used, in the same pipeline.
+		const key = String(Math.abs(row.amount));
 		const list = groups.get(key) ?? [];
 		list.push(row);
 		groups.set(key, list);
@@ -325,7 +343,12 @@ async function markSelfTransfersByName(db: Db, userId: string): Promise<void> {
 // but the sync runs independently of the web session and cannot assume it), the
 // transactions stay uncategorised until the next run rather than blocking the
 // sync.
-async function categorizeNewTransactions(db: Db, masterKey: string, userId: string): Promise<void> {
+async function categorizeNewTransactions(
+	db: Db,
+	masterKey: string,
+	userId: string,
+	options: { skipAi?: boolean } = {}
+): Promise<void> {
 	const pending = await getUncategorizedTransactions(db, userId);
 	if (pending.length === 0) return;
 
@@ -375,6 +398,10 @@ async function categorizeNewTransactions(db: Db, masterKey: string, userId: stri
 
 	const stillPending = await getUncategorizedTransactions(db, userId);
 	if (stillPending.length === 0) return;
+
+	// Everything above is free (local keyword and user rules); everything below
+	// spends the user's own API credit. The recovery path stops here.
+	if (options.skipAi) return;
 
 	// The user's toggle: automatic categorisation off → transactions stay
 	// uncategorised until they turn it on (the manual rules already ran above).
@@ -454,6 +481,15 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 			? new Date(item.lastSyncedAt.getTime() - 7 * 24 * 60 * 60 * 1000)
 			: undefined;
 		const pluggyTransactions = await fetchTransactions(token, [pluggyAccount.id], since);
+
+		// One batched lookup instead of a SELECT per transaction. On a first sync
+		// — where `since` is undefined and the whole history comes back — that was
+		// one round trip per row before any work was done.
+		const existingIds = await getExistingPluggyIds(
+			db,
+			pluggyTransactions.map((tx) => tx.id)
+		);
+
 		for (const tx of pluggyTransactions) {
 			const txDate = new Date(tx.date);
 
@@ -461,8 +497,7 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 			// still refreshed (the BRL-converted amount arrived later — a re-sync
 			// fixes foreign transactions stored before that) and the dedupe/supersede
 			// is skipped, since it only makes sense for a brand new transaction.
-			const alreadySynced = await getTransactionByPluggyId(db, tx.id);
-			if (alreadySynced) {
+			if (existingIds.has(tx.id)) {
 				await updatePluggyFields(db, tx.id, { category: tx.category, amount: tx.amount });
 				continue;
 			}

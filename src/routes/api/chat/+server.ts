@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getUserAiPrompts } from '$lib/server/db/user-ai-prompts';
+import { findUserById } from '$lib/server/db/users';
 import { createConversation, getConversation, getMessages, addMessage } from '$lib/server/db/chat';
 import { getRecurringExpenses } from '$lib/server/db/recurring-expenses';
 import { financeAccounts } from '$lib/server/db/schema';
@@ -10,7 +11,16 @@ import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { transactions } from '$lib/server/db/schema';
 import { classifyMovement, isNotInternalTransfer } from '$lib/server/db/transactions';
 import { getTagTotals } from '$lib/server/db/tags';
+import { sumSignedBalance } from '$lib/lib/accounts';
+import { toReais } from '$lib/lib/money';
 import { decryptSecret } from '$lib/server/crypto';
+import { fetchWithRetry, type FetchWithRetryOptions } from '$lib/server/http';
+
+// The chat answer is streamed, and the abort signal covers the response body —
+// so the budget has to fit the whole answer, not just the handshake. 2048
+// output tokens arrive well inside this; the timeout is here for a provider
+// that accepts the connection and then goes quiet.
+const STREAM_FETCH_OPTIONS: FetchWithRetryOptions = { timeoutMs: 120_000 };
 
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	if (!locals.userId) {
@@ -26,6 +36,14 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
+
+	// The chat spends the user's own API credit, so the toggle in /profile/ai is
+	// enforced server-side too — hiding the widget is not enough, the endpoint is
+	// reachable on its own.
+	const user = await findUserById(db, userId);
+	if (user && !user.aiChatEnabled) {
+		return json({ error: 'O chat de IA está desativado nas suas configurações.' }, { status: 403 });
+	}
 
 	// Get or create conversation
 	let convId = conversationId;
@@ -98,7 +116,11 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		}
 	}
 
-	const totalBalance = userAccounts.reduce((sum, a) => sum + a.cachedBalance, 0);
+	// Through sumSignedBalance, so a credit card's open invoice counts as debt
+	// rather than as money on hand — summing cachedBalance raw made the assistant
+	// quote a total well above what the dashboard showed, with the authority of a
+	// direct answer.
+	const totalBalance = sumSignedBalance(userAccounts);
 	const recurringTotal = recurringExpensesList.reduce((sum, e) => sum + e.amount, 0);
 
 	// Tags, month-scoped like the rest of the context — lets the AI answer
@@ -107,18 +129,18 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
 	const contextParts = [
 		`Mês atual: ${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
-		`Renda do mês: R$ ${monthIncome.toFixed(2)}`,
-		`Gastos do mês: R$ ${monthExpense.toFixed(2)}`,
-		`Saldo total: R$ ${totalBalance.toFixed(2)}`,
-		`Gastos recorrentes mensais: R$ ${recurringTotal.toFixed(2)}`,
+		`Renda do mês: R$ ${toReais(monthIncome).toFixed(2)}`,
+		`Gastos do mês: R$ ${toReais(monthExpense).toFixed(2)}`,
+		`Saldo total: R$ ${toReais(totalBalance).toFixed(2)}`,
+		`Gastos recorrentes mensais: R$ ${toReais(recurringTotal).toFixed(2)}`,
 		`Gastos por categoria: ${
 			Object.entries(categoryTotals)
-				.map(([cat, val]) => `${cat}: R$ ${val.toFixed(2)}`)
+				.map(([cat, val]) => `${cat}: R$ ${toReais(val).toFixed(2)}`)
 				.join(', ') || 'nenhum'
 		}`,
 		`Gastos por tag: ${
 			tagTotals
-				.map((t) => `${t.name}: R$ ${t.expense.toFixed(2)}`)
+				.map((t) => `${t.name}: R$ ${toReais(t.expense).toFixed(2)}`)
 				.filter((line) => !line.includes('R$ 0.00'))
 				.join(', ') || 'nenhum'
 		}`
@@ -162,21 +184,25 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 				let fullResponse = '';
 
 				if (aiCreds.provider === 'anthropic') {
-					const res = await fetch('https://api.anthropic.com/v1/messages', {
-						method: 'POST',
-						headers: {
-							'content-type': 'application/json',
-							'x-api-key': apiKey,
-							'anthropic-version': '2023-06-01'
+					const res = await fetchWithRetry(
+						'https://api.anthropic.com/v1/messages',
+						{
+							method: 'POST',
+							headers: {
+								'content-type': 'application/json',
+								'x-api-key': apiKey,
+								'anthropic-version': '2023-06-01'
+							},
+							body: JSON.stringify({
+								model: aiCreds.model,
+								max_tokens: 2048,
+								system: aiMessages[0].content,
+								messages: aiMessages.slice(1),
+								stream: true
+							})
 						},
-						body: JSON.stringify({
-							model: aiCreds.model,
-							max_tokens: 2048,
-							system: aiMessages[0].content,
-							messages: aiMessages.slice(1),
-							stream: true
-						})
-					});
+						STREAM_FETCH_OPTIONS
+					);
 
 					if (!res.ok) {
 						const err = await res.text();
@@ -232,18 +258,22 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 							? 'https://api.openai.com/v1/chat/completions'
 							: 'https://api.deepseek.com/chat/completions';
 
-					const res = await fetch(apiUrl, {
-						method: 'POST',
-						headers: {
-							'content-type': 'application/json',
-							authorization: `Bearer ${apiKey}`
+					const res = await fetchWithRetry(
+						apiUrl,
+						{
+							method: 'POST',
+							headers: {
+								'content-type': 'application/json',
+								authorization: `Bearer ${apiKey}`
+							},
+							body: JSON.stringify({
+								model: aiCreds.model,
+								messages: aiMessages,
+								stream: true
+							})
 						},
-						body: JSON.stringify({
-							model: aiCreds.model,
-							messages: aiMessages,
-							stream: true
-						})
-					});
+						STREAM_FETCH_OPTIONS
+					);
 
 					if (!res.ok) {
 						const err = await res.text();
