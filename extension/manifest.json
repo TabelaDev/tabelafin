@@ -5,10 +5,9 @@
 	"description": "Captura o token do Meu Pluggy e sincroniza automaticamente com o TabelaFin.",
 	"permissions": ["storage"],
 	"host_permissions": [
-		"https://*.pluggy.ai/*",
-		"https://*.ianptkcs-023.workers.dev/*",
-		"http://localhost/*",
-		"http://127.0.0.1/*"
+		"https://meu.pluggy.ai/*",
+		"https://tabelafin.ianptkcs-023.workers.dev/*",
+		"https://tabelafin-staging.ianptkcs-023.workers.dev/*"
 	],
 	"background": {
 		"service_worker": "background.js"
@@ -23,6 +22,8 @@
 	],
 	"action": {
 		"default_popup": "popup.html",
-		"default_title": "TabelaFin"
-	}
+		"default_title": "TabelaFin",
+		"default_icon": { "48": "icons/icon-48.png", "128": "icons/icon-128.png" }
+	},
+	"icons": { "48": "icons/icon-48.png", "128": "icons/icon-128.png" }
 }

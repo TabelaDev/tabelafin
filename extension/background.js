@@ -29,8 +29,36 @@ async function pushToken(token) {
 	return { ok: true, count: body && body.count };
 }
 
+// Only the Meu Pluggy tab may hand us a token. The content script runs in the
+// MAIN world — the page's own JS context — so any script loaded on that page,
+// or an XSS in it, can call chrome.runtime.sendMessage too. Dropping `sender`
+// on the floor meant an attacker-chosen token would be stored as the victim's
+// Meu Pluggy credential, pointing their sync at accounts they do not own.
+//
+// Checking the origin does not make the MAIN world safe against the page
+// itself; it bounds the damage to that one origin, which is the most this
+// architecture offers. A capture path outside the page's context is the real
+// fix — see docs/pluggy-integration.md.
+const TRUSTED_ORIGIN = 'https://meu.pluggy.ai';
+
+function isTrustedSender(sender) {
+	// Extension pages (the popup) carry no tab and are inherently trusted.
+	if (sender && sender.id === chrome.runtime.id && !sender.tab) return true;
+	if (!sender || !sender.url) return false;
+	try {
+		return new URL(sender.url).origin === TRUSTED_ORIGIN;
+	} catch {
+		return false;
+	}
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message && message.type === 'PLUGGY_TOKEN') {
+		if (!isTrustedSender(sender)) {
+			console.warn('[tabelafin] mensagem de origem não confiável ignorada');
+			sendResponse({ ok: false, error: 'Origem não confiável.' });
+			return true;
+		}
 		pushToken(message.token)
 			.then((result) => {
 				chrome.storage.local.set({ lastResult: { at: Date.now(), ...result } });
