@@ -137,4 +137,141 @@ describe('categorizeTransactions', () => {
 			})
 		).rejects.toThrow('Anthropic API error');
 	});
+
+	it('reports a truncated Anthropic response instead of a parsing error', async () => {
+		mockFetchOnce({ content: [], stop_reason: 'max_tokens' });
+
+		await expect(
+			categorizeTransactions({
+				provider: 'anthropic',
+				model: 'claude-sonnet-5',
+				apiKey: 'key',
+				categories: ['Alimentação', 'Renda', 'Transferências', 'Investimentos', 'Outros'],
+				transactions: TRANSACTIONS
+			})
+		).rejects.toThrow('truncada');
+	});
+
+	it('scales max_tokens with the batch size', async () => {
+		const fetchSpy = mockFetchOnce({
+			content: [{ type: 'tool_use', name: 'categorize_transactions', input: { results: [] } }]
+		});
+
+		await categorizeTransactions({
+			provider: 'anthropic',
+			model: 'claude-sonnet-5',
+			apiKey: 'key',
+			categories: ['Alimentação'],
+			transactions: TRANSACTIONS
+		});
+
+		const body = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string);
+		expect(body.max_tokens).toBe(512 + 2 * 48);
+	});
+});
+
+// The regression this guards: a first sync of a real account produces far more
+// transactions than one call can answer, and the old single-call path lost
+// every result when the response got truncated.
+describe('categorizeTransactions — batching', () => {
+	function manyTransactions(count: number): TransactionToCategorize[] {
+		return Array.from({ length: count }, (_, i) => ({
+			id: `tx-${i}`,
+			description: `COMPRA ${i}`,
+			amount: -10,
+			date: '2026-07-15'
+		}));
+	}
+
+	function anthropicOk(ids: string[]) {
+		return {
+			content: [
+				{
+					type: 'tool_use',
+					name: 'categorize_transactions',
+					input: { results: ids.map((id) => ({ id, category: 'Alimentação' })) }
+				}
+			]
+		};
+	}
+
+	it('splits a large run into batches of 100 and merges the results', async () => {
+		const transactions = manyTransactions(250);
+		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation((async (
+			_url: string,
+			init: RequestInit
+		) => {
+			const body = JSON.parse(init.body as string);
+			// The ids in this batch come from the prompt the caller just built.
+			const ids = [...(body.system as string).matchAll(/id=(tx-\d+)/g)].map((m) => m[1]);
+			return {
+				ok: true,
+				status: 200,
+				json: async () => anthropicOk(ids),
+				text: async () => ''
+			} as Response;
+		}) as unknown as typeof fetch);
+
+		const result = await categorizeTransactions({
+			provider: 'anthropic',
+			model: 'claude-sonnet-5',
+			apiKey: 'key',
+			categories: ['Alimentação'],
+			transactions
+		});
+
+		expect(fetchSpy).toHaveBeenCalledTimes(3); // 100 + 100 + 50
+		expect(result).toHaveLength(250);
+		expect(result.map((r) => r.id)).toEqual(transactions.map((t) => t.id));
+	});
+
+	it('keeps the results of the batches that succeeded when one fails', async () => {
+		let call = 0;
+		vi.spyOn(globalThis, 'fetch').mockImplementation((async (_url: string, init: RequestInit) => {
+			call++;
+			// 400, not 429: a retriable status would be retried by fetchWithRetry
+			// and this test is about a batch that genuinely fails.
+			if (call === 2) {
+				return { ok: false, status: 400, text: async () => 'bad request' } as Response;
+			}
+			const body = JSON.parse(init.body as string);
+			const ids = [...(body.system as string).matchAll(/id=(tx-\d+)/g)].map((m) => m[1]);
+			return {
+				ok: true,
+				status: 200,
+				json: async () => anthropicOk(ids),
+				text: async () => ''
+			} as Response;
+		}) as unknown as typeof fetch);
+
+		const result = await categorizeTransactions({
+			provider: 'anthropic',
+			model: 'claude-sonnet-5',
+			apiKey: 'key',
+			categories: ['Alimentação'],
+			transactions: manyTransactions(250)
+		});
+
+		// The middle batch is lost, the other two survive — the next sync retries
+		// only the 100 that stayed uncategorised.
+		expect(result).toHaveLength(150);
+	});
+
+	it('throws when every batch fails, instead of returning an empty list', async () => {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+			ok: false,
+			status: 401,
+			text: async () => 'invalid api key'
+		} as Response);
+
+		await expect(
+			categorizeTransactions({
+				provider: 'anthropic',
+				model: 'claude-sonnet-5',
+				apiKey: 'bad-key',
+				categories: ['Alimentação'],
+				transactions: manyTransactions(250)
+			})
+		).rejects.toThrow('todos os 3 lotes');
+	});
 });

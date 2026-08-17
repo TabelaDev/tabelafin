@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { and, desc, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNull, like, lt, sql } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { transactions } from '$lib/server/db/schema';
@@ -8,6 +8,11 @@ import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
 import { isNotInternalTransfer, visibleTransactions } from '$lib/server/db/transactions';
 import { getTagsByUser, getTagsForTransactions, setTransactionTags } from '$lib/server/db/tags';
+
+// Default span for the unfiltered list. Long enough to cover the year people
+// actually look back over, short enough that the query stays bounded as the
+// history grows.
+const DEFAULT_WINDOW_MONTHS = 12;
 
 export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -41,22 +46,51 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 		conditions.push(isNotInternalTransfer);
 	}
 
+	// Search runs in SQL rather than over the fetched rows. It used to load the
+	// user's entire history to match a substring, which is the single most
+	// expensive thing this page did — and the cost grew with every sync.
+	if (search) {
+		conditions.push(like(sql`lower(${transactions.description})`, `%${search.toLowerCase()}%`));
+	}
+
 	let rows;
+	let windowed = false;
 	if (month && /^\d{4}-\d{2}$/.test(month)) {
 		const [y, m] = month.split('-').map(Number);
 		const from = new Date(y, m - 1, 1);
+		// `lt`, not `lte`: `lte` on the first of the next month also matched a
+		// transaction stamped at that day's UTC midnight, so the 1st showed up in
+		// both months and the header total never matched the dashboard card.
 		const to = new Date(y, m, 1);
 		rows = await db
 			.select()
 			.from(transactions)
-			.where(and(...conditions, gte(transactions.date, from), lte(transactions.date, to)))
+			.where(and(...conditions, gte(transactions.date, from), lt(transactions.date, to)))
 			.orderBy(desc(transactions.date));
 	} else {
-		rows = await db
-			.select()
-			.from(transactions)
-			.where(and(...conditions))
-			.orderBy(desc(transactions.date));
+		// No month picked: bound the query to a rolling window instead of the whole
+		// history. Type and tag filtering still happen in memory (both need a join
+		// this query does not do), so a SQL LIMIT would cut rows *before* those
+		// filters and silently drop matches — a date window is the bound that stays
+		// correct. `?window=all` is the escape hatch for someone who really wants
+		// everything.
+		const wantsAll = url.searchParams.get('window') === 'all';
+		if (wantsAll) {
+			rows = await db
+				.select()
+				.from(transactions)
+				.where(and(...conditions))
+				.orderBy(desc(transactions.date));
+		} else {
+			const since = new Date();
+			since.setMonth(since.getMonth() - DEFAULT_WINDOW_MONTHS);
+			windowed = true;
+			rows = await db
+				.select()
+				.from(transactions)
+				.where(and(...conditions, gte(transactions.date, since)))
+				.orderBy(desc(transactions.date));
+		}
 	}
 
 	// The sign filter depends on the account type (a card's sign is inverted), so
@@ -80,11 +114,6 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 			if (accType === 'credit_card') return t.amount > 0; // compra
 			return t.amount < 0;
 		});
-	}
-
-	if (search) {
-		const q = search.toLowerCase();
-		rows = rows.filter((t) => t.description.toLowerCase().includes(q));
 	}
 
 	// Future entries (card instalments the bank pre-posts ahead of time, dated to
@@ -146,6 +175,10 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 		})),
 		categories: userCategories,
 		userTags,
+		// `windowed` lets the page say the list is bounded and offer the escape
+		// hatch — a silent cap would read as "these are all my transactions".
+		windowed,
+		windowMonths: DEFAULT_WINDOW_MONTHS,
 		filters: { category, month, search, type, tag, internal: showInternal ? 'yes' : '' }
 	};
 };

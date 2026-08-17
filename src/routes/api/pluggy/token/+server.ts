@@ -2,7 +2,11 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { upsertPluggyCredentials } from '$lib/server/db/pluggy-credentials';
-import { upsertPluggyItem } from '$lib/server/db/pluggy-items';
+import {
+	getPluggyItemsByUser,
+	shouldRefreshSync,
+	upsertPluggyItem
+} from '$lib/server/db/pluggy-items';
 import { setUserSeenOnboarding } from '$lib/server/db/users';
 import { encryptSecret } from '$lib/server/crypto';
 import { fetchItems, jwtExpiresAt } from '$lib/server/pluggy/client';
@@ -99,13 +103,20 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	// connecting).
 	await setUserSeenOnboarding(db, userId, true);
 
-	const syncPromise = syncUserItems(db, masterKey, userId).catch((err) => {
-		console.error('[pluggy/token] sync pós-token falhou', {
-			userId,
-			error: err instanceof Error ? err.message : String(err)
+	// The extension re-posts the token on every visit to Meu Pluggy, so this
+	// endpoint is not a once-per-connection event — it can fire several times a
+	// day. Throttle the sync it triggers; storing the fresh token above always
+	// happens, which is what keeps the daily cron working.
+	const userItems = await getPluggyItemsByUser(db, userId);
+	if (shouldRefreshSync(userItems)) {
+		const syncPromise = syncUserItems(db, masterKey, userId, { items: userItems }).catch((err) => {
+			console.error('[pluggy/token] sync pós-token falhou', {
+				userId,
+				error: err instanceof Error ? err.message : String(err)
+			});
 		});
-	});
-	platform!.ctx.waitUntil(syncPromise);
+		platform!.ctx.waitUntil(syncPromise);
+	}
 
 	return json({ ok: true, count: items.length });
 };

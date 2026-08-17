@@ -3,7 +3,7 @@ import type { LayoutServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
-import { getPluggyItemsByUser } from '$lib/server/db/pluggy-items';
+import { getPluggyItemsByUser, shouldRecoverySync } from '$lib/server/db/pluggy-items';
 import { findUserById } from '$lib/server/db/users';
 import { ensureDefaultCategories } from '$lib/server/db/user-categories';
 import { syncUserItems } from '$lib/server/pluggy/sync';
@@ -41,9 +41,15 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 
 	// Pluggy connected but the items never synced (a connection made before the
 	// post-connection sync existed) — kicks off the sync in the background so the
-	// data arrives without waiting for the daily cron.
-	if (pluggy && pluggyItems.some((item) => !item.lastSyncedAt)) {
-		const syncPromise = syncUserItems(db, platform!.env.MASTER_KEY, locals.userId).catch((err) => {
+	// data arrives without waiting for the daily cron. The cooldown in
+	// shouldRecoverySync is what makes this safe to run from a layout load:
+	// without it, an item that keeps failing fired a full sync on every single
+	// navigation. AI categorisation is left to the cron — see
+	// SyncUserItemsOptions.
+	if (pluggy && shouldRecoverySync(pluggyItems)) {
+		const syncPromise = syncUserItems(db, platform!.env.MASTER_KEY, locals.userId, {
+			skipAiCategorization: true
+		}).catch((err) => {
 			console.error('[layout/app] recovery sync failed', {
 				userId: locals.userId,
 				error: err instanceof Error ? err.message : String(err)
@@ -58,6 +64,7 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 		pluggyConfigured: Boolean(pluggy),
 		pluggyStatus,
 		hideAi: user?.hideAi ?? false,
+		aiChatEnabled: user?.aiChatEnabled ?? true,
 		seenOnboarding
 	};
 };

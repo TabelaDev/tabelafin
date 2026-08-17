@@ -10,11 +10,29 @@
 // gating happens in the UI and in the upload route before the call. As a
 // safeguard, the dispatch still throws if it is called with one of them.
 import type { AiProvider } from '$lib/lib/ai-providers';
+import { fetchWithRetry } from '$lib/server/http';
+import { toCents } from '$lib/lib/money';
+
+// A PDF cannot be split the way a transaction list can (server/ai/categorize.ts
+// batches; here the document is the unit), so the only lever is a budget big
+// enough for a long invoice: each extracted row costs ~60 tokens, so this covers
+// roughly 250 of them. Past that the response is truncated and the user is told
+// so — see the checks below. Returning just the rows that fit would be worse:
+// parseExtraction drops malformed entries without a word, so a truncated answer
+// reads as "your invoice only had 40 transactions".
+const MAX_OUTPUT_TOKENS = 16000;
+
+const TRUNCATED_MESSAGE =
+	'A resposta da IA foi truncada: o documento tem transações demais para o modelo escolhido. ' +
+	'Tente um modelo com saída maior ou envie o extrato dividido por período.';
 
 export interface ExtractedTransaction {
 	date: string; // 'YYYY-MM-DD'
 	description: string;
-	amount: number; // negative for expense, positive for income
+	// Integer centavos, negative for expense. The model answers in reais (the
+	// schema asks for "valor em reais"), so parseExtraction converts on the way
+	// out — this is the boundary.
+	amount: number;
 	category: string;
 }
 
@@ -85,7 +103,7 @@ export async function extractTransactionsFromPdf(
 }
 
 async function extractWithAnthropic(input: ExtractInput): Promise<ExtractedTransaction[]> {
-	const res = await fetch('https://api.anthropic.com/v1/messages', {
+	const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',
@@ -94,7 +112,7 @@ async function extractWithAnthropic(input: ExtractInput): Promise<ExtractedTrans
 		},
 		body: JSON.stringify({
 			model: input.model,
-			max_tokens: 4096,
+			max_tokens: MAX_OUTPUT_TOKENS,
 			system: systemPrompt(input.categories),
 			messages: [
 				{
@@ -126,14 +144,17 @@ async function extractWithAnthropic(input: ExtractInput): Promise<ExtractedTrans
 
 	const data = (await res.json()) as {
 		content: Array<{ type: string; name?: string; input?: unknown }>;
+		stop_reason?: string;
 	};
+	if (data.stop_reason === 'max_tokens') throw new Error(TRUNCATED_MESSAGE);
+
 	const toolUse = data.content.find((block) => block.type === 'tool_use');
 	if (!toolUse) throw new Error('IA não retornou transações estruturadas do documento');
 	return parseExtraction(toolUse.input, input.categories);
 }
 
 async function extractWithOpenAI(input: ExtractInput): Promise<ExtractedTransaction[]> {
-	const res = await fetch('https://api.openai.com/v1/responses', {
+	const res = await fetchWithRetry('https://api.openai.com/v1/responses', {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',
@@ -141,6 +162,8 @@ async function extractWithOpenAI(input: ExtractInput): Promise<ExtractedTransact
 		},
 		body: JSON.stringify({
 			model: input.model,
+			// The Responses API spells the budget differently from the Messages API.
+			max_output_tokens: MAX_OUTPUT_TOKENS,
 			instructions: systemPrompt(input.categories),
 			input: [
 				{
@@ -174,7 +197,13 @@ async function extractWithOpenAI(input: ExtractInput): Promise<ExtractedTransact
 
 	const data = (await res.json()) as {
 		output: Array<{ type: string; name?: string; arguments?: string }>;
+		status?: string;
+		incomplete_details?: { reason?: string };
 	};
+	if (data.status === 'incomplete' && data.incomplete_details?.reason === 'max_output_tokens') {
+		throw new Error(TRUNCATED_MESSAGE);
+	}
+
 	const functionCall = data.output.find((item) => item.type === 'function_call');
 	if (!functionCall?.arguments)
 		throw new Error('IA não retornou transações estruturadas do documento');
@@ -196,13 +225,14 @@ function parseExtraction(rawInput: unknown, categories: string[]): ExtractedTran
 		if (!DATE_RE.test(date)) continue;
 		const description = typeof raw.description === 'string' ? raw.description.trim() : '';
 		if (!description) continue;
-		const amount = typeof raw.amount === 'number' ? raw.amount : NaN;
-		if (!Number.isFinite(amount)) continue;
+		const reais = typeof raw.amount === 'number' ? raw.amount : NaN;
+		if (!Number.isFinite(reais)) continue;
 		const category = raw.category;
 		if (typeof category !== 'string' || !categories.includes(category)) {
 			continue;
 		}
-		result.push({ date, description, amount, category });
+		// The model answers in reais; centavos from here on.
+		result.push({ date, description, amount: toCents(reais), category });
 	}
 	return result;
 }

@@ -436,6 +436,21 @@
 				</p>
 			{/snippet}
 		</Table>
+
+		{#if data.windowed}
+			<!-- Said out loud rather than silently truncated: a bounded list that
+			     looks complete is worse than a slower one. -->
+			<p class="mt-3 text-center font-mono text-xs text-ink-faint">
+				Mostrando os últimos {data.windowMonths} meses.
+				<button
+					type="button"
+					class="text-accent hover:underline"
+					onclick={() => applyFilter('window', 'all')}
+				>
+					Ver todo o histórico
+				</button>
+			</p>
+		{/if}
 	</div>
 </div>
 
