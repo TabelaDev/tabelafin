@@ -42,25 +42,6 @@ test.describe('dashboard', () => {
 		await expect(page.locator('.apexcharts-canvas').first()).toBeVisible({ timeout: 10_000 });
 	});
 
-	test('alterna entre tema claro e escuro', async ({ page }) => {
-		await login(page);
-
-		const toggle = page.getByRole('button', { name: /Tema (claro|escuro)/ });
-		// Espera hidratação completa (o $effect do mode-watcher precisa de um frame).
-		await expect(toggle).toBeVisible();
-		await page.waitForTimeout(800);
-
-		// Detecta o estado atual pelo rótulo e alterna.
-		const initial = (await toggle.textContent()) ?? '';
-		const wantsDark = initial.includes('Tema escuro');
-
-		await toggle.click();
-		if (wantsDark) {
-			await expect(page.locator('html')).toHaveClass(/dark/);
-			await expect(toggle).toHaveText(/Tema claro/);
-		} else {
-			await expect(page.locator('html')).not.toHaveClass(/dark/);
-			await expect(toggle).toHaveText(/Tema escuro/);
-		}
-	});
+	// O teste do tema vive em theme.spec.ts: o ThemeToggle é o mesmo componente na
+	// landing, e lá ele não depende do login.
 });

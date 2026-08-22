@@ -145,7 +145,7 @@ export const financeAccounts = sqliteTable('finance_accounts', {
 	type: text('type').notNull(),
 	name: text('name').notNull(),
 	currency: text('currency').notNull().default('BRL'),
-	// Integer centavos — see $lib/lib/money.ts.
+	// Integer centavos — see $lib/utils/money.ts.
 	cachedBalance: integer('cached_balance').notNull().default(0)
 });
 
@@ -167,7 +167,7 @@ export const transactions = sqliteTable(
 		}),
 		date: integer('date', { mode: 'timestamp' }).notNull(),
 		description: text('description').notNull(),
-		// Integer centavos — see $lib/lib/money.ts for why.
+		// Integer centavos — see $lib/utils/money.ts for why.
 		amount: integer('amount').notNull(),
 		currency: text('currency').notNull().default('BRL'),
 		source: text('source').notNull(),
@@ -212,6 +212,28 @@ export const statementUploads = sqliteTable('statement_uploads', {
 	createdAt: integer('created_at', { mode: 'timestamp' })
 		.notNull()
 		.$defaultFn(() => new Date())
+});
+
+export const statementReviews = sqliteTable('statement_reviews', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	source: text('source').notNull(), // takeout_zip, single_pdf, csv
+	bank: text('bank'), // nubank, itau, inter, generic, auto
+	filename: text('filename').notNull(),
+	status: text('status').notNull().default('pending'), // pending, ready, applied, cancelled
+	extractedJson: text('extracted_json'), // JSON string of ParsedTransaction[]
+	approvedJson: text('approved_json'), // JSON string after user review
+	transactionCount: integer('transaction_count').notNull().default(0),
+	duplicateCount: integer('duplicate_count').notNull().default(0),
+	errorMessage: text('error_message'),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.notNull()
+		.$defaultFn(() => new Date()),
+	appliedAt: integer('applied_at', { mode: 'timestamp' })
 });
 
 export const monthlyReports = sqliteTable('monthly_reports', {
@@ -272,7 +294,7 @@ export const recurringExpenses = sqliteTable('recurring_expenses', {
 		.notNull()
 		.references(() => users.id, { onDelete: 'cascade' }),
 	description: text('description').notNull(),
-	// Integer centavos — see $lib/lib/money.ts.
+	// Integer centavos — see $lib/utils/money.ts.
 	amount: integer('amount').notNull(),
 	category: text('category'),
 	// 'monthly' | 'yearly' | 'weekly' | 'quarterly'

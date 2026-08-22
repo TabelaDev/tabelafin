@@ -5,8 +5,8 @@
 	import { horizontalBarOptions } from '$lib/client/charts';
 	import { Card, Table, Button } from '@tabeladev/tabelawebui';
 	import type { ApexOptions } from 'apexcharts';
-	import { formatCompactCurrency, formatCurrency, formatDate } from '$lib/lib/format';
-	import { signedBalance } from '$lib/lib/accounts';
+	import { formatCompactCurrency, formatCurrency, formatDate } from '$lib/utils/format';
+	import { signedBalance } from '$lib/utils/accounts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -94,7 +94,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard — TabelaFin</title>
+	<title>Dashboard: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-6">

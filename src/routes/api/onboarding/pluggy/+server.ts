@@ -4,7 +4,6 @@ import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { upsertPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { upsertPluggyItem } from '$lib/server/db/pluggy-items';
-import { setUserSeenOnboarding } from '$lib/server/db/users';
 import { encryptSecret } from '$lib/server/crypto';
 import { fetchItems, jwtExpiresAt } from '$lib/server/pluggy/client';
 import { syncUserItems } from '$lib/server/pluggy/sync';
@@ -29,13 +28,11 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 	const db = getDb(platform!.env.DB);
 
-	// Onboarding requires AI configured before connecting Open Finance.
 	const aiCredentials = await getAiCredentials(db, locals.userId);
 	if (!aiCredentials) {
 		return json({ error: 'Configure a IA antes de conectar o Open Finance.' }, { status: 400 });
 	}
 
-	// Validates the token and fetches the user's items (bank connections).
 	let items;
 	try {
 		items = await fetchItems(trimmedToken);
@@ -68,7 +65,6 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ error: 'Erro de configuração do servidor.' }, { status: 500 });
 	}
 
-	// Stores the token encrypted.
 	const encrypted = await encryptSecret(masterKey, trimmedToken, {
 		purpose: 'pluggy_credentials',
 		userId: locals.userId
@@ -82,8 +78,6 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		tokenExpiresAt: expiresAt ? new Date(expiresAt) : null
 	});
 
-	// Creates/updates the pluggy_items (bank connections) from the items the Meu
-	// Pluggy API returned — the sync needs them to know which items to sync.
 	for (const item of items) {
 		await upsertPluggyItem(db, {
 			userId: locals.userId,
@@ -94,14 +88,8 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		});
 	}
 
-	// Onboarding finished — marked as seen so it does not reappear on the next
-	// login.
-	await setUserSeenOnboarding(db, locals.userId, true);
+	await locals.userService.setSeenOnboarding(locals.userId, true);
 
-	// Fetches the data straight away (accounts/transactions/investments + dedupe +
-	// batch categorisation) instead of waiting for the daily cron. Runs in the
-	// background (waitUntil) so it does not hold up the modal's response; if it
-	// fails, the cron picks it up later.
 	const syncPromise = syncUserItems(db, masterKey, locals.userId).catch((err) => {
 		console.error('[onboarding/pluggy] sync pós-conexão falhou', {
 			userId: locals.userId,

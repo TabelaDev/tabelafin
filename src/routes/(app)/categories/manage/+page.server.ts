@@ -1,5 +1,7 @@
-import { redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
 import type { Actions, PageServerLoad } from './$types';
+import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import {
 	addCategory,
@@ -41,31 +43,34 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 };
 
 export const actions: Actions = {
-	add: async ({ request, locals, platform }) => {
+	add: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 		const form = await request.formData();
 		const name = String(form.get('name') ?? '').trim();
 		const color = String(form.get('color') ?? 'ctp-overlay1').trim();
 
-		if (!name) return { error: 'Informe o nome da categoria.' };
-		if (!isValidColor(color)) return { error: 'Cor inválida.' };
+		if (!name) return fail(400, { error: 'Informe o nome da categoria.' });
+		if (!isValidColor(color)) return fail(400, { error: 'Cor inválida.' });
 
 		const db = getDb(platform!.env.DB);
 		const created = await addCategory(db, locals.userId, name, color);
-		if (!created) return { error: `A categoria "${name}" já existe.` };
+		if (!created) return fail(400, { error: `A categoria "${name}" já existe.` });
+		setFlash({ type: ToastType.success, message: `Categoria "${name}" criada.` }, event);
 		return { success: true };
 	},
 
-	update: async ({ request, locals, platform }) => {
+	update: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 		const form = await request.formData();
 		const oldName = String(form.get('name') ?? '');
 		const newName = String(form.get('newName') ?? '').trim();
 		const color = String(form.get('color') ?? '').trim();
 
-		if (!oldName) return { error: 'Categoria inválida.' };
-		if (!newName) return { error: 'Informe o novo nome.' };
-		if (!isValidColor(color)) return { error: 'Cor inválida.' };
+		if (!oldName) return fail(400, { error: 'Categoria inválida.' });
+		if (!newName) return fail(400, { error: 'Informe o novo nome.' });
+		if (!isValidColor(color)) return fail(400, { error: 'Cor inválida.' });
 
 		const db = getDb(platform!.env.DB);
 		await updateCategory(db, locals.userId, oldName, { name: newName, color });
@@ -74,14 +79,25 @@ export const actions: Actions = {
 		if (newName !== oldName) {
 			await renameCategoryOnTransactions(db, locals.userId, oldName, newName);
 		}
+		setFlash(
+			{
+				type: ToastType.success,
+				message:
+					newName === oldName
+						? `Categoria "${newName}" atualizada.`
+						: `"${oldName}" agora é "${newName}".`
+			},
+			event
+		);
 		return { success: true };
 	},
 
-	remove: async ({ request, locals, platform }) => {
+	remove: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 		const form = await request.formData();
 		const name = String(form.get('name') ?? '').trim();
-		if (!name) return { error: 'Categoria inválida.' };
+		if (!name) return fail(400, { error: 'Categoria inválida.' });
 
 		const migrateTo = String(form.get('migrateTo') ?? '').trim();
 
@@ -92,7 +108,7 @@ export const actions: Actions = {
 			// being deleted.
 			const categories = await getCategoriesByUser(db, locals.userId);
 			const valid = categories.some((c) => c.name === migrateTo && c.name !== name);
-			if (!valid) return { error: 'Categoria de destino inválida.' };
+			if (!valid) return fail(400, { error: 'Categoria de destino inválida.' });
 		}
 
 		await deleteCategory(db, locals.userId, name);
@@ -106,6 +122,17 @@ export const actions: Actions = {
 			// bucket (back to "Outros"), never deleted.
 			await clearCategoryOnTransactions(db, locals.userId, name);
 		}
+		// Says where the transactions went: this action is destructive and used to
+		// finish in complete silence.
+		setFlash(
+			{
+				type: ToastType.success,
+				message: migrateTo
+					? `Categoria "${name}" excluída — transações movidas para "${migrateTo}".`
+					: `Categoria "${name}" excluída — transações agora são "Outros".`
+			},
+			event
+		);
 		return { success: true };
 	}
 };

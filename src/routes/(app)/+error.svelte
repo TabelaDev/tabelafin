@@ -32,7 +32,7 @@
 </script>
 
 <svelte:head>
-	<title>Erro {status} — TabelaFin</title>
+	<title>Erro {status}: TabelaFin</title>
 </svelte:head>
 
 <ErrorPage

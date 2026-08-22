@@ -1,17 +1,17 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
 import type { Actions, PageServerLoad } from './$types';
+import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import { getUserAiPrompts, upsertUserAiPrompts } from '$lib/server/db/user-ai-prompts';
-import { findUserById, updateUserAiToggles } from '$lib/server/db/users';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
 
-	const db = getDb(platform!.env.DB);
-	// A user who hid AI does not get the prompt configuration.
-	const user = await findUserById(db, locals.userId);
+	const user = await locals.userService.findById(locals.userId);
 	if (user?.hideAi) redirect(303, '/profile');
 
+	const db = getDb(platform!.env.DB);
 	const prompts = await getUserAiPrompts(db, locals.userId);
 
 	return {
@@ -25,7 +25,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals, platform }) => {
+	default: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -49,13 +50,13 @@ export const actions: Actions = {
 			chatSystemPrompt: chatSystemPrompt || null
 		});
 
-		// Feature toggles (checkbox checked = enabled).
-		await updateUserAiToggles(db, locals.userId, {
+		await locals.userService.updateAiToggles(locals.userId, {
 			categorization: form.get('categorizationEnabled') === 'on',
 			report: form.get('reportEnabled') === 'on',
 			chat: form.get('chatEnabled') === 'on'
 		});
 
+		setFlash({ type: ToastType.success, message: 'Configuração de IA salva.' }, event);
 		return { success: true };
 	}
 };

@@ -8,7 +8,7 @@
 		formatDate,
 		toYearMonth,
 		monthLabel
-	} from '$lib/lib/format';
+	} from '$lib/utils/format';
 	import type { ApexOptions } from 'apexcharts';
 	import type { PageData } from './$types';
 
@@ -119,7 +119,7 @@
 </script>
 
 <svelte:head>
-	<title>Parcelas futuras — TabelaFin</title>
+	<title>Parcelas futuras: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4">
@@ -128,8 +128,8 @@
 		<p class="font-mono text-sm text-ink-soft">
 			<span class="text-ink-faint">//</span>
 			{data.future.length}
-			{data.future.length === 1 ? 'parcela pré-datada' : 'parcelas pré-datadas'} — a fatura do banco também
-			inclui as compras à vista do ciclo
+			{data.future.length === 1 ? 'parcela pré-datada' : 'parcelas pré-datadas'}: a fatura do banco
+			também inclui as compras à vista do ciclo
 		</p>
 	</header>
 
@@ -198,8 +198,20 @@
 				placeholder="Buscar descrição..."
 				class="w-full min-w-40 sm:w-64"
 			/>
-			<Select class="w-52" options={monthOptions} bind:value={monthFilter} />
-			<Select class="w-56" options={accountOptions} bind:value={accountFilter} />
+			<Select
+				class="w-52"
+				options={monthOptions}
+				bind:value={monthFilter}
+				filter
+				filterPlaceholder="Buscar mês…"
+			/>
+			<Select
+				class="w-56"
+				options={accountOptions}
+				bind:value={accountFilter}
+				filter
+				filterPlaceholder="Buscar cartão…"
+			/>
 		</div>
 
 		<!-- List -->

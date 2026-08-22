@@ -41,6 +41,29 @@ Banco: `bun run db:generate` / `db:migrate` / `db:studio`.
 
 Antes de abrir PR: `bun run check && bun run lint && bun run test && bun run build`.
 
+## Migrações: rebuild de tabela no D1
+
+O SQLite não tem `ALTER COLUMN`, então o drizzle-kit troca tipo de coluna
+recriando a tabela (`__new_x` → copia → `DROP x` → `RENAME`). Três coisas dessa
+receita já custaram dados aqui — a migração de centavos zerou
+`transactions.account_id` nas 968 linhas, e todo gasto de cartão passou a contar
+como receita, porque é o tipo da conta que carrega a convenção de sinal.
+
+- **`PRAGMA foreign_keys=OFF` não funciona no D1.** O único recurso é
+  `PRAGMA defer_foreign_keys`. (No SQLite puro o pragma também é no-op dentro de
+  transação.) O que o drizzle-kit gera assume o contrário — não confie nele.
+- **`DROP TABLE` executa as ações de FK das tabelas filhas** (`SET NULL`,
+  `CASCADE`). Logo: nunca dropar um pai antes de já ter copiado os filhos. Ou
+  reordena (todos os filhos primeiro), ou renomeia em vez de dropar. A migração
+  de centavos dropou `finance_accounts` e só depois copiou `transactions` — o
+  `INSERT ... SELECT` levou a coluna já zerada.
+- **Verificação pós-migração compara colunas de FK, não `COUNT(*)`.** A
+  checagem daquele commit ("968 transações, 199 contas, 3 recorrências") passou
+  justamente porque só contou linhas. Antes/depois de qualquer rebuild, conferir
+  `SELECT SUM(fk_col IS NULL)` em cada tabela filha.
+
+Backup local antes de aplicar: `.wrangler/state/v3/d1/` inteiro num tar.
+
 ## Domínio custom (pendente)
 
 Hoje o app roda em `tabelafin.ianptkcs-023.workers.dev`. Trocar por um domínio

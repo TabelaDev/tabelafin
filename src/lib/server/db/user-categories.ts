@@ -53,13 +53,16 @@ export async function getCategory(
 export async function ensureDefaultCategories(db: Db, userId: string): Promise<void> {
 	const existing = await getCategoriesByUser(db, userId);
 	if (existing.length > 0) return;
-	await db.insert(userCategories).values(
-		DEFAULT_CATEGORIES.map((c) => ({
-			userId,
-			name: c.name,
-			color: c.color
-		}))
-	);
+	await db
+		.insert(userCategories)
+		.values(
+			DEFAULT_CATEGORIES.map((c) => ({
+				userId,
+				name: c.name,
+				color: c.color
+			}))
+		)
+		.onConflictDoNothing();
 }
 
 export async function addCategory(

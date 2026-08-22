@@ -1,18 +1,12 @@
 <script lang="ts">
-	import { enhance, applyAction } from '$app/forms';
+	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { Button, Input, Label, Select, DatePicker, TagInput } from '@tabeladev/tabelawebui';
+	import { handleAction } from '$lib/utils/forms';
 	import type { PageData } from './$types';
 
-	let {
-		data,
-		form
-	}: {
-		data: PageData;
-		form?: { error?: string } | null;
-	} = $props();
-	let submitting = $state(false);
+	let { data }: { data: PageData } = $props();
 	let date = $state(new Date().toISOString().slice(0, 10));
 	let tags = $state<string[]>([]);
 
@@ -20,7 +14,7 @@
 </script>
 
 <svelte:head>
-	<title>Nova Transação — TabelaFin</title>
+	<title>Nova Transação: TabelaFin</title>
 </svelte:head>
 
 <div class="mx-auto max-w-md">
@@ -31,13 +25,7 @@
 
 	<form
 		method="POST"
-		use:enhance={() => {
-			submitting = true;
-			return async ({ result }) => {
-				await applyAction(result);
-				submitting = false;
-			};
-		}}
+		use:enhance={handleAction()}
 		class="flex flex-col gap-4 border border-rule bg-paper-raised p-5"
 	>
 		<div class="flex flex-col gap-1.5">
@@ -88,17 +76,11 @@
 			<p class="text-xs text-ink-soft">Agrupa gastos pontuais sem criar categoria.</p>
 		</div>
 
-		{#if form?.error}
-			<p class="text-sm text-danger">{form.error}</p>
-		{/if}
-
 		<div class="mt-2 flex gap-2">
 			<Button type="button" variant="ghost" onclick={() => goto(resolve('/dashboard'))}>
 				Cancelar
 			</Button>
-			<Button type="submit" variant="primary" disabled={submitting}>
-				{submitting ? 'Salvando…' : 'Salvar'}
-			</Button>
+			<Button type="submit" variant="primary">Salvar</Button>
 		</div>
 	</form>
 </div>

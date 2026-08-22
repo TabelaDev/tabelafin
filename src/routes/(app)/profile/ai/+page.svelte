@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { Button, Card } from '@tabeladev/tabelawebui';
-	import type { PageData, ActionData } from './$types';
+	import { Button, Card, Toggle } from '@tabeladev/tabelawebui';
+	import { handleAction } from '$lib/utils/forms';
+	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	let categorizationPrompt = $state('');
 	let reportPrompt = $state('');
@@ -35,7 +36,7 @@ Regras:
 </script>
 
 <svelte:head>
-	<title>Configuração de IA — TabelaFin</title>
+	<title>Configuração de IA: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-6">
@@ -52,7 +53,7 @@ Regras:
 		</p>
 	</header>
 
-	<form method="POST" use:enhance class="flex flex-col gap-6">
+	<form method="POST" use:enhance={handleAction()} class="flex flex-col gap-6">
 		<!-- Categorisation -->
 		<Card>
 			<Card.Content>
@@ -65,15 +66,7 @@ Regras:
 								comportamento da IA ao classificar gastos.
 							</p>
 						</div>
-						<label class="flex shrink-0 cursor-pointer items-center gap-2">
-							<input
-								type="checkbox"
-								name="categorizationEnabled"
-								bind:checked={categorizationEnabled}
-								class="h-4 w-4 accent-ctp-green"
-							/>
-							<span class="font-mono text-xs text-ink-soft">Ativo</span>
-						</label>
+						<Toggle name="categorizationEnabled" checked={categorizationEnabled} label="Ativo" />
 					</div>
 					<textarea
 						name="categorizationPrompt"
@@ -107,15 +100,7 @@ Regras:
 								financeiros e segue essas instruções pra escrever o relatório.
 							</p>
 						</div>
-						<label class="flex shrink-0 cursor-pointer items-center gap-2">
-							<input
-								type="checkbox"
-								name="reportEnabled"
-								bind:checked={reportEnabled}
-								class="h-4 w-4 accent-ctp-green"
-							/>
-							<span class="font-mono text-xs text-ink-soft">Ativo</span>
-						</label>
+						<Toggle name="reportEnabled" checked={reportEnabled} label="Ativo" />
 					</div>
 					<textarea
 						name="reportPrompt"
@@ -140,15 +125,7 @@ Regras:
 								quando o usuário faz perguntas sobre seus gastos.
 							</p>
 						</div>
-						<label class="flex shrink-0 cursor-pointer items-center gap-2">
-							<input
-								type="checkbox"
-								name="chatEnabled"
-								bind:checked={chatEnabled}
-								class="h-4 w-4 accent-ctp-green"
-							/>
-							<span class="font-mono text-xs text-ink-soft">Ativo</span>
-						</label>
+						<Toggle name="chatEnabled" checked={chatEnabled} label="Ativo" />
 					</div>
 					<textarea
 						name="chatSystemPrompt"
@@ -160,14 +137,6 @@ Regras:
 				</div>
 			</Card.Content>
 		</Card>
-
-		{#if form?.success}
-			<p class="font-mono text-sm text-signal">Configurações salvas com sucesso.</p>
-		{/if}
-
-		{#if form?.error}
-			<p class="font-mono text-sm text-danger">{form.error}</p>
-		{/if}
 
 		<div class="flex justify-end">
 			<Button type="submit">Salvar configurações</Button>

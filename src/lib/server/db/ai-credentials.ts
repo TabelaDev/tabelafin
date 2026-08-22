@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { getDb } from './index';
 import { aiCredentials } from './schema';
-import type { AiProvider } from '$lib/lib/ai-providers';
+import type { AiProvider } from '$lib/utils/ai-providers';
 
 type Db = ReturnType<typeof getDb>;
 

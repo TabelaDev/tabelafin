@@ -2,9 +2,9 @@
 // fetch-based dispatch as server/ai/categorize.ts and TabelaCal's
 // server/ai/parse.ts, but without tool use: the output here is free text (a short
 // paragraph), not structured data, so a plain completion call is enough.
-import type { AiProvider } from '$lib/lib/ai-providers';
+import type { AiProvider } from '$lib/utils/ai-providers';
 import { fetchWithRetry } from '$lib/server/http';
-import { toReais } from '$lib/lib/money';
+import { toReais } from '$lib/utils/money';
 
 export interface CategoryTotals {
 	[category: string]: number;

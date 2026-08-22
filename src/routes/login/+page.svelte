@@ -1,19 +1,11 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Button, Input, Label, Card, Wordmark } from '@tabeladev/tabelawebui';
+	import { Button, Card, Wordmark } from '@tabeladev/tabelawebui';
 	import { resolve } from '$app/paths';
-	import { page } from '$app/state';
-	import type { ActionData } from './$types';
-
-	let { form }: { form: ActionData } = $props();
-
-	// /reset-password redirects here with ?reset=1 so the success is confirmed on
-	// the screen where the new password is actually used.
-	const justReset = $derived(page.url.searchParams.get('reset') === '1');
+	import { PUBLIC_TABELAHUB_URL, PUBLIC_APP_URL } from '$env/static/public';
 </script>
 
 <svelte:head>
-	<title>Entrar — TabelaFin</title>
+	<title>Entrar: TabelaFin</title>
 </svelte:head>
 
 <div class="relative mx-auto flex min-h-svh max-w-md flex-col justify-center gap-6 p-6">
@@ -26,47 +18,18 @@
 	<Card>
 		<Card.Header>
 			<Card.Title><Wordmark prefix="Tabela" suffix="Fin" /></Card.Title>
-			<Card.Description>Entre com sua conta para acessar suas finanças.</Card.Description>
+			<Card.Description>Redirecionando para o login...</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<form method="POST" use:enhance class="flex flex-col gap-4">
-				<div class="flex flex-col gap-2">
-					<Label for="email">E-mail</Label>
-					<Input id="email" name="email" type="email" placeholder="seu@email.com" required />
-				</div>
-
-				<div class="flex flex-col gap-2">
-					<Label for="password">Senha</Label>
-					<Input
-						id="password"
-						name="password"
-						type="password"
-						autocomplete="current-password"
-						required
-					/>
-				</div>
-
-				{#if form?.error}
-					<p class="text-sm text-danger">{form.error}</p>
-				{/if}
-
-				{#if justReset}
-					<p class="text-success text-sm">Senha redefinida. Entre com a nova senha.</p>
-				{/if}
-
-				<Button type="submit">Entrar</Button>
-
-				<p class="text-center text-sm text-ink-soft">
-					<a href={resolve('/forgot-password')} class="text-accent hover:underline"
-						>Esqueci minha senha</a
-					>
-				</p>
-
-				<p class="text-center text-sm text-ink-soft">
-					Não tem uma conta?
-					<a href={resolve('/signup')} class="text-accent hover:underline">Cadastre-se</a>
-				</p>
-			</form>
+			<p class="text-sm text-ink-soft">O login é feito pelo TabelaHub.</p>
+			<Button
+				href="{PUBLIC_TABELAHUB_URL}/login?redirect={encodeURIComponent(
+					PUBLIC_APP_URL + '/api/auth/hub-callback'
+				)}"
+				class="w-full"
+			>
+				Ir para o login
+			</Button>
 		</Card.Content>
 	</Card>
 </div>

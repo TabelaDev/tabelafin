@@ -14,6 +14,7 @@
 
 import { unzipSync } from 'fflate';
 import PostalMime from 'postal-mime';
+import { FileType } from '$lib/enums/file-type';
 
 export interface TakeoutAttachment {
 	/** Derived name, e.g. "nubank-2026-03.pdf" — see deriveFileName. */
@@ -23,6 +24,8 @@ export interface TakeoutAttachment {
 	/** YYYY-MM of receivedAt, used to match against the sync window. */
 	monthKey: string;
 	subject: string;
+	/** File type: pdf, csv, or ofx. */
+	type: FileType;
 	bytes: Uint8Array;
 }
 
@@ -66,17 +69,22 @@ export function monthKeyOf(date: Date): string {
  * records — so a repeated name would make an interrupted import unable to tell
  * which months already went through.
  */
-export function deriveFileName(receivedAt: Date, index: number, taken: Set<string>): string {
+export function deriveFileName(
+	receivedAt: Date,
+	index: number,
+	taken: Set<string>,
+	ext: FileType = FileType.Pdf
+): string {
 	const base = `nubank-${monthKeyOf(receivedAt)}`;
-	let candidate = `${base}.pdf`;
+	let candidate = `${base}.${ext}`;
 	// Two statements in one month do happen (account + card), so disambiguate
 	// rather than letting one silently stand in for the other.
 	let n = 2;
 	while (taken.has(candidate)) {
-		candidate = `${base}-${n}.pdf`;
+		candidate = `${base}-${n}.${ext}`;
 		n += 1;
 		if (n > 50) {
-			candidate = `${base}-${index}.pdf`;
+			candidate = `${base}-${index}.${ext}`;
 			break;
 		}
 	}
@@ -92,10 +100,58 @@ export function findMboxEntry(files: Record<string, Uint8Array>): Uint8Array | n
 
 export class TakeoutParseError extends Error {}
 
+export interface ExtractionProgress {
+	current: number;
+	total: number;
+	filename: string;
+}
+
+export interface ExtractionOptions {
+	onProgress?: (progress: ExtractionProgress) => void;
+	signal?: AbortSignal;
+}
+
 /**
- * Extracts every PDF attachment from a Takeout zip, ordered oldest first.
+ * Checks if an attachment is a supported file type.
  */
-export async function extractPdfsFromTakeout(zip: ArrayBuffer): Promise<TakeoutAttachment[]> {
+function isSupportedAttachment(a: { mimeType?: string | null; filename?: string | null }): boolean {
+	const mime = a.mimeType ?? '';
+	const name = (a.filename ?? '').toLowerCase();
+	return (
+		mime === 'application/pdf' ||
+		name.endsWith('.pdf') ||
+		mime === 'text/csv' ||
+		name.endsWith('.csv') ||
+		mime === 'application/x-ofx' ||
+		mime === 'application/ofx' ||
+		name.endsWith('.ofx')
+	);
+}
+
+/**
+ * Determines the file type from mime or extension.
+ */
+function detectFileType(a: { mimeType?: string | null; filename?: string | null }): FileType {
+	const mime = a.mimeType ?? '';
+	const name = (a.filename ?? '').toLowerCase();
+	if (mime === 'application/pdf' || name.endsWith('.pdf')) return FileType.Pdf;
+	if (mime === 'text/csv' || name.endsWith('.csv')) return FileType.Csv;
+	return FileType.Ofx;
+}
+
+/** Yield to the event loop between iterations so the UI stays responsive. */
+function yieldToMain(): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/**
+ * Extracts every supported attachment (PDF, CSV, OFX) from a Takeout zip,
+ * ordered oldest first. Supports progress callbacks and cancellation.
+ */
+export async function extractPdfsFromTakeout(
+	zip: ArrayBuffer,
+	options?: ExtractionOptions
+): Promise<TakeoutAttachment[]> {
 	let files: Record<string, Uint8Array>;
 	try {
 		files = unzipSync(new Uint8Array(zip));
@@ -115,6 +171,10 @@ export async function extractPdfsFromTakeout(zip: ArrayBuffer): Promise<TakeoutA
 	const found: TakeoutAttachment[] = [];
 
 	for (const [index, raw] of messages.entries()) {
+		if (options?.signal?.aborted) {
+			throw new TakeoutParseError('Importação cancelada pelo usuário.');
+		}
+
 		let parsed;
 		try {
 			parsed = await PostalMime.parse(raw);
@@ -123,27 +183,49 @@ export async function extractPdfsFromTakeout(zip: ArrayBuffer): Promise<TakeoutA
 			continue;
 		}
 
-		const pdfs = (parsed.attachments ?? []).filter(
-			(a) => a.mimeType === 'application/pdf' || (a.filename ?? '').toLowerCase().endsWith('.pdf')
-		);
-		if (pdfs.length === 0) continue;
+		const supported = (parsed.attachments ?? []).filter(isSupportedAttachment);
+		if (supported.length === 0) {
+			if (options?.onProgress) {
+				options.onProgress({
+					current: index + 1,
+					total: messages.length,
+					filename: ''
+				});
+			}
+			await yieldToMain();
+			continue;
+		}
 
 		const receivedAt = parsed.date ? new Date(parsed.date) : new Date(NaN);
 		if (Number.isNaN(receivedAt.getTime())) continue;
 
-		for (const pdf of pdfs) {
+		for (const attachment of supported) {
 			const bytes =
-				pdf.content instanceof ArrayBuffer
-					? new Uint8Array(pdf.content)
-					: new TextEncoder().encode(String(pdf.content));
+				attachment.content instanceof ArrayBuffer
+					? new Uint8Array(attachment.content)
+					: new TextEncoder().encode(String(attachment.content));
+			const type = detectFileType(attachment);
+			const filename = deriveFileName(receivedAt, index, taken, type);
 			found.push({
-				filename: deriveFileName(receivedAt, index, taken),
+				filename,
 				receivedAt,
 				monthKey: monthKeyOf(receivedAt),
 				subject: parsed.subject ?? '',
+				type,
 				bytes
 			});
+
+			if (options?.onProgress) {
+				options.onProgress({
+					current: index + 1,
+					total: messages.length,
+					filename
+				});
+			}
 		}
+
+		// Yield to the event loop every message to keep the UI responsive
+		await yieldToMain();
 	}
 
 	return found.sort((a, b) => a.receivedAt.getTime() - b.receivedAt.getTime());

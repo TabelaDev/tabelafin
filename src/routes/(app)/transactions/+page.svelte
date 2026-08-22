@@ -12,9 +12,10 @@
 		Input,
 		Dialog,
 		Toggle,
-		TagInput
+		TagInput,
+		toast
 	} from '@tabeladev/tabelawebui';
-	import { formatCurrency, formatDate } from '$lib/lib/format';
+	import { formatCurrency, formatDate } from '$lib/utils/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -105,7 +106,6 @@
 	let selected = $state<Record<string, unknown>[]>([]);
 	let bulkCategory = $state('');
 	let bulkSubmitting = $state(false);
-	let bulkError = $state('');
 	let bulkTags = $state<string[]>([]);
 	let bulkTagSubmitting = $state(false);
 
@@ -155,7 +155,6 @@
 	function clearSelection() {
 		selected = [];
 		bulkCategory = '';
-		bulkError = '';
 	}
 
 	// ── Automatic-rule confirmation ───────────────────────────────────────────
@@ -173,7 +172,6 @@
 
 	function openBulkCategorize() {
 		if (selectedIds.length === 0 || !bulkCategory.trim()) return;
-		bulkError = '';
 		// With no description eligible for a rule there is no decision to make —
 		// the dialog would be asking about an empty list.
 		if (pendingRuleDescriptions.length === 0) {
@@ -187,7 +185,6 @@
 		if (selectedIds.length === 0 || !bulkCategory.trim()) return;
 		showRuleDialog = false;
 		bulkSubmitting = true;
-		bulkError = '';
 		try {
 			const body = new FormData();
 			body.set('ids', selectedIds.join(','));
@@ -197,14 +194,20 @@
 				method: 'POST',
 				body
 			});
-			const result = (await res.json()) as { data?: { error?: string } };
-			// SvelteKit responds to form action fetches as
-			// { type, status, data } — the payload is in `result.data`.
+			const result = (await res.json()) as {
+				data?: { error?: string; count?: number; ruleCount?: number };
+			};
 			if (!res.ok || result.data?.error) {
-				bulkError = result.data?.error ?? 'Não foi possível categorizar.';
+				toast.error(result.data?.error ?? 'Não foi possível categorizar.');
 				return;
 			}
-			// Reload so the page reflects the new categories.
+			const count = result.data?.count ?? 0;
+			const ruleCount = result.data?.ruleCount ?? 0;
+			let msg = `${count} transa${count === 1 ? 'ção' : 'ções'} categorizad${count === 1 ? 'a' : 'as'}.`;
+			if (ruleCount > 0) {
+				msg += ` ${ruleCount} ${ruleCount === 1 ? 'regra criada' : 'regras criadas'}.`;
+			}
+			toast.success(msg);
 			await invalidateAll();
 			clearSelection();
 		} finally {
@@ -215,7 +218,6 @@
 	async function submitBulkTag() {
 		if (selectedIds.length === 0) return;
 		bulkTagSubmitting = true;
-		bulkError = '';
 		try {
 			const body = new FormData();
 			body.set('ids', selectedIds.join(','));
@@ -224,11 +226,15 @@
 				method: 'POST',
 				body
 			});
-			const result = (await res.json()) as { data?: { error?: string } };
+			const result = (await res.json()) as {
+				data?: { error?: string; count?: number };
+			};
 			if (!res.ok || result.data?.error) {
-				bulkError = result.data?.error ?? 'Não foi possível salvar as tags.';
+				toast.error(result.data?.error ?? 'Não foi possível salvar as tags.');
 				return;
 			}
+			const count = result.data?.count ?? 0;
+			toast.success(`Tags aplicadas a ${count} transa${count === 1 ? 'ção' : 'ções'}.`);
 			await invalidateAll();
 			clearSelection();
 		} finally {
@@ -238,7 +244,7 @@
 </script>
 
 <svelte:head>
-	<title>Transações — TabelaFin</title>
+	<title>Transações: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4">
@@ -272,50 +278,55 @@
 	</header>
 
 	<!-- Filters -->
-	<div class="flex flex-wrap items-center gap-2 lg:flex-nowrap">
-		<Input
-			bind:value={searchQuery}
-			placeholder="Buscar descrição..."
-			class="w-full min-w-40 sm:w-64"
-		/>
-		<Select
-			class="w-56"
-			options={[
-				{ value: '', label: 'Todas as categorias' },
-				...data.categories.map((cat) => ({ value: cat.name, label: cat.name }))
-			]}
-			bind:value={category}
-			filter
-			filterPlaceholder="Buscar categoria…"
-		/>
-		<Select
-			class="w-44"
-			options={[
-				{ value: '', label: 'Todas as tags' },
-				...data.userTags.map((t) => ({ value: t.name, label: t.name }))
-			]}
-			bind:value={tag}
-			filter
-			filterPlaceholder="Buscar tag…"
-		/>
-		<Select
-			class="w-44"
-			options={[
-				{ value: '', label: 'Todos os tipos' },
-				{ value: 'income', label: 'Receitas' },
-				{ value: 'expenses', label: 'Despesas' }
-			]}
-			bind:value={type}
-		/>
-		<DatePicker class="w-44" mode="month" placeholder="Todos os meses" bind:value={month} />
-		<Toggle
-			bind:checked={showInternal}
-			label="Exibir transações internas"
-			disabled={type === 'income' || type === 'expenses'}
-		/>
-		<a href={resolve('/transactions')} class="ml-auto">
-			<Button variant="ghost">Limpar</Button>
-		</a>
+	<div class="flex flex-col">
+		<div class="flex flex-wrap items-center gap-2 lg:flex-nowrap">
+			<Input
+				bind:value={searchQuery}
+				placeholder="Buscar descrição..."
+				class="w-full min-w-40 sm:w-64"
+			/>
+			<Select
+				class="w-56"
+				options={[
+					{ value: '', label: 'Todas as categorias' },
+					...data.categories.map((cat) => ({ value: cat.name, label: cat.name }))
+				]}
+				bind:value={category}
+				filter
+				filterPlaceholder="Buscar categoria…"
+			/>
+			<Select
+				class="w-44"
+				options={[
+					{ value: '', label: 'Todas as tags' },
+					...data.userTags.map((t) => ({ value: t.name, label: t.name }))
+				]}
+				bind:value={tag}
+				filter
+				filterPlaceholder="Buscar tag…"
+			/>
+		</div>
+		<div class="flex flex-wrap items-center gap-2 lg:flex-nowrap">
+			<Select
+				class="w-44"
+				options={[
+					{ value: '', label: 'Todos os tipos' },
+					{ value: 'income', label: 'Receitas' },
+					{ value: 'expenses', label: 'Despesas' }
+				]}
+				bind:value={type}
+			/>
+			<DatePicker class="w-44" mode="month" placeholder="Todos os meses" bind:value={month} />
+			<Toggle
+				class="text-nowrap"
+				bind:checked={showInternal}
+				label="Exibir transações internas"
+				disabled={type === 'income' || type === 'expenses'}
+			/>
+			<a href={resolve('/transactions')} class="ml-auto">
+				<Button variant="ghost">Limpar</Button>
+			</a>
+		</div>
 	</div>
 
 	<!-- Bulk categorisation — appears when rows are selected -->
@@ -360,9 +371,6 @@
 				{bulkTagSubmitting ? 'Aplicando…' : 'Aplicar tags'}
 			</Button>
 			<Button variant="ghost" onclick={clearSelection}>Cancelar</Button>
-			{#if bulkError}
-				<span class="font-mono text-sm text-danger">{bulkError}</span>
-			{/if}
 		</div>
 	{/if}
 
@@ -439,8 +447,11 @@
 
 		{#if data.windowed}
 			<!-- Said out loud rather than silently truncated: a bounded list that
-			     looks complete is worse than a slower one. -->
-			<p class="mt-3 text-center font-mono text-xs text-ink-faint">
+			     looks complete is worse than a slower one.
+			     Reads as a footer strip rather than loose text: `mt-3` alone gave 12px
+			     above and nothing below, so the line sat on the container's bottom
+			     border. The border-top + padding match the Table's own pagination bar. -->
+			<p class="border-t border-rule px-4 py-2.5 text-center font-mono text-xs text-ink-faint">
 				Mostrando os últimos {data.windowMonths} meses.
 				<button
 					type="button"

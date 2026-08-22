@@ -9,7 +9,7 @@
 //
 // Confirmed against my-api.pluggy.ai on 2026-08-04 through MCP/DevTools.
 import { fetchWithRetry } from '$lib/server/http';
-import { toCents } from '$lib/lib/money';
+import { toCents } from '$lib/utils/money';
 
 const MY_API_URL = 'https://my-api.pluggy.ai';
 

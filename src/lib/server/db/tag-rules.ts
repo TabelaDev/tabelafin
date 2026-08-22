@@ -14,13 +14,86 @@ export interface TagRule {
 	id: string;
 	description: string;
 	tagName: string;
+	createdAt: Date;
 }
 
 export async function getTagRulesByUser(db: Db, userId: string): Promise<TagRule[]> {
 	return db
-		.select({ id: tagRules.id, description: tagRules.description, tagName: tagRules.tagName })
+		.select({
+			id: tagRules.id,
+			description: tagRules.description,
+			tagName: tagRules.tagName,
+			createdAt: tagRules.createdAt
+		})
 		.from(tagRules)
 		.where(eq(tagRules.userId, userId));
+}
+
+/** One entry per description, with every tag it maps to. */
+export interface GroupedTagRule {
+	description: string;
+	tagNames: string[];
+	createdAt: Date;
+}
+
+// The table holds one row per (description, tag), unlike categorization_rules
+// which is one row per description. A list keyed by row id would therefore show
+// the same description N times — once per tag. Grouping is what makes the rules
+// page read (and edit) the way the categories one does: a description mapped to a
+// set of tags. `createdAt` is the earliest of the group, since that is when the
+// rule for that description started existing.
+export async function getGroupedTagRulesByUser(db: Db, userId: string): Promise<GroupedTagRule[]> {
+	const rows = await getTagRulesByUser(db, userId);
+
+	const byDescription = new Map<string, GroupedTagRule>();
+	for (const row of rows) {
+		const entry = byDescription.get(row.description);
+		if (!entry) {
+			byDescription.set(row.description, {
+				description: row.description,
+				tagNames: [row.tagName],
+				createdAt: row.createdAt
+			});
+			continue;
+		}
+		entry.tagNames.push(row.tagName);
+		if (row.createdAt < entry.createdAt) entry.createdAt = row.createdAt;
+	}
+
+	for (const entry of byDescription.values()) entry.tagNames.sort((a, b) => a.localeCompare(b));
+	return [...byDescription.values()].sort((a, b) => a.description.localeCompare(b.description));
+}
+
+// How many of the user's transactions a rule for this description reaches. Only
+// used to say so out loud: creating a rule backfills the whole history
+// (applyTagRules), and that used to happen with no indication at all.
+export async function countTransactionsForDescription(
+	db: Db,
+	userId: string,
+	description: string
+): Promise<number> {
+	const rows = await db
+		.select({ id: transactions.id })
+		.from(transactions)
+		.where(
+			and(
+				eq(transactions.userId, userId),
+				eq(transactions.description, description),
+				isNull(transactions.supersededByTransactionId)
+			)
+		);
+	return rows.length;
+}
+
+/** Drops every rule for a description (the whole tag set at once). */
+export async function deleteTagRulesForDescription(
+	db: Db,
+	userId: string,
+	description: string
+): Promise<void> {
+	await db
+		.delete(tagRules)
+		.where(and(eq(tagRules.userId, userId), eq(tagRules.description, description)));
 }
 
 export async function getTagRulesForDescription(

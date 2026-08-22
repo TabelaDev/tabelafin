@@ -1,5 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
 import type { Actions, PageServerLoad } from './$types';
+import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import {
 	createManualAccount,
@@ -8,8 +10,8 @@ import {
 	isManualAccount,
 	updateAccountBalance
 } from '$lib/server/db/accounts';
-import { signedBalance, sumSignedBalance } from '$lib/lib/accounts';
-import { parseCents } from '$lib/lib/money';
+import { signedBalance, sumSignedBalance } from '$lib/utils/accounts';
+import { parseCents } from '$lib/utils/money';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -53,7 +55,8 @@ const ACCOUNT_TYPES = ['checking', 'credit_card', 'investment'] as const;
 type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 export const actions: Actions = {
-	create: async ({ request, locals, platform }) => {
+	create: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -74,10 +77,12 @@ export const actions: Actions = {
 			type: type as AccountType,
 			balance
 		});
+		setFlash({ type: ToastType.success, message: `Conta "${name}" criada.` }, event);
 		return { success: true };
 	},
 
-	updateBalance: async ({ request, locals, platform }) => {
+	updateBalance: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -90,10 +95,12 @@ export const actions: Actions = {
 		// Ownership is enforced in the WHERE clause, so a forged id updates nothing
 		// rather than someone else's row.
 		await updateAccountBalance(db, locals.userId, accountId, balance);
+		setFlash({ type: ToastType.success, message: 'Saldo atualizado.' }, event);
 		return { success: true };
 	},
 
-	delete: async ({ request, locals, platform }) => {
+	delete: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -102,6 +109,13 @@ export const actions: Actions = {
 
 		const db = getDb(platform!.env.DB);
 		await deleteAccount(db, locals.userId, accountId);
+		setFlash(
+			{
+				type: ToastType.success,
+				message: 'Conta excluída — as transações continuam, sem conta vinculada.'
+			},
+			event
+		);
 		return { success: true };
 	}
 };

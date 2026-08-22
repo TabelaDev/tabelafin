@@ -17,6 +17,8 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+!.env.development
+!.env.production
 
 # Vite
 vite.config.js.timestamp-*
@@ -37,3 +39,10 @@ vite.config.ts.timestamp-*
 # scratch de debug
 tmp-*
 /tmp/
+
+# Local import fixtures — real bank statements / Google Takeout exports,
+# never meant to be committed (this repo is public)
+/Takeout/
+NU_*.pdf
+NU_*.ofx
+NU_*.csv

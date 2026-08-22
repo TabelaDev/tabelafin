@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import { Button, Card, Input, Label, Select } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency, formatDate } from '$lib/lib/format';
-	import type { PageData, ActionData } from './$types';
+	import { formatCompactCurrency, formatDate } from '$lib/utils/format';
+	import { handleAction } from '$lib/utils/forms';
+	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	let showForm = $state(false);
 	let description = $state('');
@@ -56,7 +56,7 @@
 		)}) 10%, transparent); color: var(--ctp-${color.replace('ctp-', '')});`;
 	};
 
-	// Delegates to $lib/lib/format so the UTC-midnight convention is applied here
+	// Delegates to $lib/utils/format so the UTC-midnight convention is applied here
 	// too — a next-charge date is a calendar day, and rendering it in the
 	// browser's zone showed the 1st as the last day of the previous month.
 	function formatNullableDate(ts: Date | string | null): string {
@@ -74,7 +74,7 @@
 </script>
 
 <svelte:head>
-	<title>Recorrências — TabelaFin</title>
+	<title>Recorrências: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4">
@@ -115,14 +115,7 @@
 				<form
 					method="POST"
 					action="?/create"
-					use:enhance={() => {
-						return async ({ result }) => {
-							if (result.type === 'success') {
-								await invalidateAll();
-								resetForm();
-							}
-						};
-					}}
+					use:enhance={handleAction({ onSuccess: resetForm })}
 					class="flex flex-col gap-3"
 				>
 					<h2 class="font-mono text-sm font-semibold">Nova recorrência</h2>
@@ -189,10 +182,6 @@
 						</div>
 					</div>
 
-					{#if form?.error}
-						<p class="font-mono text-sm text-danger">{form.error}</p>
-					{/if}
-
 					<div class="flex justify-end">
 						<Button type="submit" size="sm">Adicionar</Button>
 					</div>
@@ -253,7 +242,7 @@
 										<span class="font-mono text-sm font-semibold"
 											>{formatCompactCurrency(expense.amount)}</span
 										>
-										<form method="POST" action="?/delete" use:enhance>
+										<form method="POST" action="?/delete" use:enhance={handleAction()}>
 											<input type="hidden" name="id" value={expense.id} />
 											<Button type="submit" variant="ghost" size="sm" class="text-danger">✕</Button>
 										</form>

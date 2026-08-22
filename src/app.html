@@ -4,6 +4,43 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<script nonce="%sveltekit.nonce%">
+			// Resolves the theme before the first paint. Without this the server sends
+			// the root element with no class, `:root` in layout.css is Catppuccin Latte
+			// (light), and the `dark` class would only land on hydration — the
+			// light-to-dark flash on every reload. It runs with the nonce SvelteKit
+			// generates, the supported mechanism for a hand-written inline script (the
+			// only incompatibility is prerendering, and no route here is prerendered).
+			// It sits before SvelteKit's head block on purpose: it has to run before
+			// anything paints.
+			//
+			// CAREFUL: never mention SvelteKit's placeholders (the head and nonce ones)
+			// in an HTML comment in this file, not even as prose. The substitution is
+			// textual and applies anywhere in the file, and the HTML injected for the
+			// head placeholder opens a comment of its own whose terminator closes the
+			// surrounding comment early — leaking everything after it as markup. That
+			// is how this script once ended up in the body with no nonce, refused by
+			// the CSP. A JS comment inside the script, like this one, is safe.
+			(function () {
+				try {
+					// Same key the tabelawebui ThemeToggle writes and
+					// $lib/lib/theme.svelte.ts reads: 'light' | 'dark' (or nothing).
+					var stored = localStorage.getItem('theme');
+					var dark =
+						stored === 'dark' ||
+						((!stored || stored === 'system') &&
+							window.matchMedia('(prefers-color-scheme: dark)').matches);
+					var el = document.documentElement;
+					el.classList.toggle('dark', dark);
+					el.classList.toggle('light', !dark);
+					el.setAttribute('data-theme', dark ? 'dark' : 'light');
+					el.style.colorScheme = dark ? 'dark' : 'light';
+				} catch (e) {
+					// localStorage blocked (restricted mode): fall back to the light
+					// `:root` rather than taking the page down.
+				}
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

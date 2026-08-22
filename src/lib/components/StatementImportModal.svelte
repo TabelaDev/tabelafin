@@ -10,7 +10,7 @@
 	// The queue is sequential on purpose: each request is an AI document
 	// extraction that takes tens of seconds, and running them in parallel just
 	// invites the provider's rate limit.
-	import { Button, Dialog, Input, Stepper, toast } from '@tabeladev/tabelawebui';
+	import { Button, Checkbox, Dialog, Input, Stepper, toast } from '@tabeladev/tabelawebui';
 	import { invalidateAll } from '$app/navigation';
 	import {
 		extractPdfsFromTakeout,
@@ -182,7 +182,7 @@
 		const failed = $statementImport.queue.filter((q) => q.status === 'failed').length;
 		if (failed > 0) {
 			toast.warning(
-				`${imported} transação(ões) importada(s), ${failed} extrato(s) falharam — reabra a importação pra ver quais.`
+				`${imported} transação(ões) importada(s), ${failed} extrato(s) falharam: reabra a importação pra ver quais.`
 			);
 		} else {
 			toast.success(`${imported} transação(ões) importada(s) de ${chosen.length} extrato(s).`, {
@@ -227,7 +227,7 @@
 					<li>Exporte como <span class="text-ink">.zip</span> com link de download.</li>
 				</ol>
 				<p class="text-ink-faint">
-					O Google leva de alguns minutos a algumas horas pra gerar o arquivo — ele avisa por email
+					O Google leva de alguns minutos a algumas horas pra gerar o arquivo: ele avisa por email
 					quando estiver pronto.
 				</p>
 			</div>
@@ -235,7 +235,7 @@
 			<div class="flex flex-col gap-3">
 				<Input type="file" accept=".zip,application/zip" bind:files onchange={onZipChosen} />
 				<p class="font-mono text-xs text-ink-soft">
-					O zip é lido aqui no navegador — só os PDFs dos extratos são enviados, um por vez. O
+					O zip é lido aqui no navegador: só os PDFs dos extratos são enviados, um por vez. O
 					conteúdo dos emails não sai da sua máquina.
 				</p>
 				{#if parsing}
@@ -284,8 +284,7 @@
 							class="flex items-center justify-between gap-3 border-b border-rule px-3 py-2 last:border-b-0"
 						>
 							<span class="flex items-center gap-2">
-								<input
-									type="checkbox"
+								<Checkbox
 									checked={importState.selected.has(attachment.filename)}
 									onchange={() => toggleSelected(attachment.filename)}
 								/>
@@ -300,14 +299,14 @@
 
 				{#if importState.alreadyImported.size > 0}
 					<p class="font-mono text-xs text-ink-faint">
-						Extratos já importados vêm desmarcados — reimportar gastaria uma chamada de IA pra
+						Extratos já importados vêm desmarcados: reimportar gastaria uma chamada de IA pra
 						produzir linhas que já existem.
 					</p>
 				{/if}
 
 				<p class="font-mono text-xs text-ink-soft">
 					Cada extrato é lido pelo seu modelo de IA (BYOK): são {selectedCount} chamadas, algo em torno
-					de {estimatedMinutes} min no total. Pode fechar esta janela — o progresso continua e aparece
+					de {estimatedMinutes} min no total. Pode fechar esta janela: o progresso continua e aparece
 					no canto da tela.
 				</p>
 			</div>

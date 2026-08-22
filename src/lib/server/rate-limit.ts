@@ -78,10 +78,10 @@ export async function checkRateLimit(
 
 // Identity for the bucket. `CF-Connecting-IP` is set by Cloudflare on every
 // inbound request and cannot be spoofed by the client — unlike X-Forwarded-For,
-// which anyone can send. When it is missing (local dev), everything shares one
-// bucket, which is the safe direction to fail.
+// which anyone can send. When it is missing (local dev), a random UUID is used
+// so each request gets its own bucket — rate limiting is irrelevant locally.
 export function clientRateLimitKey(request: Request, suffix?: string): string {
-	const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+	const ip = request.headers.get('CF-Connecting-IP') ?? crypto.randomUUID();
 	return suffix ? `${ip}:${suffix.toLowerCase()}` : ip;
 }
 

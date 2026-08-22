@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { AI_PROVIDERS, type AiProvider } from '$lib/lib/ai-providers';
+import { AI_PROVIDERS, type AiProvider } from '$lib/utils/ai-providers';
 import { encryptSecret } from '$lib/server/crypto';
 import { getDb } from '$lib/server/db';
 import { upsertAiCredentials } from '$lib/server/db/ai-credentials';
@@ -44,14 +44,19 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		userId: locals.userId
 	});
 	const db = getDb(platform!.env.DB);
-	await upsertAiCredentials(db, {
-		userId: locals.userId,
-		provider,
-		model,
-		keyEncrypted: encrypted.ciphertext,
-		nonce: encrypted.nonce,
-		v: encrypted.v
-	});
+	try {
+		await upsertAiCredentials(db, {
+			userId: locals.userId,
+			provider,
+			model,
+			keyEncrypted: encrypted.ciphertext,
+			nonce: encrypted.nonce,
+			v: encrypted.v
+		});
+	} catch (e) {
+		console.error('[onboarding/ai] Erro ao salvar credenciais:', e);
+		return json({ error: 'Sessão inválida. Faça login novamente.' }, { status: 401 });
+	}
 
 	return json({ ok: true });
 };

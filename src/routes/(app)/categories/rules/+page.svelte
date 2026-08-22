@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { enhance, applyAction } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { handleAction } from '$lib/utils/forms';
 	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
 	import { Button, Card, Input, Select, Table } from '@tabeladev/tabelawebui';
 	import type { PageData } from './$types';
@@ -61,7 +61,7 @@
 </script>
 
 <svelte:head>
-	<title>Regras automáticas — TabelaFin</title>
+	<title>Regras automáticas: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-6">
@@ -82,16 +82,12 @@
 			<form
 				method="POST"
 				action="?/add"
-				use:enhance={() => {
-					return async ({ result }) => {
-						await applyAction(result);
-						if (result.type === 'success') {
-							newDescription = '';
-							newCategory = '';
-							await invalidateAll();
-						}
-					};
-				}}
+				use:enhance={handleAction({
+					onSuccess: () => {
+						newDescription = '';
+						newCategory = '';
+					}
+				})}
 				class="flex flex-col gap-3"
 			>
 				<h2 class="font-mono text-sm font-semibold">Nova regra</h2>
@@ -174,15 +170,7 @@
 										<form
 											method="POST"
 											action="?/update"
-											use:enhance={() => {
-												return async ({ result }) => {
-													await applyAction(result);
-													if (result.type === 'success') {
-														cancelEdit();
-														await invalidateAll();
-													}
-												};
-											}}
+											use:enhance={handleAction({ onSuccess: cancelEdit })}
 										>
 											<input type="hidden" name="description" value={row.description} />
 											<input type="hidden" name="category" value={editCategory} />
@@ -199,16 +187,7 @@
 										>
 											Editar
 										</Button>
-										<form
-											method="POST"
-											action="?/remove"
-											use:enhance={() => {
-												return async ({ result }) => {
-													await applyAction(result);
-													if (result.type === 'success') await invalidateAll();
-												};
-											}}
-										>
+										<form method="POST" action="?/remove" use:enhance={handleAction()}>
 											<input type="hidden" name="id" value={row.id} />
 											<Button
 												type="submit"

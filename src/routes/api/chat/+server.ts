@@ -3,7 +3,6 @@ import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getUserAiPrompts } from '$lib/server/db/user-ai-prompts';
-import { findUserById } from '$lib/server/db/users';
 import { createConversation, getConversation, getMessages, addMessage } from '$lib/server/db/chat';
 import { getRecurringExpenses } from '$lib/server/db/recurring-expenses';
 import { financeAccounts } from '$lib/server/db/schema';
@@ -11,8 +10,8 @@ import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { transactions } from '$lib/server/db/schema';
 import { classifyMovement, isNotInternalTransfer } from '$lib/server/db/transactions';
 import { getTagTotals } from '$lib/server/db/tags';
-import { sumSignedBalance } from '$lib/lib/accounts';
-import { toReais } from '$lib/lib/money';
+import { sumSignedBalance } from '$lib/utils/accounts';
+import { toReais } from '$lib/utils/money';
 import { decryptSecret } from '$lib/server/crypto';
 import { fetchWithRetry, type FetchWithRetryOptions } from '$lib/server/http';
 
@@ -37,10 +36,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
 
-	// The chat spends the user's own API credit, so the toggle in /profile/ai is
-	// enforced server-side too — hiding the widget is not enough, the endpoint is
-	// reachable on its own.
-	const user = await findUserById(db, userId);
+	const user = await locals.userService.findById(userId);
 	if (user && !user.aiChatEnabled) {
 		return json({ error: 'O chat de IA está desativado nas suas configurações.' }, { status: 403 });
 	}

@@ -1,6 +1,8 @@
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import { error, fail, redirect } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
 import type { Actions, PageServerLoad } from './$types';
+import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import { financeAccounts, transactions } from '$lib/server/db/schema';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
@@ -80,12 +82,13 @@ export const load: PageServerLoad = async ({ locals, platform, params }) => {
 };
 
 export const actions: Actions = {
-	categorize: async ({ request, locals, platform, params }) => {
+	categorize: async (event) => {
+		const { request, locals, platform, params } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
 		const category = String(form.get('category') ?? '').trim();
-		if (!category) return { error: 'Selecione uma categoria.' };
+		if (!category) return fail(400, { error: 'Selecione uma categoria.' });
 
 		const db = getDb(platform!.env.DB);
 		const [tx] = await db.select().from(transactions).where(eq(transactions.id, params.id));
@@ -118,13 +121,15 @@ export const actions: Actions = {
 		// description is born categorised (applied by the sync, categorySource='rule').
 		await upsertCategorizationRule(db, locals.userId, tx.description, category);
 
+		setFlash({ type: ToastType.success, message: `Categorizada como ${category}.` }, event);
 		return { success: true };
 	},
 
 	// Turns the transaction into a recurrence: creates a recurring expense with the
 	// same description, the absolute amount and the category. The frequency comes
 	// from the form (monthly by default).
-	recurring: async ({ request, locals, platform, params }) => {
+	recurring: async (event) => {
+		const { request, locals, platform, params } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -166,13 +171,15 @@ export const actions: Actions = {
 				typeof nextChargeDate === 'string' && nextChargeDate ? new Date(nextChargeDate) : undefined
 		});
 
+		setFlash({ type: ToastType.success, message: 'Recorrência criada.' }, event);
 		return { success: true };
 	},
 
 	// Deactivates the recurrence for this description (soft delete, so the
 	// history of what was tracked survives). It is shared by every transaction
 	// with that description, which the card says out loud before offering this.
-	removeRecurrence: async ({ locals, platform, params }) => {
+	removeRecurrence: async (event) => {
+		const { locals, platform, params } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const db = getDb(platform!.env.DB);
@@ -187,13 +194,15 @@ export const actions: Actions = {
 		if (!existing) return fail(404, { error: 'Nenhuma recorrência ativa para esta descrição.' });
 
 		await updateRecurringExpense(db, locals.userId, existing.id, { isActive: false });
+		setFlash({ type: ToastType.success, message: 'Recorrência removida.' }, event);
 		return { success: true };
 	},
 
 	// Clears the transaction's category (uncategorised again). Used by the
 	// categorise card when the user wants to recategorise — it has to be cleared
 	// before another one can be chosen.
-	removeCategory: async ({ locals, platform, params }) => {
+	removeCategory: async (event) => {
+		const { locals, platform, params } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const db = getDb(platform!.env.DB);
@@ -210,6 +219,7 @@ export const actions: Actions = {
 		// category — so "Remover" could not actually lead to re-categorising.
 		await deleteRuleForDescription(db, locals.userId, tx.description);
 
+		setFlash({ type: ToastType.success, message: 'Categoria removida.' }, event);
 		return { success: true };
 	},
 
@@ -217,7 +227,8 @@ export const actions: Actions = {
 	// comma-separated value). Creates tags on the fly, never touches categories.
 	// With the "criar regra" option on, it also (re)writes the automatic rule
 	// for this description and backfills the history with it.
-	tags: async ({ request, locals, platform, params }) => {
+	tags: async (event) => {
+		const { request, locals, platform, params } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -242,6 +253,15 @@ export const actions: Actions = {
 			await applyTagRules(db, locals.userId);
 		}
 
+		setFlash(
+			{
+				type: ToastType.success,
+				message: createRule
+					? `Tags salvas e regra criada para "${tx.description}".`
+					: 'Tags salvas.'
+			},
+			event
+		);
 		return { success: true };
 	}
 };

@@ -14,7 +14,7 @@ import {
 	findPushSubscriptionsByUserId
 } from '$lib/server/db/push-subscriptions';
 import { generateMonthlySummary, type CategoryTotals } from '$lib/server/ai/report';
-import type { AiProvider } from '$lib/lib/ai-providers';
+import type { AiProvider } from '$lib/utils/ai-providers';
 
 type Db = ReturnType<typeof getDb>;
 

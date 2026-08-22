@@ -1,6 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
 import { and, eq, isNull } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
+import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import { transactions } from '$lib/server/db/schema';
 import {
@@ -9,7 +11,7 @@ import {
 	deleteRecurringExpense
 } from '$lib/server/db/recurring-expenses';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
-import { parseCents } from '$lib/lib/money';
+import { parseCents } from '$lib/utils/money';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -76,7 +78,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ request, locals, platform }) => {
+	create: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -112,10 +115,12 @@ export const actions: Actions = {
 				typeof nextChargeDate === 'string' && nextChargeDate ? new Date(nextChargeDate) : undefined
 		});
 
+		setFlash({ type: ToastType.success, message: `Recorrência "${description}" criada.` }, event);
 		return { success: true };
 	},
 
-	delete: async ({ request, locals, platform }) => {
+	delete: async (event) => {
+		const { request, locals, platform } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -128,6 +133,7 @@ export const actions: Actions = {
 		const db = getDb(platform!.env.DB);
 		await deleteRecurringExpense(db, locals.userId, id);
 
+		setFlash({ type: ToastType.success, message: 'Recorrência excluída.' }, event);
 		return { success: true };
 	}
 };

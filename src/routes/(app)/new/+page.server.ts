@@ -1,12 +1,13 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
 import type { Actions, PageServerLoad } from './$types';
+import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
-import { insertManualTransaction } from '$lib/server/db/transactions';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { getTagsByUser, setTransactionTags } from '$lib/server/db/tags';
 import { applyTagRules } from '$lib/server/db/tag-rules';
 import { categorizeByRules } from '$lib/server/ai/rules';
-import { parseCents } from '$lib/lib/money';
+import { parseCents } from '$lib/utils/money';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -19,7 +20,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals, platform }) => {
+	default: async (event) => {
+		const { request, locals, platform, cookies } = event;
 		if (!locals.userId) redirect(303, '/login');
 
 		const form = await request.formData();
@@ -34,10 +36,6 @@ export const actions: Actions = {
 		if (typeof description !== 'string' || !description.trim()) {
 			return fail(400, { error: 'Informe a descrição.' });
 		}
-		// parseCents rather than parseFloat: this is the boundary where a person's
-		// "1.234,56" becomes the integer the rest of the app works in. parseFloat
-		// also read "1.234,56" as 1.234 — a silent 1000× error for anyone who
-		// typed a thousands separator.
 		const parsedAmount = parseCents(amount);
 		if (parsedAmount === null) {
 			return fail(400, { error: 'Informe um valor válido.' });
@@ -51,7 +49,6 @@ export const actions: Actions = {
 		const userCategories = await getCategoriesByUser(db, locals.userId);
 		const validCategories = userCategories.map((c) => c.name);
 
-		// When the user picked no category, fall back to the rule-based one.
 		const finalCategory: string | null =
 			typeof category === 'string' && validCategories.includes(category)
 				? category
@@ -66,7 +63,7 @@ export const actions: Actions = {
 						.filter(Boolean)
 				: [];
 
-		const saved = await insertManualTransaction(db, {
+		const saved = await locals.transactionService.insertManual({
 			userId: locals.userId,
 			date: parsedDate,
 			description: description.trim(),
@@ -78,10 +75,11 @@ export const actions: Actions = {
 			await setTransactionTags(db, locals.userId, saved.id, tagNames);
 		}
 
-		// Automatic tag rules for this description also apply (a manual "Uber"
-		// gets the same "Viagem SP" tag the sync would give it).
 		await applyTagRules(db, locals.userId);
 
-		redirect(303, '/dashboard');
+		const message = finalCategory
+			? `Transação "${description.trim()}" criada em ${finalCategory}.`
+			: `Transação "${description.trim()}" criada.`;
+		flashRedirect('/dashboard', { type: ToastType.success, message }, cookies);
 	}
 };

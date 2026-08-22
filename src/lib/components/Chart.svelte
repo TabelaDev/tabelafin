@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ApexCharts, { type ApexOptions } from 'apexcharts';
-	import { mode } from 'mode-watcher';
-	import { formatCompactNumber } from '$lib/lib/format';
+	import { theme } from '$lib/utils/theme.svelte';
+	import { formatCompactNumber } from '$lib/utils/format';
 
 	type ChartSeries = ApexOptions['series'];
 
@@ -37,7 +37,7 @@
 	});
 
 	let themeColors = $derived.by(() => {
-		const isDark = mode.current === 'dark';
+		const isDark = theme.current === 'dark';
 		const accent = accentColor ?? (isDark ? '#f5c2e7' : '#e64553');
 		const palette = isDark
 			? [accent, '#89b4fa', '#a6e3a1', '#94e2d5', '#cba6f7', '#f9e2af', '#fab387']
@@ -123,7 +123,7 @@
 			},
 			legend: { labels: { colors: c.text }, position: 'bottom' },
 			tooltip: {
-				theme: mode.current === 'dark' ? 'dark' : 'light',
+				theme: theme.current === 'dark' ? 'dark' : 'light',
 				// No coloured background on the donut (Apex paints the whole tooltip in
 				// the slice colour by default — fillSeriesColor:true). With false, every
 				// chart gets a neutral background plus a coloured dot.

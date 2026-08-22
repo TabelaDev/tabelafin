@@ -3,8 +3,10 @@ import { drizzle } from 'drizzle-orm/sqlite-proxy';
 import {
 	amountsMatchForDedupe,
 	classifyMovement,
+	findSupersedeCandidate,
 	isWithinSupersedeWindow,
-	renameCategoryOnTransactions
+	renameCategoryOnTransactions,
+	updatePluggyFields
 } from './transactions';
 
 // A drizzle instance that executes nothing and records the SQL it would have
@@ -103,6 +105,63 @@ describe('classifyMovement', () => {
 	it('zero contributes nothing on either axis', () => {
 		expect(classifyMovement('checking', 0)).toEqual({ expense: 0, income: 0 });
 		expect(classifyMovement('credit_card', 0)).toEqual({ expense: 0, income: 0 });
+	});
+
+	// The failure that actually happened: a migration nulled `account_id` on every
+	// synced row, the account type came back undefined, and the checking fallback
+	// turned R$28k of card purchases into income. The fallback itself is correct
+	// (manual/PDF rows have no account) — what this pins down is the cost of
+	// losing the link, so the fix is never mistaken for cosmetic: the SAME amount
+	// classifies to opposite axes depending on whether the account is known.
+	it('losing the account link flips a card purchase to income', () => {
+		expect(classifyMovement('credit_card', 2558)).toEqual({ expense: 2558, income: 0 });
+		expect(classifyMovement(undefined, 2558)).toEqual({ expense: 0, income: 2558 });
+	});
+});
+
+// A synced row must keep its account across re-syncs. It did not: the update ran
+// on every already-known transaction and touched only category and amount, so the
+// one-off loss above could never heal — and with the incremental window, nothing
+// else would ever revisit those rows.
+describe('updatePluggyFields', () => {
+	it('rewrites account_id, so a re-sync re-attaches an orphaned row', async () => {
+		const { db, statements } = recordingDb();
+
+		await updatePluggyFields(db, 'pluggy-tx-1', {
+			category: 'Taxi and ride-hailing',
+			amount: 2558,
+			accountId: 'acc-card'
+		});
+
+		expect(statements).toHaveLength(1);
+		expect(statements[0].sql).toContain('"account_id"');
+		expect(statements[0].params).toContain('acc-card');
+	});
+});
+
+// The cross-source dedupe: a Pluggy card purchase superseding the PDF row for the
+// same purchase. The two sides disagree on sign (PDF -78254, API +78254), so the
+// comparison has to be on magnitude — with signed equality it matched nothing on
+// a card invoice, which is most of what gets imported as a statement.
+describe('findSupersedeCandidate', () => {
+	it('compares the amount by magnitude, not by signed value', async () => {
+		const { db, statements } = recordingDb();
+
+		await findSupersedeCandidate(db, 'user-a', 'acc-card', 78254, new Date('2026-03-15'));
+
+		expect(statements).toHaveLength(1);
+		expect(statements[0].sql).toContain('abs(');
+		// The bound parameter is the magnitude; a negative PDF row is reachable.
+		expect(statements[0].params).toContain(78254);
+		expect(statements[0].params).not.toContain(-78254);
+	});
+
+	it('passes the magnitude even when called with a negative amount', async () => {
+		const { db, statements } = recordingDb();
+
+		await findSupersedeCandidate(db, 'user-a', 'acc-checking', -78254, new Date('2026-03-15'));
+
+		expect(statements[0].params).toContain(78254);
 	});
 });
 

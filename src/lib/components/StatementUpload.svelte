@@ -7,7 +7,7 @@
 	import { Button } from '@tabeladev/tabelawebui';
 	import { Input } from '@tabeladev/tabelawebui';
 	import { toast } from '@tabeladev/tabelawebui';
-	import { modelSupportsDocuments, type AiProvider } from '$lib/lib/ai-providers';
+	import { modelSupportsDocuments, type AiProvider } from '$lib/utils/ai-providers';
 
 	let { provider, model }: { provider: AiProvider; model: string } = $props();
 
@@ -59,7 +59,7 @@
 	<form onsubmit={onSubmit} class="flex flex-col gap-3">
 		<Input type="file" accept="application/pdf" bind:files />
 		<p class="text-xs text-ink-soft">
-			A fatura/extrato é enviada direto pro modelo ({model}) e não fica salva — as transações
+			A fatura/extrato é enviada direto pro modelo ({model}) e não fica salva: as transações
 			extraídas já entram categorizadas.
 		</p>
 		<Button type="submit" disabled={uploading}>

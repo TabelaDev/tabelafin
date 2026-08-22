@@ -2,7 +2,7 @@
 	import { Dialog, Stepper, Button, Input, Label, Select } from '@tabeladev/tabelawebui';
 	import ExtensionInstallModal from '$lib/components/ExtensionInstallModal.svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { AI_PROVIDERS, type AiProvider } from '$lib/lib/ai-providers';
+	import { AI_PROVIDERS, type AiProvider } from '$lib/utils/ai-providers';
 	import { onboarding, closeOnboarding } from '$lib/stores/onboarding-store';
 	import { get } from 'svelte/store';
 	import { onMount } from 'svelte';
@@ -184,7 +184,7 @@
 	}
 </script>
 
-<Dialog bind:open title="Configurar TabelaFin" class="!max-w-2xl">
+<Dialog bind:open title="Configurar TabelaFin" size="lg">
 	<div class="mb-4">
 		<Stepper items={stepperItems} bind:value={step} />
 	</div>
@@ -216,6 +216,8 @@
 						value: m.id,
 						label: m.supportsDocuments ? m.id : `${m.id} (sem upload de PDF)`
 					}))}
+					filter
+					filterPlaceholder="Buscar modelo…"
 				/>
 			</div>
 
@@ -241,7 +243,7 @@
 	{:else}
 		<div class="flex flex-col gap-4">
 			<p class="text-sm text-ink-soft">
-				O TabelaFin lê seus dados bancários pelo Meu Pluggy. Há duas formas de conectar — escolha a
+				O TabelaFin lê seus dados bancários pelo Meu Pluggy. Há duas formas de conectar: escolha a
 				que preferir:
 			</p>
 
@@ -280,7 +282,7 @@
 							<span>Instale a extensão.</span>
 						</span>
 						<p class="text-sm text-ink-soft">
-							A extensão é uma pasta deste repositório — não é publicada na loja. "Instalar" é
+							A extensão é uma pasta deste repositório: não é publicada na loja. "Instalar" é
 							carregar ela no Chrome como extensão não compactada.
 						</p>
 						<Button variant="outline" size="sm" onclick={() => (showInstallModal = true)}>
@@ -336,7 +338,7 @@
 								target="_blank"
 								rel="noreferrer">meu.pluggy.ai</a
 							>
-							e faça login — a extensão captura o token e sincroniza sozinha.
+							e faça login: a extensão captura o token e sincroniza sozinha.
 						</p>
 					</div>
 				</div>
@@ -354,14 +356,14 @@
 						Pular
 					</Button>
 					<Button onclick={checkStatus} disabled={checking || pairingLoading}>
-						{checking ? 'Verificando…' : 'Já conectei — verificar'}
+						{checking ? 'Verificando…' : 'Já conectei: verificar'}
 					</Button>
 				</div>
 			{:else}
 				<div class="flex flex-col gap-4 text-sm">
 					<p class="text-sm text-ink-soft">
 						O token é o "crachá" que comprova que é você. O Meu Pluggy mostra ele nas ferramentas de
-						desenvolvedor do navegador — não se assuste com esse nome, é só um botão escondido.
+						desenvolvedor do navegador: não se assuste com esse nome, é só um botão escondido.
 					</p>
 					<button
 						type="button"
@@ -406,7 +408,7 @@
 									<code class="border border-rule bg-paper-raised px-1 font-mono">accounts</code>
 									ou
 									<code class="border border-rule bg-paper-raised px-1 font-mono">items</code>.
-									Clique em qualquer uma delas — as colunas de status, tipo, etc. são só informações
+									Clique em qualquer uma delas: as colunas de status, tipo, etc. são só informações
 									técnicas, ignore.
 								</p>
 							</div>
@@ -415,7 +417,7 @@
 								<p>
 									Na janelinha que abrir à direita, clique na aba
 									<strong>Cabeçalhos</strong> (ou <strong>Headers</strong>). Desça até achar
-									"Authorization". O texto ao lado é o seu token — copie tudo, começando em
+									"Authorization". O texto ao lado é o seu token: copie tudo, começando em
 									<code class="border border-rule bg-paper-raised px-1 font-mono">eyJ</code>.
 								</p>
 							</div>
@@ -438,7 +440,7 @@
 						bind:value={token}
 					/>
 					<p class="text-sm text-ink-faint">
-						Começa com eyJ e pode ser comprido — pode colar inteiro.
+						Começa com eyJ e pode ser comprido: pode colar inteiro.
 					</p>
 				</div>
 

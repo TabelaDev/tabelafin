@@ -8,10 +8,9 @@ import {
 	insertStatementUpload,
 	updateStatementUpload
 } from '$lib/server/db/statement-uploads';
-import { insertPdfTransaction } from '$lib/server/db/transactions';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { extractTransactionsFromPdf } from '$lib/server/ai/extract';
-import { modelSupportsDocuments, type AiProvider } from '$lib/lib/ai-providers';
+import { modelSupportsDocuments, type AiProvider } from '$lib/utils/ai-providers';
 
 // Upload ceiling: below the providers' document limits (32 MB at Anthropic, 50 MB
 // per file at OpenAI), and comfortably above any real statement or invoice (most
@@ -92,7 +91,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		// than as a failure.
 		let duplicates = 0;
 		for (const tx of extracted) {
-			const { supersededBy } = await insertPdfTransaction(db, {
+			const { supersededBy } = await locals.transactionService.insertFromPdf({
 				userId: locals.userId,
 				statementUploadId: upload.id,
 				date: new Date(`${tx.date}T00:00:00.000Z`),

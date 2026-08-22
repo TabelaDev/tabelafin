@@ -62,7 +62,7 @@
 </script>
 
 {#if supported && permission !== 'granted'}
-	<Button variant="default" disabled={subscribing} onclick={subscribe}>
+	<Button disabled={subscribing} onclick={subscribe}>
 		Avisar quando o relatório mensal estiver pronto
 	</Button>
 {/if}

@@ -4,48 +4,39 @@ import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { getPluggyItemsByUser, shouldRecoverySync } from '$lib/server/db/pluggy-items';
-import { findUserById } from '$lib/server/db/users';
 import { ensureDefaultCategories } from '$lib/server/db/user-categories';
 import { syncUserItems } from '$lib/server/pluggy/sync';
 
 export const load: LayoutServerLoad = async ({ locals, platform }) => {
 	if (!locals.userId) redirect(303, '/login');
 
-	// The AI/Open Finance status is global (it shows in the floating pill on every
-	// page) — loaded here rather than in each page.
 	const db = getDb(platform!.env.DB);
 	const [ai, pluggy, user, pluggyItems] = await Promise.all([
 		getAiCredentials(db, locals.userId),
 		getPluggyCredentials(db, locals.userId),
-		findUserById(db, locals.userId),
+		locals.userService.findById(locals.userId),
 		getPluggyItemsByUser(db, locals.userId)
 	]);
 
-	// Makes sure every user has categories (the defaults, on first visit).
-	// Idempotent: does nothing when they already exist.
-	await ensureDefaultCategories(db, locals.userId);
+	try {
+		await ensureDefaultCategories(db, locals.userId);
+	} catch (err) {
+		const cause = err instanceof Error ? err.cause : undefined;
+		console.error('[layout/app] ensureDefaultCategories failed', {
+			userId: locals.userId,
+			error: err instanceof Error ? err.message : String(err),
+			cause: cause instanceof Error ? cause.message : String(cause)
+		});
+	}
 
-	// First visit: a user who has not seen the onboarding gets the configuration
-	// modal over the app (see +layout.svelte).
 	const seenOnboarding = user?.seenOnboarding ?? false;
 
-	// The Meu Pluggy token lasts ~24h (its `exp` is stored on receipt). Saying
-	// "conectado" when the token already expired is a lie — the sync would fail.
-	// Null expiry (a credential stored before the column existed) is treated as
-	// connected until the extension refreshes the token.
 	const pluggyStatus: 'connected' | 'expired' | 'disconnected' = pluggy
 		? pluggy.tokenExpiresAt && pluggy.tokenExpiresAt.getTime() <= Date.now()
 			? 'expired'
 			: 'connected'
 		: 'disconnected';
 
-	// Pluggy connected but the items never synced (a connection made before the
-	// post-connection sync existed) — kicks off the sync in the background so the
-	// data arrives without waiting for the daily cron. The cooldown in
-	// shouldRecoverySync is what makes this safe to run from a layout load:
-	// without it, an item that keeps failing fired a full sync on every single
-	// navigation. AI categorisation is left to the cron — see
-	// SyncUserItemsOptions.
 	if (pluggy && shouldRecoverySync(pluggyItems)) {
 		const syncPromise = syncUserItems(db, platform!.env.MASTER_KEY, locals.userId, {
 			skipAiCategorization: true

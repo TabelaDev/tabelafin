@@ -28,6 +28,8 @@
 	},
 	"vars": {
 		"ORIGIN": "https://tabelafin.ianptkcs-023.workers.dev",
+		"PUBLIC_TABELAHUB_URL": "https://tabelahub.ianptkcs-023.workers.dev",
+		"PUBLIC_APP_URL": "https://tabelafin.ianptkcs-023.workers.dev",
 		"VAPID_PUBLIC_KEY": "BLRtiZgDBYkAVW92C0WIfRmlehgF0g4vI7i6xC8VKYHziKVdcyxv3jtj0BIoin5LU255BX4pknqJENcPfswYAns",
 		"VAPID_SUBJECT": "https://tabelafin.ianptkcs-023.workers.dev",
 		// Better Auth: base URL for session callbacks

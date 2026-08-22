@@ -7,7 +7,6 @@ import {
 	shouldRefreshSync,
 	upsertPluggyItem
 } from '$lib/server/db/pluggy-items';
-import { setUserSeenOnboarding } from '$lib/server/db/users';
 import { encryptSecret } from '$lib/server/crypto';
 import { fetchItems, jwtExpiresAt } from '$lib/server/pluggy/client';
 import { syncUserItems } from '$lib/server/pluggy/sync';
@@ -35,8 +34,6 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	const db = getDb(platform!.env.DB);
 
-	// Validating the token also discovers the user's connections (items) — the
-	// extension only delivers the token; the items come from here.
 	let items;
 	try {
 		items = await fetchItems(token);
@@ -98,15 +95,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		});
 	}
 
-	// The user now has credentials + connections: onboarding can be considered
-	// seen (otherwise the modal would reopen on every login even after
-	// connecting).
-	await setUserSeenOnboarding(db, userId, true);
+	// Use platform.env for services since this route doesn't have session-based locals
+	const userService = new (await import('$lib/server/services/user.service')).UserService(db);
+	await userService.setSeenOnboarding(userId, true);
 
-	// The extension re-posts the token on every visit to Meu Pluggy, so this
-	// endpoint is not a once-per-connection event — it can fire several times a
-	// day. Throttle the sync it triggers; storing the fresh token above always
-	// happens, which is what keeps the daily cron working.
 	const userItems = await getPluggyItemsByUser(db, userId);
 	if (shouldRefreshSync(userItems)) {
 		const syncPromise = syncUserItems(db, masterKey, userId, { items: userItems }).catch((err) => {

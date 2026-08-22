@@ -9,9 +9,9 @@
 // hundred the response gets truncated, the tool_use payload comes back as
 // invalid JSON, and *nothing* is categorised — after the user already paid for
 // the call. So the batch is capped and the run is split into several calls.
-import type { AiProvider } from '$lib/lib/ai-providers';
+import type { AiProvider } from '$lib/utils/ai-providers';
 import { fetchWithRetry } from '$lib/server/http';
-import { toReais } from '$lib/lib/money';
+import { toReais } from '$lib/utils/money';
 
 // Transactions per provider call. Each result is a small object
 // (`{"id": "<uuid>", "category": "<name>"}`), so 100 of them fit comfortably in

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { signedBalance } from '$lib/lib/accounts';
-	import { formatCompactCurrency, formatCurrency } from '$lib/lib/format';
+	import { signedBalance } from '$lib/utils/accounts';
+	import { formatCompactCurrency, formatCurrency } from '$lib/utils/format';
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import {
 		Accordion,
 		Badge,
@@ -14,9 +13,10 @@
 		Select,
 		Table
 	} from '@tabeladev/tabelawebui';
-	import type { ActionData, PageData } from './$types';
+	import { handleAction } from '$lib/utils/forms';
+	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	let showForm = $state(false);
 	const manualAccounts = $derived(data.accounts.filter((a) => a.manual));
@@ -86,13 +86,13 @@
 </script>
 
 <svelte:head>
-	<title>Contas — TabelaFin</title>
+	<title>Contas: TabelaFin</title>
 </svelte:head>
 
 {#snippet investmentExplainer()}
 	<p class="font-mono text-xs text-ink-soft">
 		Produtos de investimento conectados via Open Finance (CDB, Tesouro Direto, fundos, ações)
-		aparecem como contas individuais — {investmentCount} das {data.accounts.length} contas aqui são ativos
+		aparecem como contas individuais: {investmentCount} das {data.accounts.length} contas aqui são ativos
 		separados da mesma corretora. Use o filtro de tipo pra ver só conta corrente e cartão.
 	</p>
 {/snippet}
@@ -214,7 +214,7 @@
 				{#if key === 'name'}
 					<span class="font-medium">{row.name}</span>
 				{:else if key === 'type'}
-					<Badge>[{row.type}]</Badge>
+					<Badge variant="secondary">[{row.type}]</Badge>
 				{:else if key === 'balance'}
 					<span class={amountClass(Number(row.balance))}>
 						{formatCurrency(Number(row.balance))}
@@ -242,14 +242,7 @@
 				<form
 					method="POST"
 					action="?/create"
-					use:enhance={() => {
-						return async ({ result }) => {
-							if (result.type === 'success') {
-								await invalidateAll();
-								showForm = false;
-							}
-						};
-					}}
+					use:enhance={handleAction({ onSuccess: () => (showForm = false) })}
 					class="flex flex-col gap-3"
 				>
 					<h2 class="font-mono text-sm font-semibold">Nova conta manual</h2>
@@ -281,10 +274,6 @@
 						Em cartão de crédito, informe o valor da fatura em aberto (positivo).
 					</p>
 
-					{#if form?.error}
-						<p class="font-mono text-sm text-danger">{form.error}</p>
-					{/if}
-
 					<div class="flex justify-end gap-2">
 						<Button type="button" variant="outline" size="sm" onclick={() => (showForm = false)}>
 							Cancelar
@@ -311,11 +300,7 @@
 							<form
 								method="POST"
 								action="?/updateBalance"
-								use:enhance={() => {
-									return async ({ result }) => {
-										if (result.type === 'success') await invalidateAll();
-									};
-								}}
+								use:enhance={handleAction()}
 								class="flex items-end gap-2"
 							>
 								<input type="hidden" name="accountId" value={account.id} />
@@ -327,15 +312,7 @@
 								/>
 								<Button type="submit" variant="outline" size="sm">Salvar</Button>
 							</form>
-							<form
-								method="POST"
-								action="?/delete"
-								use:enhance={() => {
-									return async ({ result }) => {
-										if (result.type === 'success') await invalidateAll();
-									};
-								}}
-							>
+							<form method="POST" action="?/delete" use:enhance={handleAction()}>
 								<input type="hidden" name="accountId" value={account.id} />
 								<Button
 									type="submit"

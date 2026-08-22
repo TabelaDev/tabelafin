@@ -9,9 +9,9 @@
 // Providers without `supportsDocuments` (DeepSeek, for one) never reach here: the
 // gating happens in the UI and in the upload route before the call. As a
 // safeguard, the dispatch still throws if it is called with one of them.
-import type { AiProvider } from '$lib/lib/ai-providers';
+import type { AiProvider } from '$lib/utils/ai-providers';
 import { fetchWithRetry } from '$lib/server/http';
-import { toCents } from '$lib/lib/money';
+import { toCents } from '$lib/utils/money';
 
 // A PDF cannot be split the way a transaction list can (server/ai/categorize.ts
 // batches; here the document is the unit), so the only lever is a budget big

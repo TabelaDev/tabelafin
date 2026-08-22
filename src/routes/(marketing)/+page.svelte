@@ -11,7 +11,8 @@
 	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
 	import SmartphoneIcon from '@lucide/svelte/icons/smartphone';
 	import TagsIcon from '@lucide/svelte/icons/tags';
-	import { Button, Landing, SectionHeading, Wordmark } from '@tabeladev/tabelawebui';
+	import { Button, Landing, Wordmark } from '@tabeladev/tabelawebui';
+	import { PUBLIC_TABELAHUB_URL } from '$env/static/public';
 
 	const REPO_URL = 'https://github.com/TabelaDev/tabelafin';
 
@@ -26,7 +27,7 @@
 			number: '01',
 			color: 'var(--ctp-mauve)',
 			title: 'Suas contas entram',
-			body: 'Conecte sua conta do Meu Pluggy e nós sincronizamos suas transações automaticamente. Não possui uma conta? Você ainda pode lançar os dados manualmente de forma simplificada.'
+			body: 'Conecte sua conta do Meu Pluggy e nós sincronizamos suas transações de maneira automática. Não possui uma conta? Você ainda pode lançar os dados manualmente de forma simplificada.'
 		},
 		{
 			number: '02',
@@ -54,14 +55,14 @@
 			iconBg: 'color-mix(in srgb, var(--ctp-mauve) 12%, transparent)',
 			iconColor: 'var(--ctp-mauve)',
 			title: 'IA opcional',
-			body: 'Com sua chave de API você escolhe provedor e modelo, e paga direto pra eles — sem taxa nossa. Sem chave, as regras locais assumem a categorização. E dá pra ocultar a IA da plataforma por completo.'
+			body: 'Com sua chave de API você escolhe provedor e modelo, e paga direto pra eles, sem taxa nossa. Sem chave, as regras locais assumem a categorização. E dá pra ocultar a IA da plataforma por completo.'
 		},
 		{
 			icon: shieldIcon,
 			iconBg: 'color-mix(in srgb, var(--ctp-sapphire) 12%, transparent)',
 			iconColor: 'var(--ctp-sapphire)',
 			title: 'Suas credenciais criptografadas',
-			body: 'Sua chave de IA e as credenciais do Open Finance ficam criptografadas no banco de dados — nada em texto puro.'
+			body: 'Sua chave de IA e as credenciais do Open Finance ficam criptografadas no banco de dados, nada em texto puro.'
 		},
 		{
 			icon: landmarkIcon,
@@ -75,7 +76,7 @@
 			iconBg: 'color-mix(in srgb, var(--ctp-peach) 12%, transparent)',
 			iconColor: 'var(--ctp-peach)',
 			title: 'Gráficos honestos',
-			body: 'Evolução do saldo, top categorias e composição de gastos — sem promessa de "planos de aposentadoria". Só os números reais.'
+			body: 'Evolução do saldo, top categorias e composição de gastos, sem promessa de "planos de aposentadoria". Só os números reais.'
 		},
 		{
 			icon: fileUpIcon,
@@ -148,57 +149,46 @@
 	<meta name="twitter:description" content={DESCRIPTION} />
 </svelte:head>
 
-<div class="relative flex w-full flex-1 flex-col">
-	<div
-		aria-hidden="true"
-		class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-150"
-		style="background-image: var(--gradient-hero)"
-	></div>
+<Landing>
+	<Landing.Hero
+		eyebrow="Suas finanças sem mistério"
+		title={heroTitle}
+		lead="O TabelaFin conecta Open Finance, categoriza suas contas com regras locais ou com a sua própria IA e mostra os números numa tabela direta. Sem assinatura, sem planos empurrados: você controla o seu próprio custo."
+		note="Crie sua conta e configure IA ou Open Finance apenas se quiser."
+		justify
+	>
+		{#snippet actions()}
+			<Button href="{PUBLIC_TABELAHUB_URL}/signup" variant="primary" size="lg">Começar</Button>
+			<Button href={REPO_URL} target="_blank" rel="noreferrer" variant="outline" size="lg">
+				<CodeXmlIcon class="size-4" />
+				Ver o código
+			</Button>
+		{/snippet}
+	</Landing.Hero>
 
-	<div class="flex w-full flex-col gap-24 px-6 pt-16 pb-8 md:pt-24">
-		<Landing.Hero
-			eyebrow="Suas finanças sem mistério"
-			title={heroTitle}
-			lead="O TabelaFin conecta Open Finance, categoriza suas contas com regras locais ou com a sua própria IA e mostra os números numa tabela direta. Sem assinatura, sem planos empurrados: você controla o seu próprio custo."
-			note="Crie sua conta e configure IA ou Open Finance apenas se quiser."
-			justify
-		>
-			{#snippet actions()}
-				<Button href={resolve('/signup')} variant="primary" size="lg">Começar</Button>
-				<Button href={REPO_URL} target="_blank" rel="noreferrer" variant="outline" size="lg">
-					<CodeXmlIcon class="size-4" />
-					Ver o código
-				</Button>
-			{/snippet}
-		</Landing.Hero>
-
-		<section class="flex flex-col gap-8">
-			<SectionHeading eyebrow="Como funciona" title="Quatro passos e seus números fazem sentido." />
-			<Landing.Steps {steps} justify />
-		</section>
-
-		<section class="flex flex-col gap-8">
-			<SectionHeading
-				eyebrow="Recursos"
-				title="O que ele faz e o que ele não faz com os seus dados."
-			/>
-			<Landing.Features {features} justify />
-		</section>
-
-		<section class="flex flex-col gap-8">
-			<SectionHeading
-				eyebrow="No radar"
-				title="O que vem depois."
-				lead="Nada disso existe ainda. Tá aqui porque o roadmap é público — igual o código."
-				justify
-			/>
-			<Landing.Roadmap items={roadmap} />
-		</section>
-
-		<Landing.Footer
-			name="tabelafin"
-			license="AGPL-3.0 · SvelteKit + Cloudflare Workers"
-			repoUrl={REPO_URL}
+	<Landing.Section>
+		<Landing.Section.Heading
+			eyebrow="Como funciona"
+			title="Quatro passos e seus números fazem sentido."
 		/>
-	</div>
-</div>
+		<Landing.Steps {steps} justify />
+	</Landing.Section>
+
+	<Landing.Section>
+		<Landing.Section.Heading
+			eyebrow="Recursos"
+			title="O que ele faz e o que ele não faz com os seus dados."
+		/>
+		<Landing.Features {features} justify />
+	</Landing.Section>
+
+	<Landing.Section>
+		<Landing.Section.Heading
+			eyebrow="No radar"
+			title="O que vem depois."
+			lead="Nada disso existe ainda. Tá aqui porque o roadmap é público, igual ao código."
+			justify
+		/>
+		<Landing.Roadmap items={roadmap} />
+	</Landing.Section>
+</Landing>

@@ -7,6 +7,8 @@ MASTER_KEY=placeholder
 VAPID_PRIVATE_KEY=placeholder
 BETTER_AUTH_SECRET=placeholder
 BETTER_AUTH_URL=http://localhost:5173
+PUBLIC_TABELAHUB_URL=http://localhost:4013
+PUBLIC_APP_URL=http://localhost:4000
 # Envio de e-mail transacional (verificação de conta e redefinição de senha).
 # Sem esta chave o app funciona normalmente, só não envia e-mail — e nesse caso
 # a verificação de e-mail não é exigida no login, pra não trancar contas novas.

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Card } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency } from '$lib/lib/format';
+	import { formatCompactCurrency } from '$lib/utils/format';
 	import PushSubscribe from '$lib/components/PushSubscribe.svelte';
 	import type { PageData } from './$types';
 
@@ -158,7 +158,7 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 </script>
 
 <svelte:head>
-	<title>Relatórios — TabelaFin</title>
+	<title>Relatórios: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4">

@@ -3,7 +3,7 @@
 	import { horizontalBarOptions } from '$lib/client/charts';
 	import { resolve } from '$app/paths';
 	import { Card, Select } from '@tabeladev/tabelawebui';
-	import { formatCurrency } from '$lib/lib/format';
+	import { formatCurrency } from '$lib/utils/format';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -61,7 +61,7 @@
 </script>
 
 <svelte:head>
-	<title>Categorias — TabelaFin</title>
+	<title>Categorias: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4">

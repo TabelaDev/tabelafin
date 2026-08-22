@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { enhance, applyAction } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import type { ActionResult } from '@sveltejs/kit';
 	import { Button, Card, Dialog, Input, Label, Select } from '@tabeladev/tabelawebui';
+	import { handleAction } from '$lib/utils/forms';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -80,18 +79,11 @@
 		if (!showDeleteDialog) pendingDelete = null;
 	});
 
-	// Reuses `use:enhance` + `applyAction` so the `?/remove` action result is
-	// applied and the list is invalidated after a successful deletion.
-	const handleRemove = () => {
-		return async ({ result }: { result: ActionResult }) => {
-			await applyAction(result);
-			if (result.type === 'success') await invalidateAll();
-		};
-	};
+	const handleRemove = handleAction();
 </script>
 
 <svelte:head>
-	<title>Categorias — TabelaFin</title>
+	<title>Categorias: TabelaFin</title>
 </svelte:head>
 
 <div class="flex flex-col gap-6">
@@ -102,7 +94,7 @@
 			>
 			<h1 class="font-mono text-2xl font-bold">Gerenciar categorias</h1>
 			<p class="font-mono text-sm text-ink-soft">
-				<span class="text-ink-faint">//</span> Suas categorias de transação — crie, renomeie, mude a cor.
+				<span class="text-ink-faint">//</span> Suas categorias de transação: crie, renomeie, mude a cor.
 				As transações sem categoria aparecem como "Outros".
 			</p>
 		</div>
@@ -117,16 +109,12 @@
 			<form
 				method="POST"
 				action="?/add"
-				use:enhance={() => {
-					return async ({ result }) => {
-						await applyAction(result);
-						if (result.type === 'success') {
-							newName = '';
-							newColor = 'ctp-overlay1';
-							await invalidateAll();
-						}
-					};
-				}}
+				use:enhance={handleAction({
+					onSuccess: () => {
+						newName = '';
+						newColor = 'ctp-overlay1';
+					}
+				})}
 				class="flex flex-col gap-3"
 			>
 				<h2 class="font-mono text-sm font-semibold">Nova categoria</h2>
@@ -164,15 +152,7 @@
 							<form
 								method="POST"
 								action="?/update"
-								use:enhance={() => {
-									return async ({ result }) => {
-										await applyAction(result);
-										if (result.type === 'success') {
-											cancelEdit();
-											await invalidateAll();
-										}
-									};
-								}}
+								use:enhance={handleAction({ onSuccess: cancelEdit })}
 								class="flex flex-wrap items-center gap-2"
 							>
 								<input type="hidden" name="name" value={cat.name} />
@@ -235,10 +215,12 @@
 				id="migrateTo"
 				name="migrateTo"
 				options={[
-					{ value: '', label: 'Não mover — transações viram "Outros"' },
+					{ value: '', label: 'Não mover: transações viram "Outros"' },
 					...migrationOptions
 				]}
 				bind:value={deleteMigrateTo}
+				filter
+				filterPlaceholder="Buscar categoria…"
 			/>
 			<p class="font-mono text-xs text-ink-faint">
 				Mover repassa transações e regras automáticas pra outra categoria.

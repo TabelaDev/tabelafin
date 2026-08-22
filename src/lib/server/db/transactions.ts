@@ -1,7 +1,7 @@
-import { and, eq, gt, gte, inArray, isNull, lte, ne, notInArray, or } from 'drizzle-orm';
+import { and, eq, gt, gte, inArray, isNull, lte, ne, notInArray, or, sql } from 'drizzle-orm';
 import type { getDb } from './index';
 import { transactions } from './schema';
-import type { TransactionCategory } from '$lib/lib/categories';
+import type { TransactionCategory } from '$lib/utils/categories';
 import {
 	INTERNAL_TRANSFER_CATEGORIES,
 	INTERNAL_TRANSFER_DESCRIPTIONS
@@ -116,19 +116,25 @@ export async function getExistingPluggyIds(
 	return found;
 }
 
-// Updates only the `pluggyCategory` of an existing transaction (used by the
-// re-sync to backfill the field on transactions that predate it).
 // Refreshes the fields the source still owns on an already-synced transaction.
 // This was two separate UPDATEs on the same row, run per transaction on every
 // sync — the single most repeated round trip in the job.
+//
+// `accountId` is rewritten too, which is what makes a re-sync self-healing. It
+// used to be left alone, and that turned a one-off data loss into a permanent
+// one: a migration that dropped `finance_accounts` before copying
+// `transactions` cascaded ON DELETE SET NULL over `account_id`, and since every
+// already-known row takes this path, no sync ever put the link back. Without
+// the account there is no account *type*, and classifyMovement then reads a
+// credit card purchase (positive by the API's convention) as income.
 export async function updatePluggyFields(
 	db: Db,
 	pluggyTransactionId: string,
-	fields: { category: string | null; amount: number }
+	fields: { category: string | null; amount: number; accountId: string }
 ) {
 	await db
 		.update(transactions)
-		.set({ pluggyCategory: fields.category, amount: fields.amount })
+		.set({ pluggyCategory: fields.category, amount: fields.amount, accountId: fields.accountId })
 		.where(eq(transactions.pluggyTransactionId, pluggyTransactionId));
 }
 
@@ -249,9 +255,9 @@ export async function insertManualTransaction(db: Db, input: NewManualTransactio
 
 // ESCOPO.md §5 — the dedupe rule: a transaction that came from a PDF (and has
 // not been superseded yet) is a duplicate candidate for a new Pluggy transaction
-// when the amount matches, the date is within ±3 days, and either the account
-// matches or the PDF row had no account linked — accountId is nullable on
-// transactions for exactly this case, see schema.ts.
+// when the amount matches in MAGNITUDE, the date is within ±3 days, and either
+// the account matches or the PDF row had no account linked — accountId is
+// nullable on transactions for exactly this case, see schema.ts.
 const SUPERSEDE_TOLERANCE_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -271,7 +277,11 @@ export async function findSupersedeCandidate(
 			and(
 				eq(transactions.userId, userId),
 				eq(transactions.source, 'pdf_upload'),
-				eq(transactions.amount, amount),
+				// Magnitude, not the signed value — the two sides disagree on sign, see
+				// amountsMatchForDedupe below. Comparing `amount = -78254` against the
+				// API's `+78254` matched nothing, so the cross-source dedupe never fired
+				// on a card invoice, which is most of what arrives as a statement.
+				eq(sql`abs(${transactions.amount})`, Math.abs(amount)),
 				isNull(transactions.supersededByTransactionId),
 				gte(transactions.date, from),
 				lte(transactions.date, to),

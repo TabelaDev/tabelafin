@@ -38,7 +38,7 @@ import {
 	isSelfTransferByDescription
 } from './internal-transfers';
 import { applyTagRules } from '$lib/server/db/tag-rules';
-import type { AiProvider } from '$lib/lib/ai-providers';
+import type { AiProvider } from '$lib/utils/ai-providers';
 
 type Db = ReturnType<typeof getDb>;
 type PluggyItemRow = Awaited<ReturnType<typeof getAllPluggyItems>>[number];
@@ -142,6 +142,14 @@ export async function syncUserItems(
 		}
 	}
 
+	// A synced transaction always has an account — the account is what carries the
+	// sign convention (a card purchase arrives positive and IS spending). A row
+	// that lost the link silently falls back to the checking convention and shows
+	// up as income, so this counts them out loud instead of letting the condition
+	// hide. It happened for real: a migration dropped `finance_accounts` before
+	// copying `transactions` and ON DELETE SET NULL cascaded over the column.
+	await reportOrphanTransactions(db, userId);
+
 	// Flags as internal transfers the transactions that mirror each other between
 	// the user's own accounts (same amount, close dates, different accounts and
 	// opposite signs) — a business account into a personal one. Without this the
@@ -160,6 +168,35 @@ export async function syncUserItems(
 	await applyTagRules(db, userId);
 
 	await categorizeNewTransactions(db, masterKey, userId, { skipAi: skipAiCategorization });
+}
+
+// Counts synced transactions that have no account linked. Every `source='pluggy'`
+// row is inserted with one (insertPluggyTransaction), so a null here is a data
+// bug, not a normal case — manual and PDF rows legitimately have none, which is
+// why the count is scoped to the pluggy source. Logged rather than repaired: the
+// repair belongs to updatePluggyFields, which re-attaches the account on the next
+// sync that touches the row. This only makes sure the state is never invisible.
+async function reportOrphanTransactions(db: Db, userId: string): Promise<void> {
+	const rows = await db
+		.select({ id: transactions.id })
+		.from(transactions)
+		.where(
+			and(
+				eq(transactions.userId, userId),
+				eq(transactions.source, 'pluggy'),
+				isNull(transactions.accountId),
+				isNull(transactions.supersededByTransactionId)
+			)
+		);
+	if (rows.length === 0) return;
+
+	// Without an account there is no account type, so classifyMovement falls back to
+	// the checking convention and a card purchase reads as income.
+	console.error('[pluggy/sync] transações sincronizadas sem conta vinculada', {
+		userId,
+		count: rows.length,
+		impact: 'income/expense sign is wrong for credit card rows'
+	});
 }
 
 // MIRROR_WINDOW_MS: interbank transfers land D+0/D+1, so the two legs can sit
@@ -493,12 +530,17 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 		for (const tx of pluggyTransactions) {
 			const txDate = new Date(tx.date);
 
-			// Already synced on an earlier run: the `pluggyCategory` and `amount` are
-			// still refreshed (the BRL-converted amount arrived later — a re-sync
-			// fixes foreign transactions stored before that) and the dedupe/supersede
-			// is skipped, since it only makes sense for a brand new transaction.
+			// Already synced on an earlier run: the `pluggyCategory`, `amount` and
+			// `accountId` are still refreshed (the BRL-converted amount arrived later
+			// — a re-sync fixes foreign transactions stored before that, and the
+			// account link re-attaches a row that lost it) and the dedupe/supersede is
+			// skipped, since it only makes sense for a brand new transaction.
 			if (existingIds.has(tx.id)) {
-				await updatePluggyFields(db, tx.id, { category: tx.category, amount: tx.amount });
+				await updatePluggyFields(db, tx.id, {
+					category: tx.category,
+					amount: tx.amount,
+					accountId: account.id
+				});
 				continue;
 			}
 

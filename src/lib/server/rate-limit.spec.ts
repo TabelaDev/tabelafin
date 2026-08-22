@@ -96,11 +96,13 @@ describe('clientRateLimitKey', () => {
 
 	// X-Forwarded-For is client-settable, so trusting it would let an attacker
 	// mint a fresh bucket per attempt.
-	it('ignores a client-supplied X-Forwarded-For', () => {
+	it('generates a random key when CF-Connecting-IP is absent', () => {
 		const request = new Request('https://example.test', {
 			headers: { 'X-Forwarded-For': '9.9.9.9' }
 		});
-		expect(clientRateLimitKey(request)).toBe('unknown');
+		const key = clientRateLimitKey(request);
+		// Should be a UUID, not 'unknown' or the spoofed X-Forwarded-For
+		expect(key).toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
 	});
 
 	it('scopes by the suffix when one is given, case-insensitively', () => {
