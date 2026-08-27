@@ -1,12 +1,14 @@
 <script lang="ts">
-	import './layout.css';
+	import ReloadPrompt from '$lib/components/ReloadPrompt.svelte';
+	import { ToastType } from '$lib/enums/toast-type';
+	import { theme } from '$lib/utils/theme.svelte';
+
 	import { page } from '$app/state';
 	import { Toaster, toast } from '@tabeladev/tabelawebui';
-	import { ToastType } from '$lib/enums/toast-type';
-	import { pwaInfo } from 'virtual:pwa-info';
 	import { getFlash } from 'sveltekit-flash-message';
-	import ReloadPrompt from '$lib/components/ReloadPrompt.svelte';
-	import { theme } from '$lib/utils/theme.svelte';
+	import { pwaInfo } from 'virtual:pwa-info';
+
+	import './layout.css';
 
 	let { children } = $props();
 

@@ -1,6 +1,8 @@
-import { redirect } from 'sveltekit-flash-message/server';
-import type { RequestHandler } from './$types';
 import { ToastType } from '$lib/enums/toast-type';
+
+import { redirect } from 'sveltekit-flash-message/server';
+
+import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ cookies, locals }) => {
 	const sessionToken = locals.authService.getSessionToken(cookies);

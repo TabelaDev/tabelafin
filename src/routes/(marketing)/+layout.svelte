@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { MarketingShell, Button } from '@tabeladev/tabelawebui';
-	import { PUBLIC_TABELAHUB_URL, PUBLIC_APP_URL } from '$env/static/public';
+	import { PUBLIC_APP_URL, PUBLIC_TABELAHUB_URL } from '$env/static/public';
+
+	import { Button, MarketingShell } from '@tabeladev/tabelawebui';
 
 	let { children } = $props();
 </script>

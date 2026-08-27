@@ -1,7 +1,9 @@
 <script lang="ts">
-	import ApexCharts, { type ApexOptions } from 'apexcharts';
-	import { theme } from '$lib/utils/theme.svelte';
+	import { ChartType } from '$lib/enums/chart-type';
 	import { formatCompactNumber } from '$lib/utils/format';
+	import { theme } from '$lib/utils/theme.svelte';
+
+	import ApexCharts, { type ApexOptions } from 'apexcharts';
 
 	type ChartSeries = ApexOptions['series'];
 
@@ -11,7 +13,7 @@
 		options,
 		onLegendClick
 	}: {
-		type: 'bar' | 'area' | 'donut';
+		type: ChartType;
 		series: ChartSeries;
 		options?: ApexOptions;
 		// Fired when the user clicks a legend item. The index is the legend
@@ -139,7 +141,7 @@
 						})
 				}
 			},
-			fill: { type: type === 'area' ? 'gradient' : 'solid', opacity: 0.9 }
+			fill: { type: type === ChartType.Area ? 'gradient' : 'solid', opacity: 0.9 }
 		};
 		return deepMerge(base, options ?? {});
 	});

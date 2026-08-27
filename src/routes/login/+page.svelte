@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { Button, Card, Wordmark } from '@tabeladev/tabelawebui';
+	import { PUBLIC_APP_URL, PUBLIC_TABELAHUB_URL } from '$env/static/public';
+
 	import { resolve } from '$app/paths';
-	import { PUBLIC_TABELAHUB_URL, PUBLIC_APP_URL } from '$env/static/public';
+	import { Button, Card, Wordmark } from '@tabeladev/tabelawebui';
 </script>
 
 <svelte:head>

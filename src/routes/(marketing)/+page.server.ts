@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+
 import type { PageServerLoad } from './$types';
 
 // A signed-out visitor gets the landing page (+page.svelte); only someone who

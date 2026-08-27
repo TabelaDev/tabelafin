@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+
 import type { PageServerLoad } from './$types';
 
 // If already logged in, go to dashboard. Otherwise, the page component

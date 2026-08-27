@@ -1,22 +1,26 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-at-html-tags -- controlled, static inline SVGs */
-	import { page } from '$app/state';
-	import { resolve } from '$app/paths';
-	import { AppShell, FloatingActionPill, Status, StatusPill } from '@tabeladev/tabelawebui';
-	import { onMount } from 'svelte';
 	import ChatWidget from '$lib/components/ChatWidget.svelte';
 	import OnboardingModal from '$lib/components/OnboardingModal.svelte';
 	import StatementImportModal from '$lib/components/StatementImportModal.svelte';
+	import { APP_NAME_SUFFIX } from '$lib/config';
+	import { PluggyStatus } from '$lib/enums/pluggy-status';
+
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { AppShell, FloatingActionPill, Status, StatusPill } from '@tabeladev/tabelawebui';
+	import { onMount } from 'svelte';
+
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
 	// AI/Open Finance status pill is dismissible; the choice persists.
 	const STATUS_HIDDEN_KEY = 'tabelafin.status-hidden';
-	let statusVisible = $state(true);
+	let statusVisible = $state(false);
 	let statusInitialized = $state(false);
 	onMount(() => {
-		if (localStorage.getItem(STATUS_HIDDEN_KEY) === '1') statusVisible = false;
+		if (localStorage.getItem(STATUS_HIDDEN_KEY) !== '1') statusVisible = true;
 		statusInitialized = true;
 	});
 	$effect(() => {
@@ -91,23 +95,13 @@
 	{@html iconSvg('user')}
 {/snippet}
 
-{#snippet profile()}
-	<a
-		href={resolve('/profile')}
-		class="profile-link {page.url.pathname === resolve('/profile') ? 'profile-link-active' : ''}"
-		aria-current={page.url.pathname === resolve('/profile') ? 'page' : undefined}
-	>
-		{@render profileIcon()}
-		<span>Perfil</span>
-	</a>
-{/snippet}
-
 <AppShell
-	brand={{ prefix: 'Tabela', suffix: 'Fin' }}
+	brand={{ suffix: APP_NAME_SUFFIX }}
 	navItems={NAV_ITEMS}
 	currentPath={page.url.pathname}
 	logoutAction="/logout"
-	{profile}
+	profile={{ href: resolve('/profile'), label: 'Perfil', icon: profileIcon }}
+	pad={false}
 >
 	{@render children()}
 </AppShell>
@@ -120,15 +114,15 @@
 	<ChatWidget
 		bind:open={chatOpen}
 		onclose={() => (chatOpen = false)}
-		class="bottom-44! left-4! lg:bottom-24! lg:left-[16.75rem]!"
+		class="bottom-44! left-4! lg:bottom-24! lg:left-64!"
 	/>
 	<FloatingActionPill
 		position="bottom-left"
-		label="Abrir chat de IA"
-		expandedLabel="Fechar chat"
+		ariaLabel="Abrir chat de IA"
+		ariaExpandedLabel="Fechar chat"
 		expanded={chatOpen}
 		onclick={() => (chatOpen = !chatOpen)}
-		class="bottom-28! left-4! lg:bottom-6! lg:left-[16rem]!"
+		class="bottom-28! left-4! lg:bottom-6! lg:left-64!"
 	>
 		{@html iconSvg('chat')}
 		Chat IA
@@ -154,7 +148,7 @@
 		<span class="text-ink-faint">·</span>
 	{/if}
 	<span class="text-ink-faint">Open Finance:</span>
-	{#if data.pluggyStatus === 'expired'}
+	{#if data.pluggyStatus === PluggyStatus.Expired}
 		<a href={resolve('/profile')} class="text-danger hover:text-danger hover:underline"
 			>expirado (renove no Meu Pluggy)</a
 		>
@@ -176,37 +170,4 @@
 <StatementImportModal />
 
 <style>
-	/* Profile in the sidebar footer — same look as the nav items, grouped with
-	   the theme toggle and logout. The negative margin cancels the AppShell
-	   wrapper padding (.twui-appshell-sidebar-profile) so the row aligns with
-	   the rest of the footer. */
-	.profile-link {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		width: 100%;
-		margin: -2px -8px -4px;
-		padding: 6px 8px;
-		border-left: 2px solid transparent;
-		font-family: var(--twui-font-mono, 'JetBrains Mono', monospace);
-		font-size: 14px;
-		line-height: 1.4;
-		color: var(--twui-ink-soft);
-		text-decoration: none;
-		transition: color 0.15s ease;
-	}
-
-	.profile-link:hover {
-		color: var(--twui-accent);
-	}
-
-	.profile-link-active {
-		border-left-color: var(--twui-accent);
-		color: var(--twui-accent);
-		font-weight: 500;
-	}
-
-	.profile-link-active:hover {
-		color: var(--twui-accent);
-	}
 </style>

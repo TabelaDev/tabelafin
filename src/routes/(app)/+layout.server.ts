@@ -1,14 +1,17 @@
-import { redirect } from '@sveltejs/kit';
-import type { LayoutServerLoad } from './$types';
+import { PluggyStatus } from '$lib/enums/pluggy-status';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { getPluggyItemsByUser, shouldRecoverySync } from '$lib/server/db/pluggy-items';
 import { ensureDefaultCategories } from '$lib/server/db/user-categories';
 import { syncUserItems } from '$lib/server/pluggy/sync';
+import { requireLogin } from '$lib/server/require-login';
+import { getPluggyStatus } from '$lib/server/services/pluggy-status.service';
+
+import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 	const [ai, pluggy, user, pluggyItems] = await Promise.all([
@@ -31,13 +34,9 @@ export const load: LayoutServerLoad = async ({ locals, platform }) => {
 
 	const seenOnboarding = user?.seenOnboarding ?? false;
 
-	const pluggyStatus: 'connected' | 'expired' | 'disconnected' = pluggy
-		? pluggy.tokenExpiresAt && pluggy.tokenExpiresAt.getTime() <= Date.now()
-			? 'expired'
-			: 'connected'
-		: 'disconnected';
+	const pluggyStatus = await getPluggyStatus(db, locals.userId);
 
-	if (pluggy && shouldRecoverySync(pluggyItems)) {
+	if (pluggyStatus === PluggyStatus.Connected && shouldRecoverySync(pluggyItems)) {
 		const syncPromise = syncUserItems(db, platform!.env.MASTER_KEY, locals.userId, {
 			skipAiCategorization: true
 		}).catch((err) => {

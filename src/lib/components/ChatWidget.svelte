@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Button, ChatMessage } from '@tabeladev/tabelawebui';
+	import { Button, ChatMessage, Textarea } from '@tabeladev/tabelawebui';
+	import { cubicOut } from 'svelte/easing';
+	import { scale } from 'svelte/transition';
 
 	let {
 		open = $bindable(),
@@ -105,6 +107,7 @@
      in the corner, positioned by the layout (sidebar offset on desktop). -->
 {#if open}
 	<div
+		transition:scale={{ duration: 160, easing: cubicOut, start: 0.95 }}
 		class="fixed z-50 flex max-h-[80svh] w-[22rem] max-w-[calc(100vw-2rem)] flex-col border border-rule bg-paper shadow-[3px_3px_0_0_var(--twui-rule)] {className}"
 	>
 		<!-- Header -->
@@ -145,13 +148,13 @@
 		<!-- Input -->
 		<div class="border-t border-rule p-4">
 			<div class="flex gap-2">
-				<textarea
+				<Textarea
 					bind:value={input}
 					onkeydown={handleKeydown}
 					placeholder="Pergunte algo..."
-					rows="1"
-					class="bg-paper-inset flex-1 resize-none rounded border border-rule px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-				></textarea>
+					rows={1}
+					class="flex-1 resize-none"
+				/>
 				<Button onclick={sendMessage} disabled={isStreaming || !input.trim()} size="sm">
 					{isStreaming ? '...' : '→'}
 				</Button>

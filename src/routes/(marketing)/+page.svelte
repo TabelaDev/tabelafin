@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { PUBLIC_TABELAHUB_URL } from '$env/static/public';
+
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import BadgeDollarSignIcon from '@lucide/svelte/icons/badge-dollar-sign';
 	import ChartLineIcon from '@lucide/svelte/icons/chart-line';
 	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
@@ -12,7 +14,6 @@
 	import SmartphoneIcon from '@lucide/svelte/icons/smartphone';
 	import TagsIcon from '@lucide/svelte/icons/tags';
 	import { Button, Landing, Wordmark } from '@tabeladev/tabelawebui';
-	import { PUBLIC_TABELAHUB_URL } from '$env/static/public';
 
 	const REPO_URL = 'https://github.com/TabelaDev/tabelafin';
 

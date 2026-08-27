@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
-	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { ErrorPage } from '@tabeladev/tabelawebui';
 
 	let { error }: { error: App.Error } = $props();
