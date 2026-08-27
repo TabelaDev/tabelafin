@@ -1,7 +1,7 @@
 import { applyAction } from '$app/forms';
 import { invalidateAll } from '$app/navigation';
-import { toast } from '@tabeladev/tabelawebui';
 import type { ActionResult } from '@sveltejs/kit';
+import { toast } from '@tabeladev/tabelawebui';
 
 /**
  * The single `use:enhance` handler for every form action in the app.

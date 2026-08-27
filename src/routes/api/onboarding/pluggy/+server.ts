@@ -1,15 +1,18 @@
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { unauthorizedJson } from '$lib/server/api-auth';
+import { encryptSecret } from '$lib/server/crypto';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { upsertPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { upsertPluggyItem } from '$lib/server/db/pluggy-items';
-import { encryptSecret } from '$lib/server/crypto';
 import { fetchItems, jwtExpiresAt } from '$lib/server/pluggy/client';
 import { syncUserItems } from '$lib/server/pluggy/sync';
 
+import { json } from '@sveltejs/kit';
+
+import type { RequestHandler } from './$types';
+
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
-	if (!locals.userId) return json({ error: 'Não autenticado.' }, { status: 401 });
+	if (!locals.userId) return unauthorizedJson();
 
 	let body: unknown;
 	try {

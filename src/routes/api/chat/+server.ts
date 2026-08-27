@@ -1,19 +1,24 @@
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { AccountType } from '$lib/enums/account-type';
+import { DEFAULT_CHAT_PROMPT } from '$lib/prompts';
+import { unauthorizedJson } from '$lib/server/api-auth';
+import { decryptSecret } from '$lib/server/crypto';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
-import { getUserAiPrompts } from '$lib/server/db/user-ai-prompts';
-import { createConversation, getConversation, getMessages, addMessage } from '$lib/server/db/chat';
+import { addMessage, createConversation, getConversation, getMessages } from '$lib/server/db/chat';
 import { getRecurringExpenses } from '$lib/server/db/recurring-expenses';
 import { financeAccounts } from '$lib/server/db/schema';
-import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { transactions } from '$lib/server/db/schema';
-import { classifyMovement, isNotInternalTransfer } from '$lib/server/db/transactions';
 import { getTagTotals } from '$lib/server/db/tags';
+import { classifyMovement, isNotInternalTransfer } from '$lib/server/db/transactions';
+import { getUserAiPrompts } from '$lib/server/db/user-ai-prompts';
+import { type FetchWithRetryOptions, fetchWithRetry } from '$lib/server/http';
 import { sumSignedBalance } from '$lib/utils/accounts';
 import { toReais } from '$lib/utils/money';
-import { decryptSecret } from '$lib/server/crypto';
-import { fetchWithRetry, type FetchWithRetryOptions } from '$lib/server/http';
+
+import { json } from '@sveltejs/kit';
+import { and, desc, eq, gte, isNull } from 'drizzle-orm';
+
+import type { RequestHandler } from './$types';
 
 // The chat answer is streamed, and the abort signal covers the response body —
 // so the budget has to fit the whole answer, not just the handshake. 2048
@@ -23,7 +28,7 @@ const STREAM_FETCH_OPTIONS: FetchWithRetryOptions = { timeoutMs: 120_000 };
 
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	if (!locals.userId) {
-		return json({ error: 'Não autenticado' }, { status: 401 });
+		return unauthorizedJson();
 	}
 
 	const body = (await request.json()) as { message?: string; conversationId?: string };
@@ -93,7 +98,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		]);
 
 	// Build context
-	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
+	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type as AccountType]));
 
 	// Sign-aware split (a card purchase is positive but is spending — see
 	// classifyMovement), consistent with the dashboard/categories.
@@ -351,11 +356,5 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 };
 
 function getDefaultChatPrompt(): string {
-	return (
-		`Você é um assistente financeiro pessoal do TabelaFin. ` +
-		`Responda em português do Brasil, de forma direta e prática. ` +
-		`Use os dados financeiros do usuário fornecidos no contexto pra dar respostas precisas. ` +
-		`Seja conciso e objetivo. Quando apropriado, sugira ações concretas. ` +
-		`Não invente dados — se não tiver informação suficiente, peça esclarecimento.`
-	);
+	return DEFAULT_CHAT_PROMPT;
 }

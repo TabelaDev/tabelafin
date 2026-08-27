@@ -1,3 +1,5 @@
+import { AccountType } from '$lib/enums/account-type';
+
 // Sign convention for account balances.
 //
 // The API reports a credit card's cachedBalance as the open invoice — a debt,
@@ -12,12 +14,12 @@
 // both need it while rendering.
 
 export interface AccountBalance {
-	type: string;
+	type: AccountType | string;
 	cachedBalance: number;
 }
 
 export function signedBalance(account: AccountBalance): number {
-	return account.type === 'credit_card' ? -account.cachedBalance : account.cachedBalance;
+	return account.type === AccountType.CreditCard ? -account.cachedBalance : account.cachedBalance;
 }
 
 // Sums balances on the signed axis. No rounding needed: balances are integer

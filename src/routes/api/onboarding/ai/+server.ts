@@ -1,16 +1,19 @@
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
-import { AI_PROVIDERS, type AiProvider } from '$lib/utils/ai-providers';
+import { unauthorizedJson } from '$lib/server/api-auth';
 import { encryptSecret } from '$lib/server/crypto';
 import { getDb } from '$lib/server/db';
 import { upsertAiCredentials } from '$lib/server/db/ai-credentials';
+import { AI_PROVIDERS, type AiProvider } from '$lib/utils/ai-providers';
+
+import { json } from '@sveltejs/kit';
+
+import type { RequestHandler } from './$types';
 
 function isAiProvider(value: string): value is AiProvider {
 	return value in AI_PROVIDERS;
 }
 
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
-	if (!locals.userId) return json({ error: 'Não autenticado.' }, { status: 401 });
+	if (!locals.userId) return unauthorizedJson();
 
 	let body: unknown;
 	try {

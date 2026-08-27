@@ -92,6 +92,18 @@ export function formatDate(ts: Date | string): string {
 	});
 }
 
+// Same UTC-anchored date as formatDate, spelled out for single-transaction
+// detail views ("23 de agosto de 2026" instead of "23 ago. 2026").
+export function formatDateLong(ts: Date | string): string {
+	const d = typeof ts === 'string' ? new Date(ts) : ts;
+	return d.toLocaleDateString('pt-BR', {
+		day: '2-digit',
+		month: 'long',
+		year: 'numeric',
+		timeZone: DISPLAY_TIME_ZONE
+	});
+}
+
 export function toYearMonth(date: Date): string {
 	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }

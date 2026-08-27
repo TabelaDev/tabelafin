@@ -1,7 +1,10 @@
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { requireAuth } from '$lib/server/api-auth';
 import { getDb } from '$lib/server/db';
 import { upsertPushSubscription } from '$lib/server/db/push-subscriptions';
+
+import { error, json } from '@sveltejs/kit';
+
+import type { RequestHandler } from './$types';
 
 interface SubscribePayload {
 	endpoint: string;
@@ -19,7 +22,7 @@ function isSubscribePayload(value: unknown): value is SubscribePayload {
 }
 
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
-	if (!locals.userId) error(401, 'Não autenticado.');
+	if (!locals.userId) requireAuth();
 	const payload = await request.json();
 	if (!isSubscribePayload(payload)) error(400, 'Inscrição inválida.');
 
