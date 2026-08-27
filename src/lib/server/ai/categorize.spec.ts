@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { categorizeTransactions, type TransactionToCategorize } from './categorize';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { type TransactionToCategorize, categorizeTransactions } from './categorize';
 
 function mockFetchOnce(body: unknown, ok = true, status = ok ? 200 : 500) {
 	return vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({

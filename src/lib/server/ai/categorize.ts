@@ -9,8 +9,9 @@
 // hundred the response gets truncated, the tool_use payload comes back as
 // invalid JSON, and *nothing* is categorised — after the user already paid for
 // the call. So the batch is capped and the run is split into several calls.
-import type { AiProvider } from '$lib/utils/ai-providers';
+import { DEFAULT_CATEGORIZATION_PROMPT } from '$lib/prompts';
 import { fetchWithRetry } from '$lib/server/http';
+import type { AiProvider } from '$lib/utils/ai-providers';
 import { toReais } from '$lib/utils/money';
 
 // Transactions per provider call. Each result is a small object
@@ -109,13 +110,7 @@ function systemPrompt(
 		);
 	}
 	return (
-		`Você categoriza transações financeiras pessoais (Brasil). Categorias válidas: ` +
-		`${categories.join(', ')}.\n\n` +
-		`Regras:\n` +
-		`- Valores negativos costumam ser gastos, positivos costumam ser entrada de dinheiro (ex: "Renda" ou "Transferências").\n` +
-		`- Use "Transferências" pra Pix/TED/DOC entre contas do próprio usuário ou pra terceiros sem contexto de compra.\n` +
-		`- Use "Investimentos" pra aplicações, resgates e movimentações de corretora.\n` +
-		`- Use "Outros" só quando nenhuma categoria específica se aplicar com confiança.\n\n` +
+		`${DEFAULT_CATEGORIZATION_PROMPT.replace('[categorias do usuário]', categories.join(', '))}\n\n` +
 		`Transações a categorizar:\n${formatTransactions(transactions)}\n\n` +
 		`Chame a ferramenta categorize_transactions com um resultado por transação, na mesma quantidade recebida (um id pode não se repetir).`
 	);

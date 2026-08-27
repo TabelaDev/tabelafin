@@ -2,8 +2,9 @@
 // fetch-based dispatch as server/ai/categorize.ts and TabelaCal's
 // server/ai/parse.ts, but without tool use: the output here is free text (a short
 // paragraph), not structured data, so a plain completion call is enough.
-import type { AiProvider } from '$lib/utils/ai-providers';
+import { DEFAULT_REPORT_INSTRUCTION } from '$lib/prompts';
 import { fetchWithRetry } from '$lib/server/http';
+import type { AiProvider } from '$lib/utils/ai-providers';
 import { toReais } from '$lib/utils/money';
 
 export interface CategoryTotals {
@@ -52,8 +53,7 @@ function buildPrompt(input: MonthlyReportInput): string {
 		: '';
 
 	return (
-		`Escreva um parágrafo curto (3-5 frases, em português do Brasil, tom direto e prático, ` +
-		`sem saudação nem despedida) resumindo as finanças pessoais do mês ${input.yearMonth} do ` +
+		`${DEFAULT_REPORT_INSTRUCTION} ${input.yearMonth} do ` +
 		`usuário e apontando 1-2 sugestões concretas de onde ele poderia economizar, com base nestes dados:\n\n` +
 		`Renda total: ${formatCurrency(input.totalIncome)}.\n` +
 		`Gasto total: ${formatCurrency(input.totalExpense)}.\n` +

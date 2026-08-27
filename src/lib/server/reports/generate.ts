@@ -1,20 +1,22 @@
 // Monthly cron (the 1st, ESCOPO.md §3.6): writes the previous month's
 // monthly_reports for every user and fires a push saying the report is ready.
-import { buildPushPayload } from '@block65/webcrypto-web-push';
-import { getDb } from '$lib/server/db';
+import { AccountType } from '$lib/enums/account-type';
+import { type CategoryTotals, generateMonthlySummary } from '$lib/server/ai/report';
 import { decryptSecret } from '$lib/server/crypto';
-import { getAllUsers } from '$lib/server/db/users';
-import { getAiCredentials } from '$lib/server/db/ai-credentials';
+import { getDb } from '$lib/server/db';
 import { getAccountsByUser } from '$lib/server/db/accounts';
-import { classifyMovement, getTransactionsInRange } from '$lib/server/db/transactions';
-import { getTagTotals } from '$lib/server/db/tags';
+import { getAiCredentials } from '$lib/server/db/ai-credentials';
 import { getMonthlyReport, insertMonthlyReport } from '$lib/server/db/monthly-reports';
 import {
 	deletePushSubscriptionById,
 	findPushSubscriptionsByUserId
 } from '$lib/server/db/push-subscriptions';
-import { generateMonthlySummary, type CategoryTotals } from '$lib/server/ai/report';
+import { getTagTotals } from '$lib/server/db/tags';
+import { getTransactionsInRange, summarizeTransactions } from '$lib/server/db/transactions';
+import { getAllUsers } from '$lib/server/db/users';
 import type { AiProvider } from '$lib/utils/ai-providers';
+
+import { buildPushPayload } from '@block65/webcrypto-web-push';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -92,23 +94,15 @@ async function generateReportForUser(
 
 	const transactions = await getTransactionsInRange(db, userId, range.from, range.to);
 	const accounts = await getAccountsByUser(db, userId);
-	const accountTypeById = new Map(accounts.map((a) => [a.id, a.type]));
+	const accountTypeById = new Map(accounts.map((a) => [a.id, a.type as AccountType]));
 
-	let totalIncome = 0;
-	let totalExpense = 0;
-	const categoryTotals: CategoryTotals = {};
-	for (const tx of transactions) {
-		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
-		const { expense, income } = classifyMovement(accType, tx.amount);
-		totalExpense += expense;
-		totalIncome += income;
-		if (expense !== 0) {
-			const category = tx.category ?? 'Outros';
-			categoryTotals[category] = (categoryTotals[category] ?? 0) + expense;
-		}
-	}
+	const {
+		income: totalIncome,
+		expense: totalExpense,
+		categoryTotals
+	} = summarizeTransactions(transactions, accountTypeById);
 	const investmentBalance = accounts
-		.filter((a) => a.type === 'investment')
+		.filter((a) => a.type === AccountType.Investment)
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 
 	// The previous month, when one exists, feeds the comparison asked for in
