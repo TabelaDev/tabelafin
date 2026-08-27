@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { encryptSecret, decryptSecret, type SecretContext } from './crypto';
+import { describe, expect, it } from 'vitest';
+
+import { type SecretContext, decryptSecret, encryptSecret } from './crypto';
 
 const ai: SecretContext = { purpose: 'ai_credentials', userId: 'user-1' };
 const pluggy: SecretContext = { purpose: 'pluggy_credentials', userId: 'user-1' };

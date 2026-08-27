@@ -1,9 +1,12 @@
+import { AccountType } from '$lib/enums/account-type';
+
 import { describe, expect, it } from 'vitest';
+
 import { signedBalance, sumSignedBalance } from './accounts';
 
-const checking = { type: 'checking', cachedBalance: 1271.09 };
-const investment = { type: 'investment', cachedBalance: 24408.29 };
-const card = { type: 'credit_card', cachedBalance: 6374.34 };
+const checking = { type: AccountType.Checking, cachedBalance: 1271.09 };
+const investment = { type: AccountType.Investment, cachedBalance: 24408.29 };
+const card = { type: AccountType.CreditCard, cachedBalance: 6374.34 };
 
 describe('signedBalance', () => {
 	it('passes a checking balance through untouched', () => {
@@ -20,7 +23,7 @@ describe('signedBalance', () => {
 	});
 
 	it('keeps a credit card refund positive', () => {
-		expect(signedBalance({ type: 'credit_card', cachedBalance: -120.5 })).toBe(120.5);
+		expect(signedBalance({ type: AccountType.CreditCard, cachedBalance: -120.5 })).toBe(120.5);
 	});
 });
 
@@ -42,15 +45,15 @@ describe('sumSignedBalance', () => {
 	it('sums exactly, without rounding', () => {
 		expect(
 			sumSignedBalance([
-				{ type: 'checking', cachedBalance: 10 },
-				{ type: 'checking', cachedBalance: 20 }
+				{ type: AccountType.Checking, cachedBalance: 10 },
+				{ type: AccountType.Checking, cachedBalance: 20 }
 			])
 		).toBe(30);
 	});
 
 	it('stays exact across many small balances', () => {
 		const accounts = Array.from({ length: 1000 }, () => ({
-			type: 'checking',
+			type: AccountType.Checking,
 			cachedBalance: 7
 		}));
 		expect(sumSignedBalance(accounts)).toBe(7000);

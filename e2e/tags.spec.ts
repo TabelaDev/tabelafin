@@ -1,4 +1,5 @@
-import { test, expect, type Page, type Locator } from '@playwright/test';
+import { type Locator, type Page, expect, test } from '@playwright/test';
+
 import { login } from './helpers';
 
 // Unique per run so a leftover row from an interrupted run never collides.

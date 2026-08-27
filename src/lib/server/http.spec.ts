@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fetchWithRetry } from './http';
 
 // The backoff really sleeps, so the whole suite runs on fake timers: each test

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
 
 // Exercised on the landing page: the ThemeToggle is the very same component the
 // signed-in AppShell renders, and here it needs no login.

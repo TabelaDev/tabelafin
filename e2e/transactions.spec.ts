@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
 import { login } from './helpers';
 
 // Cada teste cria a própria transação (banco isolado por rodada de teste —

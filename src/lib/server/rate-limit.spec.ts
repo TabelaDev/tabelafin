@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
+	SIGN_IN_RULE,
+	SIGN_UP_RULE,
 	checkRateLimit,
 	clientRateLimitKey,
-	rateLimitMessage,
-	SIGN_IN_RULE,
-	SIGN_UP_RULE
+	rateLimitMessage
 } from './rate-limit';
 
 // Minimal in-memory stand-in for the KV binding: only get/put with JSON are
