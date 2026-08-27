@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { DEVICE_TOKEN_KV_PREFIX, generateDeviceToken } from './device-token';
 
 describe('generateDeviceToken', () => {

@@ -2,9 +2,14 @@
 // Meu Pluggy (my-api.pluggy.ai) for every pluggy_item of every user, runs the
 // dedupe (§5) and fires the batch AI categorisation (§3.3) once per user at the
 // end.
-import { getDb } from '$lib/server/db';
+import { AccountType } from '$lib/enums/account-type';
+import { categorizeTransactions } from '$lib/server/ai/categorize';
+import { categorizeByRules } from '$lib/server/ai/rules';
 import { decryptSecret } from '$lib/server/crypto';
+import { getDb } from '$lib/server/db';
+import { upsertAccount } from '$lib/server/db/accounts';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
+import { getRulesByUser } from '$lib/server/db/categorization-rules';
 import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import {
 	getAllPluggyItems,
@@ -13,7 +18,8 @@ import {
 	updateLastSyncedAt,
 	upsertPluggyItem
 } from '$lib/server/db/pluggy-items';
-import { upsertAccount } from '$lib/server/db/accounts';
+import { financeAccounts, transactions } from '$lib/server/db/schema';
+import { applyTagRules } from '$lib/server/db/tag-rules';
 import {
 	findSupersedeCandidate,
 	getExistingPluggyIds,
@@ -22,23 +28,20 @@ import {
 	markSuperseded,
 	updatePluggyFields
 } from '$lib/server/db/transactions';
-import { financeAccounts, transactions } from '$lib/server/db/schema';
+import { getUserAiPrompts } from '$lib/server/db/user-ai-prompts';
+import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { findUserById } from '$lib/server/db/users';
+import type { AiProvider } from '$lib/utils/ai-providers';
+
 import { and, eq, gte, inArray, isNull, notInArray, or } from 'drizzle-orm';
+
 import { fetchAccounts, fetchInvestments, fetchItems, fetchTransactions } from './client';
 import { computeDedupeHash } from './dedupe';
-import { categorizeTransactions } from '$lib/server/ai/categorize';
-import { categorizeByRules } from '$lib/server/ai/rules';
-import { getRulesByUser } from '$lib/server/db/categorization-rules';
-import { getCategoriesByUser } from '$lib/server/db/user-categories';
-import { getUserAiPrompts } from '$lib/server/db/user-ai-prompts';
-import { findUserById } from '$lib/server/db/users';
 import {
 	INTERNAL_TRANSFER_CATEGORIES,
 	INTERNAL_TRANSFER_DESCRIPTIONS,
 	isSelfTransferByDescription
 } from './internal-transfers';
-import { applyTagRules } from '$lib/server/db/tag-rules';
-import type { AiProvider } from '$lib/utils/ai-providers';
 
 type Db = ReturnType<typeof getDb>;
 type PluggyItemRow = Awaited<ReturnType<typeof getAllPluggyItems>>[number];
@@ -301,7 +304,7 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 		.from(financeAccounts)
 		.where(and(eq(financeAccounts.userId, userId), inArray(financeAccounts.id, [...accountIds])));
 
-	const accountTypeById = new Map(accountRows.map((a) => [a.id, a.type]));
+	const accountTypeById = new Map(accountRows.map((a) => [a.id, a.type as AccountType]));
 
 	// Grouped by absolute amount (rounded to cents). Within a group, looks for
 	// pairs on DIFFERENT accounts with opposite signs and dates up to two days
@@ -311,7 +314,7 @@ async function markInternalTransfers(db: Db, userId: string): Promise<void> {
 	for (const row of rows) {
 		if (!row.accountId) continue;
 		const accType = accountTypeById.get(row.accountId);
-		if (accType === 'credit_card') continue;
+		if (accType === AccountType.CreditCard) continue;
 		// The grouping key is the integer magnitude. It used to be
 		// `.toFixed(2)` on a float — a second, different notion of "same amount"
 		// from the one the dedupe used, in the same pipeline.
@@ -584,7 +587,7 @@ async function syncItem(db: Db, token: string, item: PluggyItemRow): Promise<voi
 			pluggyItemId: item.id,
 			pluggyAccountId: investment.id,
 			institution: item.institutionName,
-			type: 'investment',
+			type: AccountType.Investment,
 			name: investment.name,
 			currency: investment.currency,
 			cachedBalance: investment.balance

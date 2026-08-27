@@ -8,6 +8,7 @@
 // offset/cursor pagination) — simpler than Pluggy's commercial API.
 //
 // Confirmed against my-api.pluggy.ai on 2026-08-04 through MCP/DevTools.
+import { AccountType } from '$lib/enums/account-type';
 import { fetchWithRetry } from '$lib/server/http';
 import { toCents } from '$lib/utils/money';
 
@@ -83,7 +84,7 @@ export async function fetchItems(token: string): Promise<PluggyItem[]> {
 
 export interface PluggyAccount {
 	id: string;
-	type: 'checking' | 'credit_card';
+	type: AccountType.Checking | AccountType.CreditCard;
 	name: string;
 	currency: string;
 	balance: number;
@@ -102,7 +103,10 @@ export async function fetchAccounts(token: string, itemIds: string[]): Promise<P
 	}>;
 	return data.map((a) => ({
 		id: a.id,
-		type: a.subtype === 'CREDIT_CARD' || a.type === 'CREDIT' ? 'credit_card' : 'checking',
+		type:
+			a.subtype === 'CREDIT_CARD' || a.type === 'CREDIT'
+				? AccountType.CreditCard
+				: AccountType.Checking,
 		name: a.name,
 		currency: a.currencyCode,
 		// The API speaks reais; everything past this boundary is centavos.

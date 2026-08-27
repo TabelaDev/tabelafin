@@ -1,5 +1,4 @@
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { encryptSecret } from '$lib/server/crypto';
 import { getDb } from '$lib/server/db';
 import { upsertPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import {
@@ -7,10 +6,13 @@ import {
 	shouldRefreshSync,
 	upsertPluggyItem
 } from '$lib/server/db/pluggy-items';
-import { encryptSecret } from '$lib/server/crypto';
 import { fetchItems, jwtExpiresAt } from '$lib/server/pluggy/client';
-import { syncUserItems } from '$lib/server/pluggy/sync';
 import { DEVICE_TOKEN_KV_PREFIX } from '$lib/server/pluggy/device-token';
+import { syncUserItems } from '$lib/server/pluggy/sync';
+
+import { json } from '@sveltejs/kit';
+
+import type { RequestHandler } from './$types';
 
 // Receives the Meu Pluggy token captured by the extension
 // (docs/pluggy-integration.md).

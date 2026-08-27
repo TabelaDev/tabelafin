@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { pairMirrors } from './sync';
+
 import {
 	isInternalTransfer,
 	isSelfTransferByDescription,
 	normalizeName
 } from './internal-transfers';
+import { pairMirrors } from './sync';
 
 const day = (d: number) => new Date(`2026-08-${String(d).padStart(2, '0')}T12:00:00Z`);
 

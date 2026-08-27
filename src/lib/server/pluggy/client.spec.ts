@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchItems, fetchAccounts, fetchTransactions, fetchInvestments } from './client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { fetchAccounts, fetchInvestments, fetchItems, fetchTransactions } from './client';
 
 function mockFetchOnce(body: unknown, ok = true, status = ok ? 200 : 500) {
 	return vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
