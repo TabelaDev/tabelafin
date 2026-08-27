@@ -21,9 +21,10 @@
 // `$lib` works here because `wrangler.jsonc` declares `alias: { "$lib":
 // "./src/lib" }`, resolved by wrangler's esbuild (same idea as Vite's alias,
 // but for the bundle wrangler generates from this `main`).
-import server from '../.svelte-kit/cloudflare/_worker.js';
 import { syncAllUsers } from '$lib/server/pluggy/sync';
 import { generateMonthlyReports } from '$lib/server/reports/generate';
+
+import server from '../.svelte-kit/cloudflare/_worker.js';
 
 export default {
 	fetch: server.fetch,

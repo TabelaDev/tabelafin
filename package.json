@@ -36,6 +36,7 @@
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/vite": "^4.3.0",
+		"@trivago/prettier-plugin-sort-imports": "^6.0.2",
 		"@types/node": "^24",
 		"@vite-pwa/assets-generator": "^1.0.2",
 		"@vite-pwa/sveltekit": "^1.1.0",
@@ -67,6 +68,7 @@
 		"better-auth": "^1.6.26",
 		"fflate": "^0.8.3",
 		"postal-mime": "^2.7.6",
-		"sveltekit-flash-message": "^2.4.6"
+		"sveltekit-flash-message": "^2.4.6",
+		"xlsx": "^0.18.5"
 	}
 }
