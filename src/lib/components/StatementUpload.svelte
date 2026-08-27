@@ -4,10 +4,11 @@
 	// is discarded after the extraction. Capability gating: if the chosen model
 	// does not support documents the upload is disabled with an explicit message
 	// (BYOK — never swap the model out from under the user).
+	import { type AiProvider, modelSupportsDocuments } from '$lib/utils/ai-providers';
+
 	import { Button } from '@tabeladev/tabelawebui';
 	import { Input } from '@tabeladev/tabelawebui';
 	import { toast } from '@tabeladev/tabelawebui';
-	import { modelSupportsDocuments, type AiProvider } from '$lib/utils/ai-providers';
 
 	let { provider, model }: { provider: AiProvider; model: string } = $props();
 

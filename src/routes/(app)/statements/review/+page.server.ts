@@ -1,16 +1,19 @@
-import { redirect, error } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
+import { StatementReviewStatus } from '$lib/enums/statement-review';
+import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import {
 	getStatementReviewById,
 	updateStatementReviewStatus
 } from '$lib/server/db/statement-reviews';
+import { requireLogin } from '$lib/server/require-login';
+
+import { error } from '@sveltejs/kit';
 import { setFlash } from 'sveltekit-flash-message/server';
-import { ToastType } from '$lib/enums/toast-type';
-import { StatementReviewStatus } from '$lib/enums/statement-review';
+
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, platform, url }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const reviewId = url.searchParams.get('id');
 	if (!reviewId) error(400, 'ID do review é obrigatório.');
@@ -36,7 +39,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 
 export const actions: Actions = {
 	cancel: async ({ locals, platform, url, request }) => {
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const formData = await request.formData();
 		const reviewId = formData.get('reviewId') as string;

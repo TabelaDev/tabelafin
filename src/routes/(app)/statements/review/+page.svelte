@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { formatCurrency, formatDate } from '$lib/utils/format';
+	import { handleAction } from '$lib/utils/forms';
+
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Badge, Button, Card, Checkbox, Select, toast } from '@tabeladev/tabelawebui';
-	import { handleAction } from '$lib/utils/forms';
+	import { Button, Card, Checkbox, Page, Select, Table, toast } from '@tabeladev/tabelawebui';
 
 	let { data } = $props();
 
@@ -48,18 +50,6 @@
 		);
 	}
 
-	function formatCurrency(amount: number): string {
-		return new Intl.NumberFormat('pt-BR', {
-			style: 'currency',
-			currency: 'BRL'
-		}).format(amount / 100);
-	}
-
-	function formatDate(dateStr: string): string {
-		const [y, m, d] = dateStr.split('-');
-		return `${d}/${m}/${y}`;
-	}
-
 	async function applyTransactions() {
 		submitting = true;
 		try {
@@ -97,28 +87,28 @@
 	<title>Revisar extrato — tabelafin</title>
 </svelte:head>
 
-<div class="mx-auto max-w-4xl space-y-6 p-4">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="font-mono text-xl font-semibold">Revisar extrato</h1>
-			<p class="mt-1 font-mono text-sm text-ink-soft">
-				{data.review.filename} — {data.review.source === 'csv'
-					? 'CSV'
-					: data.review.source === 'single_pdf'
-						? 'PDF'
-						: 'Takeout'}
-			</p>
-		</div>
-		<div class="flex items-center gap-2">
-			{#if data.review.status === 'ready'}
-				<form method="POST" action="?/cancel" use:enhance={handleAction()}>
-					<input type="hidden" name="reviewId" value={data.review.id} />
-					<Button variant="ghost" size="sm" type="submit">Cancelar</Button>
-				</form>
-			{/if}
-			<Button href={resolve('/statements')} variant="ghost" size="sm">Voltar</Button>
-		</div>
-	</div>
+<Page.Shell>
+	<Page.Header
+		title="Revisar extrato"
+		subtitle="{data.review.filename} — {data.review.source === 'csv'
+			? 'CSV'
+			: data.review.source === 'single_pdf'
+				? 'PDF'
+				: 'Takeout'}"
+		back={{ label: 'Extratos', href: resolve('/statements') }}
+	>
+		{#snippet action()}
+			<div class="flex items-center gap-2">
+				{#if data.review.status === 'ready'}
+					<form method="POST" action="?/cancel" use:enhance={handleAction()}>
+						<input type="hidden" name="reviewId" value={data.review.id} />
+						<Button variant="ghost" size="sm" type="submit">Cancelar</Button>
+					</form>
+				{/if}
+				<Button href={resolve('/statements')} variant="ghost" size="sm">Voltar</Button>
+			</div>
+		{/snippet}
+	</Page.Header>
 
 	{#if transactions.length === 0}
 		<Card>
@@ -144,44 +134,43 @@
 				</div>
 
 				<div class="mt-3 max-h-[60vh] overflow-y-auto">
-					<table class="w-full">
-						<thead>
-							<tr class="border-b border-rule font-mono text-xs text-ink-soft">
-								<th class="px-2 py-2 text-left"></th>
-								<th class="px-2 py-2 text-left">Data</th>
-								<th class="px-2 py-2 text-left">Descrição</th>
-								<th class="px-2 py-2 text-right">Valor</th>
-								<th class="px-2 py-2 text-left">Categoria</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each transactions as tx (tx.id)}
-								<tr class="border-b border-rule last:border-b-0 {tx.selected ? '' : 'opacity-50'}">
-									<td class="px-2 py-2">
-										<Checkbox checked={tx.selected} onchange={() => toggleOne(tx.id)} />
-									</td>
-									<td class="px-2 py-2 font-mono text-xs whitespace-nowrap">
-										{formatDate(tx.date)}
-									</td>
-									<td class="max-w-xs truncate px-2 py-2 font-mono text-xs">
-										{tx.description}
-									</td>
-									<td
-										class="px-2 py-2 text-right font-mono text-xs whitespace-nowrap {tx.amount < 0
+					<Table
+						columns={[
+							{ key: 'select', label: '' },
+							{ key: 'date', label: 'Data' },
+							{ key: 'description', label: 'Descrição' },
+							{ key: 'amount', label: 'Valor' },
+							{ key: 'category', label: 'Categoria' }
+						]}
+						rows={transactions}
+						rowKey="id"
+						pageSize={0}
+					>
+						{#snippet cell(row: Record<string, unknown>, key: string)}
+							{@const tx = row as unknown as (typeof transactions)[number]}
+							<div class={tx.selected ? '' : 'opacity-50'}>
+								{#if key === 'select'}
+									<Checkbox checked={tx.selected} onchange={() => toggleOne(tx.id)} />
+								{:else if key === 'date'}
+									<span class="whitespace-nowrap font-mono text-xs">{formatDate(tx.date)}</span>
+								{:else if key === 'description'}
+									<span class="block max-w-xs truncate font-mono text-xs">{tx.description}</span>
+								{:else if key === 'amount'}
+									<span
+										class="block text-right font-mono text-xs whitespace-nowrap {tx.amount < 0
 											? 'text-danger'
 											: 'text-signal'}"
 									>
 										{formatCurrency(tx.amount)}
-									</td>
-									<td class="px-2 py-2">
-										<Select options={categoryOptions} bind:value={tx.category} class="!w-40" />
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
+									</span>
+								{:else if key === 'category'}
+									<Select options={categoryOptions} bind:value={tx.category} class="!w-40" />
+								{/if}
+							</div>
+						{/snippet}
+					</Table>
 				</div>
 			</Card.Content>
 		</Card>
 	{/if}
-</div>
+</Page.Shell>

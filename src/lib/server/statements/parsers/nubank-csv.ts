@@ -1,5 +1,6 @@
-import type { ParsedTransaction, StatementParser } from '../types';
 import { FileType } from '$lib/enums/file-type';
+
+import type { ParsedTransaction, StatementParser } from '../types';
 
 /**
  * Parser for Nubank CSV exports.

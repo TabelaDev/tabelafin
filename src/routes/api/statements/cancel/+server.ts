@@ -1,6 +1,9 @@
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 import { StatementReviewStatus } from '$lib/enums/statement-review';
+import { requireAuth } from '$lib/server/api-auth';
+
+import { error, json } from '@sveltejs/kit';
+
+import type { RequestHandler } from './$types';
 
 interface CancelRequest {
 	reviewId: string;
@@ -12,7 +15,7 @@ interface CancelRequest {
  * Receives a review ID, marks it as cancelled.
  */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.userId) error(401, 'Não autenticado.');
+	if (!locals.userId) requireAuth();
 
 	const body = (await request.json().catch(() => null)) as CancelRequest | null;
 	if (!body?.reviewId) error(400, 'reviewId é obrigatório.');

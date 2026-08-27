@@ -10,14 +10,14 @@
 	// The queue is sequential on purpose: each request is an AI document
 	// extraction that takes tens of seconds, and running them in parallel just
 	// invites the provider's rate limit.
-	import { Button, Checkbox, Dialog, Input, Stepper, toast } from '@tabeladev/tabelawebui';
-	import { invalidateAll } from '$app/navigation';
 	import {
-		extractPdfsFromTakeout,
+		type TakeoutAttachment,
 		TakeoutParseError,
-		type TakeoutAttachment
+		extractPdfsFromTakeout
 	} from '$lib/client/takeout-mbox';
 	import {
+		type ImportState,
+		type QueueItem,
 		closeStatementImport,
 		finishQueue,
 		initialImportState,
@@ -29,10 +29,11 @@
 		setStep,
 		startQueue,
 		statementImport,
-		toggleSelected,
-		type ImportState,
-		type QueueItem
+		toggleSelected
 	} from '$lib/stores/statement-import-store';
+
+	import { invalidateAll } from '$app/navigation';
+	import { Button, Checkbox, Dialog, Input, Stepper, toast } from '@tabeladev/tabelawebui';
 
 	const STEPS = [
 		{ value: 'instructions', label: 'Takeout' },
@@ -313,14 +314,19 @@
 		{/if}
 	</div>
 
-	{#snippet footer()}
+	{#snippet footerStart()}
 		{#if importState.step === 'instructions'}
 			<Button variant="ghost" onclick={resetStatementImport}>Cancelar</Button>
-			<Button variant="primary" onclick={() => setStep('upload')}>Já tenho o zip</Button>
 		{:else if importState.step === 'upload'}
 			<Button variant="ghost" onclick={() => setStep('instructions')}>Voltar</Button>
 		{:else}
 			<Button variant="ghost" onclick={() => setStep('upload')}>Trocar arquivo</Button>
+		{/if}
+	{/snippet}
+	{#snippet footerEnd()}
+		{#if importState.step === 'instructions'}
+			<Button variant="primary" onclick={() => setStep('upload')}>Já tenho o zip</Button>
+		{:else if importState.step === 'review'}
 			<Button
 				variant="primary"
 				disabled={selectedCount === 0 || importState.running}

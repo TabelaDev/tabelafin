@@ -1,6 +1,6 @@
-import type { ParsedTransaction, StatementParser } from './types';
 import { nubankCsvParser } from './parsers/nubank-csv';
 import { ofxParser } from './parsers/ofx';
+import type { ParsedTransaction, StatementParser } from './types';
 
 export type { ParsedTransaction, StatementParser } from './types';
 

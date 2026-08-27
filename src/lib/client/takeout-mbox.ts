@@ -11,10 +11,10 @@
 // no reason for any of that to reach the server: only the extracted PDFs are
 // uploaded, one at a time, to the endpoint that already handles a single
 // statement.
+import { FileType } from '$lib/enums/file-type';
 
 import { unzipSync } from 'fflate';
 import PostalMime from 'postal-mime';
-import { FileType } from '$lib/enums/file-type';
 
 export interface TakeoutAttachment {
 	/** Derived name, e.g. "nubank-2026-03.pdf" — see deriveFileName. */

@@ -1,12 +1,13 @@
+import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
-import { zipSync, strToU8 } from 'fflate';
+
 import {
+	TakeoutParseError,
 	deriveFileName,
 	extractPdfsFromTakeout,
 	findMboxEntry,
 	monthKeyOf,
-	splitMboxMessages,
-	TakeoutParseError
+	splitMboxMessages
 } from './takeout-mbox';
 
 // A minimal PDF is enough — nothing here parses the document, it only has to

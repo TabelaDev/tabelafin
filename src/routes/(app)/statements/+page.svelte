@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Badge, Button, Card } from '@tabeladev/tabelawebui';
+	import { Badge, Button, Card, Page } from '@tabeladev/tabelawebui';
 
 	let { data } = $props();
 
@@ -30,8 +30,8 @@
 	<title>Extratos — tabelafin</title>
 </svelte:head>
 
-<div class="mx-auto max-w-4xl space-y-6 p-4">
-	<h1 class="font-mono text-xl font-semibold">Extratos importados</h1>
+<Page.Shell>
+	<Page.Header title="Extratos importados" />
 
 	{#if data.reviews.length === 0}
 		<Card>
@@ -75,4 +75,4 @@
 			{/each}
 		</div>
 	{/if}
-</div>
+</Page.Shell>

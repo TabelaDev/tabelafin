@@ -1,12 +1,13 @@
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { unauthorizedJson } from '$lib/server/api-auth';
 import { getDb } from '$lib/server/db';
 import { exportUserData } from '$lib/server/db/user-data';
+
+import type { RequestHandler } from './$types';
 
 // LGPD art. 18, V/XV — portability and access. Returns the user's data as a
 // JSON download.
 export const GET: RequestHandler = async ({ locals, platform }) => {
-	if (!locals.userId) return json({ error: 'Não autenticado.' }, { status: 401 });
+	if (!locals.userId) return unauthorizedJson();
 
 	const db = getDb(platform!.env.DB);
 	const data = await exportUserData(db, locals.userId);

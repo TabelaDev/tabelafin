@@ -1,6 +1,9 @@
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 import { StatementReviewStatus } from '$lib/enums/statement-review';
+import { requireAuth } from '$lib/server/api-auth';
+
+import { error, json } from '@sveltejs/kit';
+
+import type { RequestHandler } from './$types';
 
 interface ApplyRequest {
 	reviewId: string;
@@ -13,7 +16,7 @@ interface ApplyRequest {
  * Receives a review ID + approved transactions, inserts them into the DB.
  */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.userId) error(401, 'Não autenticado.');
+	if (!locals.userId) requireAuth();
 
 	const body = (await request.json().catch(() => null)) as ApplyRequest | null;
 	if (!body?.reviewId) error(400, 'reviewId é obrigatório.');

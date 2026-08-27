@@ -1,10 +1,11 @@
-import type { ParsedTransaction } from './types';
-import { getDb } from '$lib/server/db';
-import { insertPdfTransaction } from '$lib/server/db/transactions';
-import { updateStatementReviewStatus } from '$lib/server/db/statement-reviews';
-import { Currency } from '$lib/enums/currency';
 import { Category } from '$lib/enums/category';
+import { Currency } from '$lib/enums/currency';
 import { StatementReviewStatus } from '$lib/enums/statement-review';
+import { getDb } from '$lib/server/db';
+import { updateStatementReviewStatus } from '$lib/server/db/statement-reviews';
+import { insertPdfTransaction } from '$lib/server/db/transactions';
+
+import type { ParsedTransaction } from './types';
 
 export interface ApplyInput {
 	userId: string;

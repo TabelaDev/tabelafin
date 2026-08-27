@@ -7,9 +7,9 @@
 // persisting an in-flight queue would mean re-uploading a file that may already
 // have landed. Resume is handled instead by asking the server which filenames
 // completed, which is the only source that cannot lie.
+import type { TakeoutAttachment } from '$lib/client/takeout-mbox';
 
 import { writable } from 'svelte/store';
-import type { TakeoutAttachment } from '$lib/client/takeout-mbox';
 
 export type ImportStep = 'instructions' | 'upload' | 'review';
 

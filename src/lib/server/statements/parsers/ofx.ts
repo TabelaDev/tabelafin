@@ -1,5 +1,6 @@
-import type { ParsedTransaction, StatementParser } from '../types';
 import { FileType } from '$lib/enums/file-type';
+
+import type { ParsedTransaction, StatementParser } from '../types';
 
 /**
  * Generic OFX parser. OFX is a standard banking format used by most Brazilian banks.

@@ -1,6 +1,9 @@
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 import { StatementReviewStatus } from '$lib/enums/statement-review';
+import { requireAuth } from '$lib/server/api-auth';
+
+import { error, json } from '@sveltejs/kit';
+
+import type { RequestHandler } from './$types';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
@@ -11,7 +14,7 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
  * using parser or AI, and returns the review ID.
  */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.userId) error(401, 'Não autenticado.');
+	if (!locals.userId) requireAuth();
 
 	const formData = await request.formData().catch(() => null);
 	const file = formData?.get('file');

@@ -1,16 +1,20 @@
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { extractTransactionsFromPdf } from '$lib/server/ai/extract';
+import { requireAuth } from '$lib/server/api-auth';
+import { decryptSecret } from '$lib/server/crypto';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
-import { decryptSecret } from '$lib/server/crypto';
 import {
 	getCompletedUploadFilenames,
 	insertStatementUpload,
 	updateStatementUpload
 } from '$lib/server/db/statement-uploads';
+import { insertPdfTransaction } from '$lib/server/db/transactions';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
-import { extractTransactionsFromPdf } from '$lib/server/ai/extract';
-import { modelSupportsDocuments, type AiProvider } from '$lib/utils/ai-providers';
+import { type AiProvider, modelSupportsDocuments } from '$lib/utils/ai-providers';
+
+import { error, json } from '@sveltejs/kit';
+
+import type { RequestHandler } from './$types';
 
 // Upload ceiling: below the providers' document limits (32 MB at Anthropic, 50 MB
 // per file at OpenAI), and comfortably above any real statement or invoice (most
@@ -27,7 +31,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 // Which statements already went through, so the bulk Takeout import can resume
 // instead of re-running extractions the user has already paid for.
 export const GET: RequestHandler = async ({ locals, platform }) => {
-	if (!locals.userId) error(401, 'Não autenticado.');
+	if (!locals.userId) requireAuth();
 	const db = getDb(platform!.env.DB);
 	return json({ completed: await getCompletedUploadFilenames(db, locals.userId) });
 };
@@ -37,7 +41,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 // already-categorised transactions with source='pdf_upload', and discards the
 // file — it is never persisted (no R2 in the MVP).
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
-	if (!locals.userId) error(401, 'Não autenticado.');
+	if (!locals.userId) requireAuth();
 
 	const formData = await request.formData().catch(() => null);
 	const file = formData?.get('file');
@@ -91,7 +95,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		// than as a failure.
 		let duplicates = 0;
 		for (const tx of extracted) {
-			const { supersededBy } = await locals.transactionService.insertFromPdf({
+			const { supersededBy } = await insertPdfTransaction(db, {
 				userId: locals.userId,
 				statementUploadId: upload.id,
 				date: new Date(`${tx.date}T00:00:00.000Z`),
