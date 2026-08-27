@@ -1,9 +1,12 @@
 <script lang="ts">
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
+	import { getCategoryColor } from '$lib/utils/categories';
+	import { handleAction } from '$lib/utils/forms';
+
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { handleAction } from '$lib/utils/forms';
-	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
-	import { Button, Card, Input, Select, Table } from '@tabeladev/tabelawebui';
+	import { Button, Card, Input, Page, Select, Table } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -27,8 +30,7 @@
 
 	const categoryOptions = $derived(data.categories.map((c) => ({ value: c.name, label: c.name })));
 
-	const categoryColor = (name: string) =>
-		data.categories.find((c) => c.name === name)?.color ?? 'ctp-overlay1';
+	const categoryColor = (name: string) => getCategoryColor(data.categories, name);
 
 	// Client-side search, like the categories page — no page reload per keystroke.
 	let searchQuery = $state('');
@@ -64,20 +66,22 @@
 	<title>Regras automáticas: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
+<Page.Shell>
 	<header>
 		<a href={resolve('/categories/manage')} class="font-mono text-sm text-ink-soft hover:text-ink"
 			>← Gerenciar categorias</a
 		>
-		<h1 class="font-mono text-2xl font-bold">Regras automáticas</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span> Cada regra guarda uma descrição e a categoria que ela recebe.
-			Transações novas com a mesma descrição já entram categorizadas.
-		</p>
 	</header>
+	<Page.Header
+		title="Regras automáticas"
+		subtitle="Cada regra guarda uma descrição e a categoria que ela recebe. Transações novas com a mesma descrição já entram categorizadas."
+	/>
 
 	<!-- New rule -->
 	<Card>
+		<Card.Header>
+			<Card.Title>Nova regra</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<form
 				method="POST"
@@ -90,7 +94,6 @@
 				})}
 				class="flex flex-col gap-3"
 			>
-				<h2 class="font-mono text-sm font-semibold">Nova regra</h2>
 				<div class="flex flex-wrap items-center gap-2">
 					<Input
 						name="description"
@@ -116,19 +119,15 @@
 	</Card>
 
 	<Card>
+		<Card.Header>
+			<Card.Title>
+				{data.rules.length}
+				{data.rules.length === 1 ? 'regra' : 'regras'}
+			</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<div class="flex flex-col gap-3">
-				<div class="flex flex-wrap items-center justify-between gap-2">
-					<h2 class="font-mono text-sm font-semibold">
-						{data.rules.length}
-						{data.rules.length === 1 ? 'regra' : 'regras'}
-					</h2>
-					<Input
-						bind:value={searchQuery}
-						placeholder="Buscar descrição ou categoria…"
-						class="w-64"
-					/>
-				</div>
+				<Input bind:value={searchQuery} placeholder="Buscar descrição ou categoria…" class="w-64" />
 
 				<div class="border border-rule bg-paper-raised">
 					<Table
@@ -143,6 +142,12 @@
 						rowKey="id"
 						pageSize={25}
 						pageSizeOptions={[10, 25, 50]}
+						labels={{
+							empty:
+								data.rules.length === 0
+									? 'Nenhuma regra ainda. Elas são criadas quando você categoriza uma transação.'
+									: 'Nenhuma regra encontrada para a busca.'
+						}}
 					>
 						{#snippet cell(row: Record<string, unknown>, key: string)}
 							{#if key === 'description'}
@@ -202,16 +207,9 @@
 								</div>
 							{/if}
 						{/snippet}
-						{#snippet empty()}
-							<p class="py-12 text-center font-mono text-sm text-ink-soft">
-								{data.rules.length === 0
-									? 'Nenhuma regra ainda. Elas são criadas quando você categoriza uma transação.'
-									: 'Nenhuma regra encontrada para a busca.'}
-							</p>
-						{/snippet}
 					</Table>
 				</div>
 			</div>
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>

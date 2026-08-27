@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { handleAction } from '$lib/utils/forms';
+
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { Badge, Button, Card, Input, Label, Table, TagInput } from '@tabeladev/tabelawebui';
-	import { handleAction } from '$lib/utils/forms';
+	import { Badge, Button, Card, Input, Label, Page, Table, TagInput } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -67,20 +69,22 @@
 	<title>Regras de tag: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
+<Page.Shell>
 	<header>
 		<a href={resolve('/tags/manage')} class="font-mono text-sm text-ink-soft hover:text-ink"
 			>← Gerenciar tags</a
 		>
-		<h1 class="font-mono text-2xl font-bold">Regras automáticas</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span> Cada regra guarda uma descrição e as tags que ela recebe.
-			Vale pras transações novas e também pras antigas com a mesma descrição.
-		</p>
 	</header>
+	<Page.Header
+		title="Regras automáticas"
+		subtitle="Cada regra guarda uma descrição e as tags que ela recebe. Vale pras transações novas e também pras antigas com a mesma descrição."
+	/>
 
 	<!-- New rule -->
 	<Card>
+		<Card.Header>
+			<Card.Title>Nova regra</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<form
 				method="POST"
@@ -88,7 +92,6 @@
 				use:enhance={handleAction({ onSuccess: clearNewForm })}
 				class="flex flex-col gap-3"
 			>
-				<h2 class="font-mono text-sm font-semibold">Nova regra</h2>
 				<div class="flex flex-wrap items-end gap-2">
 					<div class="flex flex-col gap-1">
 						<Label for="ruleDescription">Descrição</Label>
@@ -126,15 +129,15 @@
 
 	<!-- Rule list -->
 	<Card>
+		<Card.Header>
+			<Card.Title>
+				{data.rules.length}
+				{data.rules.length === 1 ? 'regra' : 'regras'}
+			</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<div class="flex flex-col gap-3">
-				<div class="flex flex-wrap items-center justify-between gap-2">
-					<h2 class="font-mono text-sm font-semibold">
-						{data.rules.length}
-						{data.rules.length === 1 ? 'regra' : 'regras'}
-					</h2>
-					<Input bind:value={searchQuery} placeholder="Buscar descrição ou tag…" class="w-64" />
-				</div>
+				<Input bind:value={searchQuery} placeholder="Buscar descrição ou tag…" class="w-64" />
 
 				<div class="border border-rule bg-paper-raised">
 					<Table
@@ -149,6 +152,12 @@
 						rowKey="description"
 						pageSize={25}
 						pageSizeOptions={[10, 25, 50]}
+						labels={{
+							empty:
+								data.rules.length === 0
+									? 'Nenhuma regra ainda. Crie uma acima ou no detalhe de uma transação (card de Tags).'
+									: 'Nenhuma regra encontrada para a busca.'
+						}}
 					>
 						{#snippet cell(row: Record<string, unknown>, key: string)}
 							{#if key === 'description'}
@@ -206,16 +215,9 @@
 								</div>
 							{/if}
 						{/snippet}
-						{#snippet empty()}
-							<p class="py-12 text-center font-mono text-sm text-ink-soft">
-								{data.rules.length === 0
-									? 'Nenhuma regra ainda. Crie uma acima ou no detalhe de uma transação (card de Tags).'
-									: 'Nenhuma regra encontrada para a busca.'}
-							</p>
-						{/snippet}
 					</Table>
 				</div>
 			</div>
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>

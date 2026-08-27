@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import { Card } from '@tabeladev/tabelawebui';
 	import { formatCurrency } from '$lib/utils/format';
+
+	import { resolve } from '$app/paths';
+	import { Card, Page } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -15,45 +17,36 @@
 	<title>Tags: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
-	<header>
-		<h1 class="font-mono text-2xl font-bold">Tags</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span> Agrupam gastos pontuais sem criar categoria ("Viagem SP",
-			"PC novo"). A tag é além da categoria, não no lugar dela.
-		</p>
-	</header>
+<Page.Shell>
+	<Page.Header
+		title="Tags"
+		subtitle="Agrupam gastos pontuais sem criar categoria ('Viagem SP', 'PC novo'). A tag é além da categoria, não no lugar dela."
+	/>
 
 	<!-- Management entry points, side by side — same shape as /categories. -->
 	<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 		<a href={resolve('/tags/manage')} class="block">
 			<Card>
-				<Card.Content>
-					<div class="flex items-center justify-between">
-						<div>
-							<h2 class="font-mono text-sm font-semibold">Tags</h2>
-							<p class="mt-1 font-mono text-xs text-ink-soft">
-								Crie, renomeie ou exclua suas tags.
-							</p>
-						</div>
-						<span class="font-mono text-sm text-accent">→</span>
+				<Card.Header>
+					<div>
+						<Card.Title>Tags</Card.Title>
+						<Card.Description>Crie, renomeie ou exclua suas tags.</Card.Description>
 					</div>
-				</Card.Content>
+					<Card.Action navigate />
+				</Card.Header>
 			</Card>
 		</a>
 		<a href={resolve('/tags/rules')} class="block">
 			<Card>
-				<Card.Content>
-					<div class="flex items-center justify-between">
-						<div>
-							<h2 class="font-mono text-sm font-semibold">Regras automáticas</h2>
-							<p class="mt-1 font-mono text-xs text-ink-soft">
-								Marque transações com tags automaticamente pela descrição.
-							</p>
-						</div>
-						<span class="font-mono text-sm text-accent">→</span>
+				<Card.Header>
+					<div>
+						<Card.Title>Regras automáticas</Card.Title>
+						<Card.Description
+							>Marque transações com tags automaticamente pela descrição.</Card.Description
+						>
 					</div>
-				</Card.Content>
+					<Card.Action navigate />
+				</Card.Header>
 			</Card>
 		</a>
 	</div>
@@ -80,10 +73,11 @@
 
 	<!-- Tag list (read-only here; editing lives in /tags/manage) -->
 	<Card>
+		<Card.Header>
+			<Card.Title>Suas tags</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<div class="flex flex-col gap-2">
-				<h2 class="font-mono text-sm font-semibold">Suas tags</h2>
-
 				{#if data.tags.length === 0}
 					<p class="font-mono text-sm text-ink-soft">
 						Nenhuma tag ainda. Crie uma em <a
@@ -115,4 +109,4 @@
 			</div>
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>

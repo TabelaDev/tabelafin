@@ -49,3 +49,16 @@ export const CATEGORY_COLORS: Record<BuiltinCategory, string> = {
 	Renda: 'ctp-green',
 	Outros: 'ctp-overlay1'
 };
+
+// Looks up a user's own category colour by name, falling back to the neutral
+// 'Outros' colour for an unset or unknown category (a category deleted after
+// being applied to a transaction). Shared by every screen that renders a
+// CategoryBadge for a user-supplied category name, so they all fall back the
+// same way.
+export function getCategoryColor(
+	categories: { name: string; color: string }[],
+	name: string | null
+): string {
+	if (!name) return CATEGORY_COLORS.Outros;
+	return categories.find((c) => c.name === name)?.color ?? CATEGORY_COLORS.Outros;
+}

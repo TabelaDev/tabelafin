@@ -1,8 +1,11 @@
 <script lang="ts">
+	import { DeleteConfirm } from '$lib/utils/delete-confirm.svelte';
+	import { handleAction } from '$lib/utils/forms';
+
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { Button, Card, Dialog, Input, Label, Select } from '@tabeladev/tabelawebui';
-	import { handleAction } from '$lib/utils/forms';
+	import { Button, Card, Dialog, Input, Label, Page, Select } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -46,38 +49,32 @@
 	// Delete confirmation — the "Excluir" button only opens the dialog; the
 	// confirm button submits the row's own `?/remove` form. The dialog can also
 	// migrate the category's transactions + rules to another one.
-	let showDeleteDialog = $state(false);
-	let pendingDelete = $state<{ name: string; form: HTMLFormElement } | null>(null);
+	const deleteConfirm = new DeleteConfirm<{ name: string }>();
 	let deleteMigrateTo = $state('');
 
 	const migrationOptions = $derived(
 		data.categories
-			.filter((c) => c.name !== pendingDelete?.name)
+			.filter((c) => c.name !== deleteConfirm.pending?.name)
 			.map((c) => ({ value: c.name, label: c.name }))
 	);
 
 	function openDelete(name: string, form: HTMLFormElement) {
-		pendingDelete = { name, form };
 		deleteMigrateTo = '';
-		showDeleteDialog = true;
+		deleteConfirm.start({ name }, form);
 	}
 
 	function confirmDelete() {
-		const form = pendingDelete?.form;
-		// Carry the chosen target into the row's form (a hidden input exists on
-		// every `?/remove` form, left empty by default).
-		const hidden = form?.querySelector<HTMLInputElement>('input[name="migrateTo"]');
-		if (hidden) hidden.value = deleteMigrateTo;
-		form?.requestSubmit();
-		pendingDelete = null;
-		showDeleteDialog = false;
+		deleteConfirm.confirm((pending) => {
+			// Carry the chosen target into the row's form (a hidden input exists on
+			// every `?/remove` form, left empty by default).
+			const hidden = pending.form.querySelector<HTMLInputElement>('input[name="migrateTo"]');
+			if (hidden) hidden.value = deleteMigrateTo;
+		});
 	}
 
 	// Dismissing the dialog by X/Esc/overlay cancels the deletion (clears the
 	// pending target so it is not submitted later).
-	$effect(() => {
-		if (!showDeleteDialog) pendingDelete = null;
-	});
+	$effect(() => deleteConfirm.syncClosed());
 
 	const handleRemove = handleAction();
 </script>
@@ -86,25 +83,28 @@
 	<title>Categorias: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
-	<header class="flex flex-wrap items-start justify-between gap-2">
-		<div>
-			<a href={resolve('/categories')} class="font-mono text-sm text-ink-soft hover:text-ink"
-				>← Categorias</a
-			>
-			<h1 class="font-mono text-2xl font-bold">Gerenciar categorias</h1>
-			<p class="font-mono text-sm text-ink-soft">
-				<span class="text-ink-faint">//</span> Suas categorias de transação: crie, renomeie, mude a cor.
-				As transações sem categoria aparecem como "Outros".
-			</p>
-		</div>
-		<a href={resolve('/categories/rules')} class="font-mono text-xs text-accent hover:underline"
-			>regras automáticas</a
+<Page.Shell>
+	<header>
+		<a href={resolve('/categories')} class="font-mono text-sm text-ink-soft hover:text-ink"
+			>← Categorias</a
 		>
 	</header>
+	<Page.Header
+		title="Gerenciar categorias"
+		subtitle="Suas categorias de transação: crie, renomeie, mude a cor. As transações sem categoria aparecem como 'Outros'."
+	>
+		{#snippet action()}
+			<a href={resolve('/categories/rules')} class="font-mono text-xs text-accent hover:underline"
+				>regras automáticas</a
+			>
+		{/snippet}
+	</Page.Header>
 
 	<!-- New category -->
 	<Card>
+		<Card.Header>
+			<Card.Title>Nova categoria</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<form
 				method="POST"
@@ -117,7 +117,6 @@
 				})}
 				class="flex flex-col gap-3"
 			>
-				<h2 class="font-mono text-sm font-semibold">Nova categoria</h2>
 				<div class="flex flex-wrap items-center gap-2">
 					<Input
 						name="name"
@@ -135,9 +134,11 @@
 
 	<!-- Category list -->
 	<Card>
+		<Card.Header>
+			<Card.Title>Suas categorias</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<div class="flex flex-col gap-2">
-				<h2 class="font-mono text-sm font-semibold">Suas categorias</h2>
 				<Input bind:value={searchQuery} placeholder="Buscar categoria…" />
 				{#each filteredCategories as cat (cat.name)}
 					<div
@@ -200,13 +201,13 @@
 			</div>
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>
 
-<Dialog bind:open={showDeleteDialog} title="Excluir categoria?" size="lg">
+<Dialog bind:open={deleteConfirm.open} title="Excluir categoria?" size="lg">
 	<div class="flex flex-col gap-3">
 		<p class="text-justify font-mono text-sm text-ink-soft">
-			Excluir a categoria <span class="text-ink">{pendingDelete?.name}</span>? As transações que a
-			usam <strong>não são apagadas</strong>.
+			Excluir a categoria <span class="text-ink">{deleteConfirm.pending?.name}</span>? As transações
+			que a usam <strong>não são apagadas</strong>.
 		</p>
 
 		<div class="flex flex-col gap-2">
@@ -227,8 +228,10 @@
 			</p>
 		</div>
 	</div>
-	{#snippet footer()}
-		<Button variant="ghost" onclick={() => (showDeleteDialog = false)}>Cancelar</Button>
+	{#snippet footerStart()}
+		<Button variant="ghost" onclick={() => deleteConfirm.cancel()}>Cancelar</Button>
+	{/snippet}
+	{#snippet footerEnd()}
 		<Button variant="danger" onclick={confirmDelete}>Excluir</Button>
 	{/snippet}
 </Dialog>

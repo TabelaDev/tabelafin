@@ -1,21 +1,24 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { setFlash } from 'sveltekit-flash-message/server';
-import { eq } from 'drizzle-orm';
-import type { Actions, PageServerLoad } from './$types';
 import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
+import { tags } from '$lib/server/db/schema';
+import { deleteTagRulesByTagName } from '$lib/server/db/tag-rules';
 import {
 	deleteTag,
 	getOrCreateTag,
-	getTagsByUser,
 	getTagTotals,
+	getTagsByUser,
 	renameTag
 } from '$lib/server/db/tags';
-import { deleteTagRulesByTagName } from '$lib/server/db/tag-rules';
-import { tags } from '$lib/server/db/schema';
+import { requireLogin } from '$lib/server/require-login';
+
+import { fail } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
+import { setFlash } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 	const db = getDb(platform!.env.DB);
 
 	const [userTags, totals] = await Promise.all([
@@ -41,7 +44,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 export const actions: Actions = {
 	add: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 		const form = await request.formData();
 		const name = String(form.get('name') ?? '').trim();
 		if (!name) return fail(400, { error: 'Informe o nome da tag.' });
@@ -58,7 +61,7 @@ export const actions: Actions = {
 
 	rename: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 		const form = await request.formData();
 		const tagId = String(form.get('tagId') ?? '');
 		const newName = String(form.get('newName') ?? '').trim();
@@ -72,7 +75,7 @@ export const actions: Actions = {
 
 	remove: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 		const form = await request.formData();
 		const tagId = String(form.get('tagId') ?? '');
 		if (!tagId) return fail(400, { error: 'Tag inválida.' });

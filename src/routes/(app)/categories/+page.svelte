@@ -1,9 +1,12 @@
 <script lang="ts">
-	import Chart from '$lib/components/Chart.svelte';
 	import { horizontalBarOptions } from '$lib/client/charts';
-	import { resolve } from '$app/paths';
-	import { Card, Select } from '@tabeladev/tabelawebui';
+	import Chart from '$lib/components/Chart.svelte';
+	import { ChartType } from '$lib/enums/chart-type';
 	import { formatCurrency } from '$lib/utils/format';
+
+	import { resolve } from '$app/paths';
+	import { Card, Page, Select } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -64,58 +67,49 @@
 	<title>Categorias: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-4">
-	<header>
-		<h1 class="font-mono text-2xl font-bold">Categorias</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span>
-			{isExpense ? 'Distribuição dos seus gastos' : 'Distribuição das suas receitas'} por categoria
-		</p>
-	</header>
+<Page.Shell>
+	<Page.Header
+		title="Categorias"
+		subtitle="{isExpense
+			? 'Distribuição dos seus gastos'
+			: 'Distribuição das suas receitas'} por categoria"
+	/>
 
 	<!-- Management entry points, side by side (like the profile's AI card). -->
 	<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 		<a href={resolve('/categories/manage')} class="block">
 			<Card>
-				<Card.Content>
-					<div class="flex items-center justify-between">
-						<div>
-							<h2 class="font-mono text-sm font-semibold">Categorias</h2>
-							<p class="mt-1 font-mono text-xs text-ink-soft">
-								Crie, renomeie ou exclua suas categorias.
-							</p>
-						</div>
-						<span class="font-mono text-sm text-accent">→</span>
+				<Card.Header>
+					<div>
+						<Card.Title>Categorias</Card.Title>
+						<Card.Description>Crie, renomeie ou exclua suas categorias.</Card.Description>
 					</div>
-				</Card.Content>
+					<Card.Action navigate />
+				</Card.Header>
 			</Card>
 		</a>
 		<a href={resolve('/categories/rules')} class="block">
 			<Card>
-				<Card.Content>
-					<div class="flex items-center justify-between">
-						<div>
-							<h2 class="font-mono text-sm font-semibold">Regras automáticas</h2>
-							<p class="mt-1 font-mono text-xs text-ink-soft">
-								Ensine o app a categorizar automaticamente pela descrição.
-							</p>
-						</div>
-						<span class="font-mono text-sm text-accent">→</span>
+				<Card.Header>
+					<div>
+						<Card.Title>Regras automáticas</Card.Title>
+						<Card.Description
+							>Ensine o app a categorizar automaticamente pela descrição.</Card.Description
+						>
 					</div>
-				</Card.Content>
+					<Card.Action navigate />
+				</Card.Header>
 			</Card>
 		</a>
 	</div>
 
 	<Card>
-		<Card.Content>
-			<div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-				<div>
-					<h2 class="font-mono text-sm font-semibold">
-						{isExpense ? 'Gastos' : 'Receitas'} por categoria
-					</h2>
-					<p class="font-mono text-xs text-ink-soft">Total: {formatCurrency(total)}</p>
-				</div>
+		<Card.Header>
+			<div>
+				<Card.Title>{isExpense ? 'Gastos' : 'Receitas'} por categoria</Card.Title>
+				<Card.Description>Total: {formatCurrency(total)}</Card.Description>
+			</div>
+			<Card.Action>
 				<div class="flex items-center gap-3">
 					<Select
 						class="w-36"
@@ -131,15 +125,16 @@
 						class="font-mono text-xs text-accent hover:underline">Gerenciar</a
 					>
 				</div>
-			</div>
-
+			</Card.Action>
+		</Card.Header>
+		<Card.Content>
 			<div style={`height: ${chartHeight}px`}>
 				{#if series[0].data.length > 0}
-					<Chart type="bar" {series} {options} onLegendClick={toggleCategory} />
+					<Chart type={ChartType.Bar} {series} {options} onLegendClick={toggleCategory} />
 				{:else}
 					<p class="py-12 text-center font-mono text-sm text-ink-soft">Sem dados ainda.</p>
 				{/if}
 			</div>
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>

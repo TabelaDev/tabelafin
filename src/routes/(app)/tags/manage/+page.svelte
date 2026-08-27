@@ -1,9 +1,12 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
-	import { Button, Card, Dialog, Input } from '@tabeladev/tabelawebui';
+	import { DeleteConfirm } from '$lib/utils/delete-confirm.svelte';
 	import { formatCurrency } from '$lib/utils/format';
 	import { handleAction } from '$lib/utils/forms';
+
+	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
+	import { Button, Card, Dialog, Input, Page } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -23,8 +26,7 @@
 	);
 
 	// Delete confirmation — mirrors categories/manage.
-	let showDeleteDialog = $state(false);
-	let pendingDelete = $state<{ tagId: string; name: string; form: HTMLFormElement } | null>(null);
+	const deleteConfirm = new DeleteConfirm<{ tagId: string; name: string }>();
 
 	function startEdit(tag: { tagId: string; name: string }) {
 		editingTag = tag;
@@ -36,42 +38,40 @@
 	}
 
 	function openDelete(tag: { tagId: string; name: string }, form: HTMLFormElement) {
-		pendingDelete = { ...tag, form };
-		showDeleteDialog = true;
+		deleteConfirm.start(tag, form);
 	}
 
 	function confirmDelete() {
-		pendingDelete?.form.requestSubmit();
-		pendingDelete = null;
-		showDeleteDialog = false;
+		deleteConfirm.confirm();
 	}
 
-	$effect(() => {
-		if (!showDeleteDialog) pendingDelete = null;
-	});
+	$effect(() => deleteConfirm.syncClosed());
 </script>
 
 <svelte:head>
 	<title>Gerenciar tags: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
-	<header class="flex flex-wrap items-start justify-between gap-2">
-		<div>
-			<a href={resolve('/tags')} class="font-mono text-sm text-ink-soft hover:text-ink">← Tags</a>
-			<h1 class="font-mono text-2xl font-bold">Gerenciar tags</h1>
-			<p class="font-mono text-sm text-ink-soft">
-				<span class="text-ink-faint">//</span> Crie, renomeie ou exclua suas tags. Excluir uma tag só
-				desfaz o agrupamento: nenhuma transação é apagada.
-			</p>
-		</div>
-		<a href={resolve('/tags/rules')} class="font-mono text-xs text-accent hover:underline"
-			>regras automáticas</a
-		>
+<Page.Shell>
+	<header>
+		<a href={resolve('/tags')} class="font-mono text-sm text-ink-soft hover:text-ink">← Tags</a>
 	</header>
+	<Page.Header
+		title="Gerenciar tags"
+		subtitle="Crie, renomeie ou exclua suas tags. Excluir uma tag só desfaz o agrupamento: nenhuma transação é apagada."
+	>
+		{#snippet action()}
+			<a href={resolve('/tags/rules')} class="font-mono text-xs text-accent hover:underline"
+				>regras automáticas</a
+			>
+		{/snippet}
+	</Page.Header>
 
 	<!-- New tag -->
 	<Card>
+		<Card.Header>
+			<Card.Title>Nova tag</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<form
 				method="POST"
@@ -79,7 +79,6 @@
 				use:enhance={handleAction({ onSuccess: () => (newName = '') })}
 				class="flex flex-wrap items-end gap-2"
 			>
-				<h2 class="w-full font-mono text-sm font-semibold">Nova tag</h2>
 				<Input
 					name="name"
 					placeholder="Ex.: Viagem SP, PC novo…"
@@ -94,9 +93,11 @@
 
 	<!-- Tag list -->
 	<Card>
+		<Card.Header>
+			<Card.Title>Suas tags</Card.Title>
+		</Card.Header>
 		<Card.Content>
 			<div class="flex flex-col gap-2">
-				<h2 class="font-mono text-sm font-semibold">Suas tags</h2>
 				<Input bind:value={searchQuery} placeholder="Buscar tag…" />
 
 				{#if data.tags.length === 0}
@@ -164,15 +165,17 @@
 			</div>
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>
 
-<Dialog bind:open={showDeleteDialog} title="Excluir tag?">
+<Dialog bind:open={deleteConfirm.open} title="Excluir tag?">
 	<p class="text-justify font-mono text-sm text-ink-soft">
-		Excluir a tag <span class="text-ink">{pendingDelete?.name}</span>? Nenhuma transação é apagada:
-		só o agrupamento some, junto das regras automáticas que usavam essa tag.
+		Excluir a tag <span class="text-ink">{deleteConfirm.pending?.name}</span>? Nenhuma transação é
+		apagada: só o agrupamento some, junto das regras automáticas que usavam essa tag.
 	</p>
-	{#snippet footer()}
-		<Button variant="ghost" onclick={() => (showDeleteDialog = false)}>Cancelar</Button>
+	{#snippet footerStart()}
+		<Button variant="ghost" onclick={() => deleteConfirm.cancel()}>Cancelar</Button>
+	{/snippet}
+	{#snippet footerEnd()}
 		<Button variant="danger" onclick={confirmDelete}>Excluir</Button>
 	{/snippet}
 </Dialog>

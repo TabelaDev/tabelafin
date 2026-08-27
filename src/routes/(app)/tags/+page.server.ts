@@ -1,14 +1,15 @@
-import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
-import { getTagsByUser, getTagTotals } from '$lib/server/db/tags';
+import { getTagTotals, getTagsByUser } from '$lib/server/db/tags';
+import { requireLogin } from '$lib/server/require-login';
+
+import type { PageServerLoad } from './$types';
 
 // Overview only — the CRUD lives in /tags/manage and the automatic rules in
 // /tags/rules, mirroring how /categories is split. This page used to hold all
 // three, which is why its rules section had none of what the categories rules
 // page has (table, search, pagination, editing).
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 	const db = getDb(platform!.env.DB);
 
 	// Every tag the user owns, merged with the totals — a freshly created tag

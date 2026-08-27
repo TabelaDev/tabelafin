@@ -1,19 +1,22 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { setFlash } from 'sveltekit-flash-message/server';
-import type { Actions, PageServerLoad } from './$types';
 import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
+import { renameCategoryOnRules } from '$lib/server/db/categorization-rules';
+import {
+	clearCategoryOnTransactions,
+	renameCategoryOnTransactions
+} from '$lib/server/db/transactions';
 import {
 	addCategory,
 	deleteCategory,
 	getCategoriesByUser,
 	updateCategory
 } from '$lib/server/db/user-categories';
-import {
-	clearCategoryOnTransactions,
-	renameCategoryOnTransactions
-} from '$lib/server/db/transactions';
-import { renameCategoryOnRules } from '$lib/server/db/categorization-rules';
+import { requireLogin } from '$lib/server/require-login';
+
+import { fail } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
 
 // The available colour palette — the same Catppuccin classes used in badges, with
 // a Portuguese label for the dropdown.
@@ -36,7 +39,7 @@ function isValidColor(color: string): boolean {
 }
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 	const db = getDb(platform!.env.DB);
 	const categories = await getCategoriesByUser(db, locals.userId);
 	return { categories, colorOptions: COLOR_OPTIONS };
@@ -45,7 +48,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 export const actions: Actions = {
 	add: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 		const form = await request.formData();
 		const name = String(form.get('name') ?? '').trim();
 		const color = String(form.get('color') ?? 'ctp-overlay1').trim();
@@ -62,7 +65,7 @@ export const actions: Actions = {
 
 	update: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 		const form = await request.formData();
 		const oldName = String(form.get('name') ?? '');
 		const newName = String(form.get('newName') ?? '').trim();
@@ -94,7 +97,7 @@ export const actions: Actions = {
 
 	remove: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 		const form = await request.formData();
 		const name = String(form.get('name') ?? '').trim();
 		if (!name) return fail(400, { error: 'Categoria inválida.' });

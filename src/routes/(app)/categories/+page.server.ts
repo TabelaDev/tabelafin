@@ -1,18 +1,21 @@
-import { redirect } from '@sveltejs/kit';
-import { and } from 'drizzle-orm';
-import type { PageServerLoad } from './$types';
+import { AccountType } from '$lib/enums/account-type';
 import { getDb } from '$lib/server/db';
 import { getAccountsByUser } from '$lib/server/db/accounts';
 import { transactions } from '$lib/server/db/schema';
-import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import {
 	classifyMovement,
 	isNotInternalTransfer,
 	visibleTransactions
 } from '$lib/server/db/transactions';
+import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { requireLogin } from '$lib/server/require-login';
+
+import { and } from 'drizzle-orm';
+
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
@@ -23,7 +26,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	// Account type by id: needed to classify spending/income — a credit card
 	// purchase comes in positive but is SPENDING, not income (classifyMovement).
 	const userAccounts = await getAccountsByUser(db, userId);
-	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
+	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type as AccountType]));
 
 	// All-time movement per category, excluding internal transfers and investment
 	// movements — those are neither spending nor income (a card invoice payment

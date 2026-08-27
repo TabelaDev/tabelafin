@@ -1,6 +1,3 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { setFlash } from 'sveltekit-flash-message/server';
-import type { Actions, PageServerLoad } from './$types';
 import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import {
@@ -9,6 +6,12 @@ import {
 	upsertCategorizationRule
 } from '$lib/server/db/categorization-rules';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { requireLogin } from '$lib/server/require-login';
+
+import { fail } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
 
 // Automatic categorisation rules, one per description: the sync applies them to
 // incoming transactions (categorySource='rule'). They are created as a side
@@ -16,7 +19,7 @@ import { getCategoriesByUser } from '$lib/server/db/user-categories';
 // confirms it — so until this page existed there was nowhere to see what the
 // app had been taught, let alone correct it.
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 	const [rules, categories] = await Promise.all([
@@ -36,7 +39,7 @@ export const actions: Actions = {
 	// created as a side effect of categorising a transaction.
 	add: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const description = String(form.get('description') ?? '').trim();
@@ -65,7 +68,7 @@ export const actions: Actions = {
 	// upsert lands on the same row rather than creating a second one.
 	update: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const description = String(form.get('description') ?? '').trim();
@@ -94,7 +97,7 @@ export const actions: Actions = {
 	// their category. What stops is the app applying it to new ones.
 	remove: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const id = String(form.get('id') ?? '').trim();

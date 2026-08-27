@@ -1,6 +1,3 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { setFlash } from 'sveltekit-flash-message/server';
-import type { Actions, PageServerLoad } from './$types';
 import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import {
@@ -11,13 +8,19 @@ import {
 	setTagRulesForDescription
 } from '$lib/server/db/tag-rules';
 import { getTagsByUser } from '$lib/server/db/tags';
+import { requireLogin } from '$lib/server/require-login';
+
+import { fail } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
 
 // Automatic tag rules, keyed by description: whenever a transaction with that
 // exact description shows up, it gets these tags — and creating a rule backfills
 // the history too. These used to be an unsorted, unsearchable, uneditable list
 // tacked onto the bottom of /tags; this route mirrors /categories/rules instead.
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 	const [rules, tags] = await Promise.all([
@@ -38,7 +41,7 @@ function parseTagNames(raw: FormDataEntryValue | null): string[] {
 export const actions: Actions = {
 	add: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const description = String(form.get('description') ?? '').trim();
@@ -70,7 +73,7 @@ export const actions: Actions = {
 	// IS its set of tags.
 	update: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const description = String(form.get('description') ?? '').trim();
@@ -97,7 +100,7 @@ export const actions: Actions = {
 	// them automatically.
 	remove: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const description = String(form.get('description') ?? '').trim();
