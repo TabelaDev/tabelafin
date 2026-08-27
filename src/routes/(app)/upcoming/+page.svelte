@@ -1,15 +1,18 @@
 <script lang="ts">
 	import Chart from '$lib/components/Chart.svelte';
-	import { Card, Input, Select, Table } from '@tabeladev/tabelawebui';
+	import { ChartType } from '$lib/enums/chart-type';
 	import {
 		formatCompactCurrency,
 		formatCurrency,
 		formatCurrencyLabel,
 		formatDate,
-		toYearMonth,
-		monthLabel
+		monthLabel,
+		toYearMonth
 	} from '$lib/utils/format';
+
+	import { Card, Input, Page, Select, StatTile, Table } from '@tabeladev/tabelawebui';
 	import type { ApexOptions } from 'apexcharts';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -122,16 +125,13 @@
 	<title>Parcelas futuras: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-4">
-	<header>
-		<h1 class="font-mono text-2xl font-bold">Parcelas futuras</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span>
-			{data.future.length}
-			{data.future.length === 1 ? 'parcela pré-datada' : 'parcelas pré-datadas'}: a fatura do banco
-			também inclui as compras à vista do ciclo
-		</p>
-	</header>
+<Page.Shell>
+	<Page.Header
+		title="Parcelas futuras"
+		subtitle="{data.future.length} {data.future.length === 1
+			? 'parcela pré-datada'
+			: 'parcelas pré-datadas'}: a fatura do banco também inclui as compras à vista do ciclo"
+	/>
 
 	{#if data.future.length === 0}
 		<Card>
@@ -144,33 +144,25 @@
 	{:else}
 		<!-- Summary by account -->
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-			<Card>
-				<Card.Content>
-					<p class="font-mono text-xs text-ink-soft">
-						{monthFilter ? `Fatura de ${monthLabel(monthFilter)}` : 'Parcelas futuras'}
-					</p>
-					<p class="mt-1 font-mono text-xl font-bold text-accent">
-						{formatCompactCurrency(
-							monthFilter || accountFilter || searchQuery.trim() ? filteredTotal : data.total
-						)}
-					</p>
+			<StatTile
+				label={monthFilter ? `Fatura de ${monthLabel(monthFilter)}` : 'Parcelas futuras'}
+				value={formatCompactCurrency(
+					monthFilter || accountFilter || searchQuery.trim() ? filteredTotal : data.total
+				)}
+				valueClass="text-accent"
+			>
+				{#snippet footer()}
 					{#if monthFilter || accountFilter || searchQuery.trim()}
-						<p class="font-mono text-xs text-ink-faint">
-							de {formatCompactCurrency(data.total)} no total
-						</p>
+						<span>de {formatCompactCurrency(data.total)} no total</span>
 					{/if}
-				</Card.Content>
-			</Card>
+				{/snippet}
+			</StatTile>
 			{#each futureByAccount as acc (acc.id)}
-				<Card>
-					<Card.Content>
-						<p class="truncate font-mono text-xs text-ink-soft">{acc.name || 'Sem conta'}</p>
-						<p class="mt-1 font-mono text-xl font-bold">
-							{formatCompactCurrency(acc.total)}
-						</p>
-						<p class="font-mono text-xs text-ink-faint">{acc.count}x parcelas</p>
-					</Card.Content>
-				</Card>
+				<StatTile label={acc.name || 'Sem conta'} value={formatCompactCurrency(acc.total)}>
+					{#snippet footer()}
+						<span>{acc.count}x parcelas</span>
+					{/snippet}
+				</StatTile>
 			{/each}
 		</div>
 
@@ -185,7 +177,7 @@
 						</p>
 					</div>
 					<div class="mt-2 min-h-56 flex-1">
-						<Chart type="bar" series={monthSeries} options={monthChartOptions} />
+						<Chart type={ChartType.Bar} series={monthSeries} options={monthChartOptions} />
 					</div>
 				</Card.Content>
 			</Card>
@@ -237,6 +229,7 @@
 				rowKey="id"
 				pageSize={10}
 				pageSizeOptions={[10, 25, 50]}
+				labels={{ empty: 'Nenhum lançamento encontrado para os filtros.' }}
 			>
 				{#snippet cell(row: Record<string, unknown>, key: string)}
 					{#if key === 'date'}
@@ -249,12 +242,7 @@
 						{row.description}
 					{/if}
 				{/snippet}
-				{#snippet empty()}
-					<p class="py-12 text-center font-mono text-sm text-ink-soft">
-						Nenhum lançamento encontrado para os filtros.
-					</p>
-				{/snippet}
 			</Table>
 		</div>
 	{/if}
-</div>
+</Page.Shell>

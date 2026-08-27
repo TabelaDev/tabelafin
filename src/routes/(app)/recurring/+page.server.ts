@@ -1,20 +1,24 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { setFlash } from 'sveltekit-flash-message/server';
-import { and, eq, isNull } from 'drizzle-orm';
-import type { Actions, PageServerLoad } from './$types';
+import { Frequency } from '$lib/enums/frequency';
 import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
-import { transactions } from '$lib/server/db/schema';
 import {
-	getAllRecurringExpenses,
 	createRecurringExpense,
-	deleteRecurringExpense
+	deleteRecurringExpense,
+	getAllRecurringExpenses
 } from '$lib/server/db/recurring-expenses';
+import { transactions } from '$lib/server/db/schema';
 import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { requireLogin } from '$lib/server/require-login';
 import { parseCents } from '$lib/utils/money';
 
+import { fail } from '@sveltejs/kit';
+import { and, eq, isNull } from 'drizzle-orm';
+import { setFlash } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
+
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 	const expenses = await getAllRecurringExpenses(db, locals.userId);
@@ -54,13 +58,13 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	// an integer rather than drifting into fractional cents.
 	const monthlyTotal = activeExpenses.reduce((sum, e) => {
 		switch (e.frequency) {
-			case 'weekly':
+			case Frequency.Weekly:
 				return sum + Math.round(e.amount * 4.33);
-			case 'quarterly':
+			case Frequency.Quarterly:
 				return sum + Math.round(e.amount / 3);
-			case 'yearly':
+			case Frequency.Yearly:
 				return sum + Math.round(e.amount / 12);
-			case 'monthly':
+			case Frequency.Monthly:
 			default:
 				return sum + e.amount;
 		}
@@ -80,7 +84,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 export const actions: Actions = {
 	create: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const description = form.get('description');
@@ -110,7 +114,7 @@ export const actions: Actions = {
 			description,
 			amount: parsedAmount,
 			category: typeof category === 'string' ? category : undefined,
-			frequency: frequency as 'monthly' | 'yearly' | 'weekly' | 'quarterly',
+			frequency: frequency as Frequency,
 			nextChargeDate:
 				typeof nextChargeDate === 'string' && nextChargeDate ? new Date(nextChargeDate) : undefined
 		});
@@ -121,7 +125,7 @@ export const actions: Actions = {
 
 	delete: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const id = form.get('id');

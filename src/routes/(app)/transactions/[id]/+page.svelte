@@ -1,15 +1,20 @@
 <script lang="ts">
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
+	import { AccountType } from '$lib/enums/account-type';
+	import { Frequency } from '$lib/enums/frequency';
+	import { getCategoryColor } from '$lib/utils/categories';
+	import { formatCurrency, formatDateLong } from '$lib/utils/format';
+	import { handleAction } from '$lib/utils/forms';
+
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
-	import { Badge, Button, Card, Select, TagInput, Toggle } from '@tabeladev/tabelawebui';
-	import { handleAction } from '$lib/utils/forms';
-	import { formatCurrency } from '$lib/utils/format';
+	import { Badge, Button, Card, Page, Select, TagInput, Toggle } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	let recurringFrequency = $state('monthly');
+	let recurringFrequency = $state(Frequency.Monthly);
 	// One-shot read of the loaded tags (the TagInput owns it after that); the
 	// function wrapper avoids the `state_referenced_locally` warning.
 	const initialTags = () => data.tags;
@@ -45,23 +50,15 @@
 	const categoryOptions = $derived(data.categories.map((c) => ({ value: c.name, label: c.name })));
 	const isExpense = $derived(data.transaction.displayAmount < 0);
 
-	const categoryColor = (name: string | null) => {
-		if (!name) return 'ctp-overlay1';
-		return data.categories.find((c) => c.name === name)?.color ?? 'ctp-overlay1';
-	};
+	const categoryColor = (name: string | null) => getCategoryColor(data.categories, name);
 
 	const accountLabel = $derived(
-		data.account?.type === 'credit_card'
+		data.account?.type === AccountType.CreditCard
 			? 'Cartão de crédito'
-			: data.account?.type === 'investment'
+			: data.account?.type === AccountType.Investment
 				? 'Investimento'
 				: 'Conta corrente'
 	);
-
-	const formatDate = (ts: Date | string) => {
-		const d = typeof ts === 'string' ? new Date(ts) : ts;
-		return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-	};
 
 	const sourceLabel: Record<string, string> = {
 		ai: 'IA',
@@ -75,13 +72,13 @@
 	<title>Transação: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
+<Page.Shell>
 	<header>
 		<a href={resolve('/transactions')} class="font-mono text-sm text-ink-soft hover:text-ink"
 			>← Transações</a
 		>
-		<h1 class="font-mono text-2xl font-bold">{data.transaction.description}</h1>
 	</header>
+	<Page.Header title={data.transaction.description} />
 
 	<Card>
 		<Card.Content>
@@ -95,7 +92,7 @@
 
 				<div class="flex items-center justify-between border-t border-rule pt-3">
 					<span class="font-mono text-sm text-ink-soft">Data</span>
-					<span class="font-mono text-sm">{formatDate(data.transaction.date)}</span>
+					<span class="font-mono text-sm">{formatDateLong(data.transaction.date)}</span>
 				</div>
 
 				<div class="flex items-center justify-between border-t border-rule pt-3">
@@ -140,13 +137,14 @@
 
 	<!-- Categorise -->
 	<Card>
-		<Card.Content>
-			<h2 class="font-mono text-sm font-semibold">Categorizar</h2>
-			<p class="mt-1 font-mono text-xs text-ink-soft">
+		<Card.Header>
+			<Card.Title>Categorizar</Card.Title>
+			<Card.Description>
 				Ao categorizar, o app cria uma regra automática: transações futuras com a mesma descrição já
 				entram categorizadas.
-			</p>
-
+			</Card.Description>
+		</Card.Header>
+		<Card.Content>
 			{#if hasCategory}
 				<!-- Already categorised: shows locked, with an option to remove to
 				     re-categorise. -->
@@ -194,13 +192,14 @@
 
 	<!-- Tags -->
 	<Card>
-		<Card.Content>
-			<h2 class="font-mono text-sm font-semibold">Tags</h2>
-			<p class="mt-1 font-mono text-xs text-ink-soft">
+		<Card.Header>
+			<Card.Title>Tags</Card.Title>
+			<Card.Description>
 				Agrupam gastos pontuais sem criar categoria ("Viagem SP", "PC novo"): além da categoria, não
 				no lugar dela.
-			</p>
-
+			</Card.Description>
+		</Card.Header>
+		<Card.Content>
 			<form
 				method="POST"
 				action="?/tags"
@@ -233,9 +232,9 @@
 	<!-- Recurrence from transaction: mirrors the categorise card —
 	     form while it does not exist, locked state after creation. -->
 	<Card>
-		<Card.Content>
-			<h2 class="font-mono text-sm font-semibold">Recorrência</h2>
-			<p class="mt-1 font-mono text-xs text-ink-soft">
+		<Card.Header>
+			<Card.Title>Recorrência</Card.Title>
+			<Card.Description>
 				{#if hasRecurrence}
 					Esta descrição já é acompanhada como gasto recorrente. A recorrência vale pra descrição
 					inteira, não só pra esta transação: removê-la aqui remove pra todas.
@@ -243,10 +242,11 @@
 					Cria um gasto recorrente com a mesma descrição e valor desta transação: útil pra
 					assinaturas e despesas fixas que se repetem.
 				{/if}
-			</p>
-
+			</Card.Description>
+		</Card.Header>
+		<Card.Content>
 			{#if hasRecurrence && data.recurrence}
-				<div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+				<div class="flex flex-wrap items-center justify-between gap-3">
 					<div class="flex flex-wrap items-center gap-2">
 						<Badge variant="secondary"
 							>[{frequencyLabel[data.recurrence.frequency] ?? data.recurrence.frequency}]</Badge
@@ -267,15 +267,15 @@
 					method="POST"
 					action="?/recurring"
 					use:enhance={handleAction()}
-					class="mt-3 flex flex-col gap-3"
+					class="flex flex-col gap-3"
 				>
 					<Select
 						name="frequency"
 						options={[
-							{ value: 'weekly', label: 'Semanal' },
-							{ value: 'monthly', label: 'Mensal' },
-							{ value: 'quarterly', label: 'Trimestral' },
-							{ value: 'yearly', label: 'Anual' }
+							{ value: Frequency.Weekly, label: 'Semanal' },
+							{ value: Frequency.Monthly, label: 'Mensal' },
+							{ value: Frequency.Quarterly, label: 'Trimestral' },
+							{ value: Frequency.Yearly, label: 'Anual' }
 						]}
 						bind:value={recurringFrequency}
 					/>
@@ -284,4 +284,4 @@
 			{/if}
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>

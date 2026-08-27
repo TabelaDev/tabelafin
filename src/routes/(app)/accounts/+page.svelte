@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
+	import { AccountType } from '$lib/enums/account-type';
 	import { signedBalance } from '$lib/utils/accounts';
 	import { formatCompactCurrency, formatCurrency } from '$lib/utils/format';
+	import { handleAction } from '$lib/utils/forms';
+
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import {
 		Accordion,
 		Badge,
@@ -10,10 +13,12 @@
 		Card,
 		Input,
 		Label,
+		Page,
 		Select,
+		StatTile,
 		Table
 	} from '@tabeladev/tabelawebui';
-	import { handleAction } from '$lib/utils/forms';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -22,9 +27,9 @@
 	const manualAccounts = $derived(data.accounts.filter((a) => a.manual));
 
 	const typeLabel: Record<string, string> = {
-		checking: 'Conta corrente',
-		credit_card: 'Cartão de crédito',
-		investment: 'Investimentos'
+		[AccountType.Checking]: 'Conta corrente',
+		[AccountType.CreditCard]: 'Cartão de crédito',
+		[AccountType.Investment]: 'Investimentos'
 	};
 
 	function amountClass(n: number): string {
@@ -48,9 +53,9 @@
 
 	const typeOptions = [
 		{ value: '', label: 'Todos os tipos' },
-		{ value: 'checking', label: 'Conta corrente' },
-		{ value: 'credit_card', label: 'Cartão de crédito' },
-		{ value: 'investment', label: 'Investimentos' }
+		{ value: AccountType.Checking, label: 'Conta corrente' },
+		{ value: AccountType.CreditCard, label: 'Cartão de crédito' },
+		{ value: AccountType.Investment, label: 'Investimentos' }
 	];
 
 	const filteredAccounts = $derived(
@@ -82,7 +87,9 @@
 
 	const hasFilters = $derived(!!(searchQuery.trim() || typeFilter || institutionFilter));
 
-	const investmentCount = $derived(data.accounts.filter((a) => a.type === 'investment').length);
+	const investmentCount = $derived(
+		data.accounts.filter((a) => a.type === AccountType.Investment).length
+	);
 </script>
 
 <svelte:head>
@@ -97,66 +104,38 @@
 	</p>
 {/snippet}
 
-<div class="flex flex-col gap-4">
-	<header class="flex flex-wrap items-start justify-between gap-3">
-		<div>
-			<h1 class="font-mono text-2xl font-bold">Contas</h1>
-			<p class="font-mono text-sm text-ink-soft">
-				<span class="text-ink-faint">//</span>
-				{data.accounts.length}
-				{data.accounts.length === 1 ? 'conta' : 'contas'}
-			</p>
-		</div>
-		<Button
-			onclick={() => (showForm = !showForm)}
-			variant={showForm ? 'outline' : 'primary'}
-			size="sm"
-		>
-			{showForm ? 'Cancelar' : '+ Conta manual'}
-		</Button>
-	</header>
+<Page.Shell>
+	<Page.Header
+		title="Contas"
+		subtitle="{data.accounts.length} {data.accounts.length === 1 ? 'conta' : 'contas'}"
+	>
+		{#snippet action()}
+			<Button
+				onclick={() => (showForm = !showForm)}
+				variant={showForm ? 'outline' : 'primary'}
+				size="sm"
+			>
+				{showForm ? 'Cancelar' : '+ Conta manual'}
+			</Button>
+		{/snippet}
+	</Page.Header>
 
 	<!-- Summary cards -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-		<Card>
-			<Card.Content>
-				<p class="font-mono text-xs text-ink-soft">Saldo total</p>
-				<p class="mt-1 font-mono text-xl font-bold">
-					{formatCompactCurrency(data.summary.total)}
-				</p>
-			</Card.Content>
-		</Card>
-		<Card>
-			<Card.Content>
-				<p class="font-mono text-xs text-ink-soft">Conta corrente</p>
-				<p class="mt-1 font-mono text-xl font-bold">
-					{formatCompactCurrency(data.summary.checking)}
-				</p>
-			</Card.Content>
-		</Card>
-		<Card>
-			<Card.Content>
-				<p class="font-mono text-xs text-ink-soft">Investimentos</p>
-				<p class="mt-1 font-mono text-xl font-bold">
-					{formatCompactCurrency(data.summary.investment)}
-				</p>
-			</Card.Content>
-		</Card>
-		<Card>
-			<Card.Content>
-				<p class="font-mono text-xs text-ink-soft">Cartão de crédito</p>
-				{#if data.summary.credit > 0}
-					<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
-						-{formatCompactCurrency(data.summary.credit)}
-					</p>
-				{:else}
-					<p class="mt-1 font-mono text-xl font-bold">
-						{formatCompactCurrency(data.summary.credit)}
-					</p>
-				{/if}
-				<p class="font-mono text-xs text-ink-faint">fatura em aberto (dívida)</p>
-			</Card.Content>
-		</Card>
+		<StatTile label="Saldo total" value={formatCompactCurrency(data.summary.total)} />
+		<StatTile label="Conta corrente" value={formatCompactCurrency(data.summary.checking)} />
+		<StatTile label="Investimentos" value={formatCompactCurrency(data.summary.investment)} />
+		<StatTile
+			label="Cartão de crédito"
+			value={data.summary.credit > 0
+				? `-${formatCompactCurrency(data.summary.credit)}`
+				: formatCompactCurrency(data.summary.credit)}
+			valueClass={data.summary.credit > 0 ? 'text-ctp-red' : ''}
+		>
+			{#snippet footer()}
+				<span>fatura em aberto (dívida)</span>
+			{/snippet}
+		</StatTile>
 	</div>
 
 	<!-- Why the list is so long: every Open Finance investment product becomes
@@ -209,6 +188,12 @@
 			rowKey="id"
 			pageSize={10}
 			pageSizeOptions={[10, 25, 50, 100]}
+			labels={{
+				empty:
+					data.accounts.length === 0
+						? 'Nenhuma conta ainda. Conecte via Open Finance ou crie uma conta manual.'
+						: 'Nenhuma conta encontrada para os filtros.'
+			}}
 		>
 			{#snippet cell(row: Record<string, unknown>, key: string)}
 				{#if key === 'name'}
@@ -223,13 +208,6 @@
 					<span class="text-xs text-ink-soft">{row.institution}</span>
 				{/if}
 			{/snippet}
-			{#snippet empty()}
-				<p class="py-12 text-center font-mono text-sm text-ink-soft">
-					{data.accounts.length === 0
-						? 'Nenhuma conta ainda. Conecte via Open Finance ou crie uma conta manual.'
-						: 'Nenhuma conta encontrada para os filtros.'}
-				</p>
-			{/snippet}
 		</Table>
 	</div>
 
@@ -238,6 +216,9 @@
 	     total reads from finance_accounts, which only the sync ever wrote. -->
 	{#if showForm}
 		<Card>
+			<Card.Header>
+				<Card.Title>Nova conta manual</Card.Title>
+			</Card.Header>
 			<Card.Content>
 				<form
 					method="POST"
@@ -245,8 +226,6 @@
 					use:enhance={handleAction({ onSuccess: () => (showForm = false) })}
 					class="flex flex-col gap-3"
 				>
-					<h2 class="font-mono text-sm font-semibold">Nova conta manual</h2>
-
 					<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
 						<div class="flex flex-col gap-1">
 							<Label for="name">Nome</Label>
@@ -258,9 +237,9 @@
 								id="type"
 								name="type"
 								options={[
-									{ value: 'checking', label: 'Conta corrente' },
-									{ value: 'credit_card', label: 'Cartão de crédito' },
-									{ value: 'investment', label: 'Investimentos' }
+									{ value: AccountType.Checking, label: 'Conta corrente' },
+									{ value: AccountType.CreditCard, label: 'Cartão de crédito' },
+									{ value: AccountType.Investment, label: 'Investimentos' }
 								]}
 							/>
 						</div>
@@ -287,13 +266,15 @@
 
 	{#if manualAccounts.length > 0}
 		<Card>
+			<Card.Header>
+				<Card.Title>Contas manuais</Card.Title>
+				<Card.Description>
+					O saldo destas é o que você informar. Contas do Open Finance são atualizadas pelo sync e
+					por isso não aparecem aqui.
+				</Card.Description>
+			</Card.Header>
 			<Card.Content>
 				<div class="flex flex-col gap-3">
-					<h2 class="font-mono text-sm font-semibold">Contas manuais</h2>
-					<p class="font-mono text-xs text-ink-soft">
-						O saldo destas é o que você informar. Contas do Open Finance são atualizadas pelo sync e
-						por isso não aparecem aqui.
-					</p>
 					{#each manualAccounts as account (account.id)}
 						<div class="flex flex-wrap items-end gap-2 border-t border-rule pt-3">
 							<span class="flex-1 font-mono text-sm">{account.name}</span>
@@ -329,4 +310,4 @@
 			</Card.Content>
 		</Card>
 	{/if}
-</div>
+</Page.Shell>

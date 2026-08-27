@@ -1,16 +1,20 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
-import type { Actions, PageServerLoad } from './$types';
 import { ToastType } from '$lib/enums/toast-type';
-import { getDb } from '$lib/server/db';
-import { getCategoriesByUser } from '$lib/server/db/user-categories';
-import { getTagsByUser, setTransactionTags } from '$lib/server/db/tags';
-import { applyTagRules } from '$lib/server/db/tag-rules';
 import { categorizeByRules } from '$lib/server/ai/rules';
+import { getDb } from '$lib/server/db';
+import { applyTagRules } from '$lib/server/db/tag-rules';
+import { getTagsByUser, setTransactionTags } from '$lib/server/db/tags';
+import { insertManualTransaction } from '$lib/server/db/transactions';
+import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { requireLogin } from '$lib/server/require-login';
 import { parseCents } from '$lib/utils/money';
 
+import { fail } from '@sveltejs/kit';
+import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
+
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 	const db = getDb(platform!.env.DB);
 	const [categories, userTags] = await Promise.all([
 		getCategoriesByUser(db, locals.userId),
@@ -22,7 +26,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 export const actions: Actions = {
 	default: async (event) => {
 		const { request, locals, platform, cookies } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const date = form.get('date');
@@ -63,7 +67,7 @@ export const actions: Actions = {
 						.filter(Boolean)
 				: [];
 
-		const saved = await locals.transactionService.insertManual({
+		const saved = await insertManualTransaction(db, {
 			userId: locals.userId,
 			date: parsedDate,
 			description: description.trim(),

@@ -1,13 +1,17 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { and, desc, eq, gte, inArray, isNull, like, lt, sql } from 'drizzle-orm';
-import type { Actions, PageServerLoad } from './$types';
+import { AccountType } from '$lib/enums/account-type';
 import { getDb } from '$lib/server/db';
-import { transactions } from '$lib/server/db/schema';
 import { getAccountsByUser } from '$lib/server/db/accounts';
-import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
-import { isNotInternalTransfer, visibleTransactions } from '$lib/server/db/transactions';
+import { transactions } from '$lib/server/db/schema';
 import { getTagsByUser, getTagsForTransactions, setTransactionTags } from '$lib/server/db/tags';
+import { isNotInternalTransfer, visibleTransactions } from '$lib/server/db/transactions';
+import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { requireLogin } from '$lib/server/require-login';
+
+import { fail } from '@sveltejs/kit';
+import { and, desc, eq, gte, inArray, isNull, like, lt, sql } from 'drizzle-orm';
+
+import type { Actions, PageServerLoad } from './$types';
 
 // Default span for the unfiltered list. Long enough to cover the year people
 // actually look back over, short enough that the query stays bounded as the
@@ -15,7 +19,7 @@ import { getTagsByUser, getTagsForTransactions, setTransactionTags } from '$lib/
 const DEFAULT_WINDOW_MONTHS = 12;
 
 export const load: PageServerLoad = async ({ locals, platform, url }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
@@ -96,7 +100,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	// The sign filter depends on the account type (a card's sign is inverted), so
 	// each account's type is needed to filter in memory.
 	const userAccounts = await getAccountsByUser(db, userId);
-	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
+	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type as AccountType]));
 
 	// On a credit card the API reports a purchase as positive and a refund as
 	// negative — the opposite of a checking account. "receitas" used to reject
@@ -105,13 +109,13 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 	if (type === 'income') {
 		rows = rows.filter((t) => {
 			const accType = t.accountId ? accountTypeById.get(t.accountId) : undefined;
-			if (accType === 'credit_card') return t.amount < 0; // estorno
+			if (accType === AccountType.CreditCard) return t.amount < 0; // estorno
 			return t.amount >= 0;
 		});
 	} else if (type === 'expenses') {
 		rows = rows.filter((t) => {
 			const accType = t.accountId ? accountTypeById.get(t.accountId) : undefined;
-			if (accType === 'credit_card') return t.amount > 0; // compra
+			if (accType === AccountType.CreditCard) return t.amount > 0; // compra
 			return t.amount < 0;
 		});
 	}
@@ -134,7 +138,7 @@ export const load: PageServerLoad = async ({ locals, platform, url }) => {
 		// negative ("Estorno de Uber" -1,44 = money back). Flipping unconditionally
 		// makes a purchase negative (red) and a refund positive (green) —
 		// consistent with the dashboard.
-		const displayAmount = accType === 'credit_card' ? -tx.amount : tx.amount;
+		const displayAmount = accType === AccountType.CreditCard ? -tx.amount : tx.amount;
 		return { ...tx, displayAmount };
 	};
 
@@ -193,7 +197,7 @@ export const actions: Actions = {
 	// only categorises the selected transactions and teaches the app nothing
 	// about future ones.
 	bulkCategorize: async ({ request, locals, platform }) => {
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const idsRaw = String(form.get('ids') ?? '');
@@ -272,7 +276,7 @@ export const actions: Actions = {
 	// Bulk tag assignment: replaces the tag set of every selected transaction
 	// with the given tags (creates them on the fly). Ownership-checked per id.
 	bulkTag: async ({ request, locals, platform }) => {
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const idsRaw = String(form.get('ids') ?? '');

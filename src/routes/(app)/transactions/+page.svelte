@@ -1,21 +1,25 @@
 <script lang="ts">
 	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
-	import { untrack } from 'svelte';
+	import { getCategoryColor } from '$lib/utils/categories';
+	import { formatCurrency, formatDate } from '$lib/utils/format';
+
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import {
-		Table,
 		Button,
-		Select,
 		DatePicker,
-		Input,
 		Dialog,
-		Toggle,
+		Input,
+		Page,
+		Select,
+		Table,
 		TagInput,
+		Toggle,
 		toast
 	} from '@tabeladev/tabelawebui';
-	import { formatCurrency, formatDate } from '$lib/utils/format';
+	import { untrack } from 'svelte';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -86,10 +90,7 @@
 		if (showInternal !== current) applyFilter('internal', showInternal ? 'yes' : '');
 	});
 
-	const categoryColor = (cat: string | null) => {
-		if (!cat) return 'ctp-overlay1';
-		return data.categories.find((c) => c.name === cat)?.color ?? 'ctp-overlay1';
-	};
+	const categoryColor = (cat: string | null) => getCategoryColor(data.categories, cat);
 
 	function applyFilter(key: string, value: string) {
 		const url = new URL(page.url);
@@ -247,38 +248,14 @@
 	<title>Transações: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-4">
-	<header>
-		<h1 class="font-mono text-2xl font-bold">Transações</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span>
-			{visible.length} registros
-			{#if (type || tag) && visible.length > 0}
-				· total
-				<span
-					class={visible.reduce((sum, t) => sum + t.displayAmount, 0) >= 0
-						? 'text-ctp-green'
-						: 'text-ctp-red'}
-				>
-					<!-- Sum first, then take the magnitude. Summing Math.abs of each
-					     row made a refund add to the expense total instead of
-					     reducing it. -->
-					{formatCurrency(Math.abs(visible.reduce((sum, t) => sum + t.displayAmount, 0)))}
-				</span>
-			{/if}
-			{#if data.future.length > 0}
-				· <a href={resolve('/upcoming')} class="text-accent hover:underline"
-					>{data.future.length} lançamento{data.future.length === 1 ? '' : 's'} futuro{data.future
-						.length === 1
-						? ''
-						: 's'}</a
-				>
-			{/if}
-		</p>
-	</header>
+<Page.Shell>
+	<Page.Header
+		title="Transações"
+		subtitle="{visible.length} registro{visible.length === 1 ? '' : 's'}"
+	/>
 
 	<!-- Filters -->
-	<div class="flex flex-col">
+	<div class="flex flex-col gap-2">
 		<div class="flex flex-wrap items-center gap-2 lg:flex-nowrap">
 			<Input
 				bind:value={searchQuery}
@@ -392,6 +369,7 @@
 			selection="multiple"
 			rowKey="id"
 			bind:selected
+			labels={{ empty: 'Nenhuma transação encontrada.' }}
 		>
 			{#snippet cell(row: Record<string, unknown>, key: string)}
 				{#if key === 'date'}
@@ -438,11 +416,6 @@
 					<span>{row.description}</span>
 				{/if}
 			{/snippet}
-			{#snippet empty()}
-				<p class="py-12 text-center font-mono text-sm text-ink-soft">
-					Nenhuma transação encontrada.
-				</p>
-			{/snippet}
 		</Table>
 
 		{#if data.windowed}
@@ -463,7 +436,7 @@
 			</p>
 		{/if}
 	</div>
-</div>
+</Page.Shell>
 
 <!-- Closing by X/Esc/overlay leaves `showRuleDialog` false and submits nothing,
      so dismissing the dialog cancels the whole action rather than falling
@@ -487,7 +460,7 @@
 			</ul>
 		</div>
 	</div>
-	{#snippet footer()}
+	{#snippet footerEnd()}
 		<Button variant="ghost" disabled={bulkSubmitting} onclick={() => submitBulkCategorize(false)}>
 			Apenas categorizar
 		</Button>

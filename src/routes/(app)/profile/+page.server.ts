@@ -1,22 +1,23 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
-import { setFlash } from 'sveltekit-flash-message/server';
-import type { Actions, PageServerLoad } from './$types';
 import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
-import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
-import { deleteUserAccount } from '$lib/server/db/user-data';
 import { revokeDeviceToken } from '$lib/server/pluggy/device-token';
+import { requireLogin } from '$lib/server/require-login';
+import { getPluggyStatus } from '$lib/server/services/pluggy-status.service';
+
+import { fail, redirect } from '@sveltejs/kit';
+import { redirect as flashRedirect, setFlash } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
-	const [ai, pluggy, user] = await Promise.all([
+	const [ai, user, pluggyStatus] = await Promise.all([
 		getAiCredentials(db, locals.userId),
-		getPluggyCredentials(db, locals.userId),
-		locals.userService.findById(locals.userId)
+		locals.userService.findById(locals.userId),
+		getPluggyStatus(db, locals.userId)
 	]);
 
 	return {
@@ -25,14 +26,14 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		aiConfigured: Boolean(ai),
 		aiProvider: ai?.provider ?? null,
 		aiModel: ai?.model ?? null,
-		pluggyConfigured: Boolean(pluggy)
+		pluggyStatus
 	};
 };
 
 export const actions: Actions = {
 	hideAi: async (event) => {
 		const { request, locals } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const hidden = form.get('hideAi') === 'on';
@@ -51,7 +52,7 @@ export const actions: Actions = {
 
 	updateName: async (event) => {
 		const { request, locals } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const name = String(form.get('name') ?? '').trim();
@@ -70,7 +71,7 @@ export const actions: Actions = {
 
 	deleteAccount: async (event) => {
 		const { request, locals, platform, cookies } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const confirmation = String(form.get('confirmEmail') ?? '')
@@ -96,5 +97,24 @@ export const actions: Actions = {
 			{ type: ToastType.success, message: 'Conta excluída com sucesso.' },
 			cookies
 		);
+	},
+
+	eraseData: async (event) => {
+		const { request, locals } = event;
+		if (!locals.userId) requireLogin();
+
+		const form = await request.formData();
+		const confirmation = String(form.get('confirmErase') ?? '')
+			.trim()
+			.toUpperCase();
+
+		if (confirmation !== 'APAGAR') {
+			return fail(400, { error: 'Digite APAGAR para confirmar.' });
+		}
+
+		await locals.userService.eraseUserData(locals.userId);
+
+		setFlash({ type: ToastType.success, message: 'Todos os seus dados foram apagados.' }, event);
+		return { success: true };
 	}
 };

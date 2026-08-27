@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { Button, Card } from '@tabeladev/tabelawebui';
-	import { formatCompactCurrency } from '$lib/utils/format';
 	import PushSubscribe from '$lib/components/PushSubscribe.svelte';
+	import { formatCompactCurrency } from '$lib/utils/format';
+
+	import { Button, Card, Page } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -161,37 +163,30 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 	<title>Relatórios: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-4">
-	<header class="flex flex-wrap items-start justify-between gap-3">
-		<div>
-			<h1 class="font-mono text-2xl font-bold">Relatórios</h1>
-			<p class="font-mono text-sm text-ink-soft">
-				<span class="text-ink-faint">//</span> Gere relatórios em PDF das suas finanças.
-			</p>
-		</div>
-		<!-- Renders itself only when the browser supports push and permission has
-		     not been granted yet, so it disappears once the user opts in. -->
-		<PushSubscribe vapidPublicKey={data.vapidPublicKey} />
-	</header>
+<Page.Shell>
+	<Page.Header title="Relatórios" subtitle="Gere relatórios em PDF das suas finanças.">
+		{#snippet action()}
+			<PushSubscribe vapidPublicKey={data.vapidPublicKey} />
+		{/snippet}
+	</Page.Header>
 
 	{#if data.latestReport}
 		<Card>
+			<Card.Header>
+				<div>
+					<Card.Title>Relatório de {data.latestReport.yearMonth}</Card.Title>
+					<Card.Description>
+						Gerado em {new Date(data.latestReport.generatedAt).toLocaleDateString('pt-BR')}
+					</Card.Description>
+				</div>
+				<Card.Action>
+					<Button onclick={generatePdf} disabled={isGenerating} size="sm">
+						{isGenerating ? 'Gerando...' : 'Baixar PDF'}
+					</Button>
+				</Card.Action>
+			</Card.Header>
 			<Card.Content>
 				<div class="flex flex-col gap-4">
-					<div class="flex items-center justify-between">
-						<div>
-							<h2 class="font-mono text-sm font-semibold">
-								Relatório de {data.latestReport.yearMonth}
-							</h2>
-							<p class="mt-1 font-mono text-xs text-ink-soft">
-								Gerado em {new Date(data.latestReport.generatedAt).toLocaleDateString('pt-BR')}
-							</p>
-						</div>
-						<Button onclick={generatePdf} disabled={isGenerating} size="sm">
-							{isGenerating ? 'Gerando...' : 'Baixar PDF'}
-						</Button>
-					</div>
-
 					{#if error}
 						<p class="font-mono text-sm text-danger">{error}</p>
 					{/if}
@@ -215,4 +210,4 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 			</Card.Content>
 		</Card>
 	{/if}
-</div>
+</Page.Shell>

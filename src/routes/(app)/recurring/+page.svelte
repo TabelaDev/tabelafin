@@ -1,8 +1,13 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Button, Card, Input, Label, Select } from '@tabeladev/tabelawebui';
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
+	import { Frequency } from '$lib/enums/frequency';
+	import { getCategoryColor } from '$lib/utils/categories';
 	import { formatCompactCurrency, formatDate } from '$lib/utils/format';
 	import { handleAction } from '$lib/utils/forms';
+
+	import { enhance } from '$app/forms';
+	import { Button, Card, Input, Label, Page, Select } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -11,21 +16,21 @@
 	let description = $state('');
 	let amount = $state('');
 	let category = $state('');
-	let frequency = $state('monthly');
+	let frequency = $state(Frequency.Monthly);
 	let nextChargeDate = $state('');
 
 	const FREQUENCIES: { value: string; label: string }[] = [
-		{ value: 'weekly', label: 'Semanal' },
-		{ value: 'monthly', label: 'Mensal' },
-		{ value: 'quarterly', label: 'Trimestral' },
-		{ value: 'yearly', label: 'Anual' }
+		{ value: Frequency.Weekly, label: 'Semanal' },
+		{ value: Frequency.Monthly, label: 'Mensal' },
+		{ value: Frequency.Quarterly, label: 'Trimestral' },
+		{ value: Frequency.Yearly, label: 'Anual' }
 	];
 	const FREQUENCY_LABELS: Record<string, string> = Object.fromEntries(
 		FREQUENCIES.map((f) => [f.value, f.label])
 	);
 
 	// Display order of the frequencies.
-	const GROUP_ORDER = ['monthly', 'weekly', 'quarterly', 'yearly'];
+	const GROUP_ORDER = [Frequency.Monthly, Frequency.Weekly, Frequency.Quarterly, Frequency.Yearly];
 
 	// Groups active recurrences by frequency, in the defined order.
 	const groups = $derived.by(() => {
@@ -43,19 +48,6 @@
 
 	const inactive = $derived(data.expenses.filter((e) => !e.isActive));
 
-	const categoryColor = (name: string | null) => {
-		if (!name) return null;
-		return data.categories.find((c) => c.name === name)?.color ?? null;
-	};
-	const badgeStyle = (name: string | null) => {
-		const color = categoryColor(name);
-		if (!color) return '';
-		return `background-color: color-mix(in oklab, var(--ctp-${color.replace(
-			'ctp-',
-			''
-		)}) 10%, transparent); color: var(--ctp-${color.replace('ctp-', '')});`;
-	};
-
 	// Delegates to $lib/utils/format so the UTC-midnight convention is applied here
 	// too — a next-charge date is a calendar day, and rendering it in the
 	// browser's zone showed the 1st as the last day of the previous month.
@@ -67,7 +59,7 @@
 		description = '';
 		amount = '';
 		category = '';
-		frequency = 'monthly';
+		frequency = Frequency.Monthly;
 		nextChargeDate = '';
 		showForm = false;
 	}
@@ -77,22 +69,18 @@
 	<title>Recorrências: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-4">
-	<header class="flex items-center justify-between">
-		<div>
-			<h1 class="font-mono text-2xl font-bold">Recorrências</h1>
-			<p class="font-mono text-sm text-ink-soft">
-				<span class="text-ink-faint">//</span> Assinaturas e despesas fixas.
-			</p>
-		</div>
-		<Button
-			onclick={() => (showForm = !showForm)}
-			variant={showForm ? 'outline' : 'primary'}
-			size="sm"
-		>
-			{showForm ? 'Cancelar' : '+ Novo'}
-		</Button>
-	</header>
+<Page.Shell>
+	<Page.Header title="Recorrências" subtitle="Assinaturas e despesas fixas.">
+		{#snippet action()}
+			<Button
+				onclick={() => (showForm = !showForm)}
+				variant={showForm ? 'outline' : 'primary'}
+				size="sm"
+			>
+				{showForm ? 'Cancelar' : '+ Novo'}
+			</Button>
+		{/snippet}
+	</Page.Header>
 
 	<!-- Estimated monthly total -->
 	{#if data.expenses.length > 0}
@@ -111,6 +99,9 @@
 	<!-- New recurring expense form -->
 	{#if showForm}
 		<Card>
+			<Card.Header>
+				<Card.Title>Nova recorrência</Card.Title>
+			</Card.Header>
 			<Card.Content>
 				<form
 					method="POST"
@@ -118,8 +109,6 @@
 					use:enhance={handleAction({ onSuccess: resetForm })}
 					class="flex flex-col gap-3"
 				>
-					<h2 class="font-mono text-sm font-semibold">Nova recorrência</h2>
-
 					<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<div class="flex flex-col gap-1">
 							<Label for="description">Descrição</Label>
@@ -216,10 +205,10 @@
 										>
 										<div class="flex flex-wrap items-center gap-2">
 											{#if expense.category}
-												<span
-													class="border px-2 py-0.5 font-mono text-xs"
-													style={badgeStyle(expense.category)}>[{expense.category}]</span
-												>
+												<CategoryBadge
+													category={expense.category}
+													color={getCategoryColor(data.categories, expense.category)}
+												/>
 											{/if}
 											<span class="font-mono text-xs text-ink-soft">
 												{formatCompactCurrency(expense.amount)}/mês
@@ -275,4 +264,4 @@
 			</section>
 		{/if}
 	{/if}
-</div>
+</Page.Shell>

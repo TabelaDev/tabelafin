@@ -1,18 +1,23 @@
-import { redirect } from '@sveltejs/kit';
-import { and, desc, gte, lt, lte, sql } from 'drizzle-orm';
-import type { PageServerLoad } from './$types';
+import { AccountType } from '$lib/enums/account-type';
+import { PluggyStatus } from '$lib/enums/pluggy-status';
 import { getDb } from '$lib/server/db';
 import { getAccountsByUser } from '$lib/server/db/accounts';
 import { getAiCredentials } from '$lib/server/db/ai-credentials';
-import { getPluggyCredentials } from '$lib/server/db/pluggy-credentials';
 import { getLatestMonthlyReport } from '$lib/server/db/monthly-reports';
 import { transactions } from '$lib/server/db/schema';
-import { getCategoriesByUser } from '$lib/server/db/user-categories';
 import {
 	classifyMovement,
 	isNotInternalTransfer,
+	summarizeTransactions,
 	visibleTransactions
 } from '$lib/server/db/transactions';
+import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { requireLogin } from '$lib/server/require-login';
+import { getPluggyStatus } from '$lib/server/services/pluggy-status.service';
+
+import { and, desc, gte, lt, lte, sql } from 'drizzle-orm';
+
+import type { PageServerLoad } from './$types';
 
 function startOfMonth(offset = 0): Date {
 	const now = new Date();
@@ -20,22 +25,22 @@ function startOfMonth(offset = 0): Date {
 }
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
 
 	// Credentials are OPTIONAL.
-	const [aiCredentials, pluggyCredentials] = await Promise.all([
+	const [aiCredentials, pluggyStatus] = await Promise.all([
 		getAiCredentials(db, userId),
-		getPluggyCredentials(db, userId)
+		getPluggyStatus(db, userId)
 	]);
 
 	const userAccounts = await getAccountsByUser(db, userId);
 
 	// Account type by id — the credit card has its own logic (see
 	// INTERNAL_TRANSFER_CATEGORIES and the sign handling in the loop below).
-	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type]));
+	const accountTypeById = new Map(userAccounts.map((a) => [a.id, a.type as AccountType]));
 
 	// "Recent" means up to today: an invoice transaction dated in the future (an
 	// instalment yet to land) is not recent, even if the bank sent it earlier.
@@ -77,39 +82,27 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 			)
 		);
 
-	let monthIncome = 0;
-	let monthExpense = 0;
-	const categoryTotals: Record<string, number> = {};
-	for (const tx of monthTransactions) {
-		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
-		const { expense, income } = classifyMovement(accType, tx.amount);
-		monthExpense += expense;
-		monthIncome += income;
-		if (expense !== 0) {
-			const cat = tx.category ?? 'Outros';
-			categoryTotals[cat] = (categoryTotals[cat] ?? 0) + expense;
-		}
-	}
+	const {
+		income: monthIncome,
+		expense: monthExpense,
+		categoryTotals
+	} = summarizeTransactions(monthTransactions, accountTypeById);
 
-	let prevExpense = 0;
-	for (const tx of prevMonthTransactions) {
-		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
-		prevExpense += classifyMovement(accType, tx.amount).expense;
-	}
+	const { expense: prevExpense } = summarizeTransactions(prevMonthTransactions, accountTypeById);
 
 	const investmentBalance = userAccounts
-		.filter((a) => a.type === 'investment')
+		.filter((a) => a.type === AccountType.Investment)
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 
 	const checkingBalance = userAccounts
-		.filter((a) => a.type === 'checking')
+		.filter((a) => a.type === AccountType.Checking)
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 
 	// Total balance = net worth: assets (accounts + investments) minus the
 	// credit card debt (the open invoice, which aggregates future instalments).
 	// The card is NOT an asset — it is a liability.
 	const creditCardBalance = userAccounts
-		.filter((a) => a.type === 'credit_card')
+		.filter((a) => a.type === AccountType.CreditCard)
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 
 	const totalBalance = checkingBalance + investmentBalance - creditCardBalance;
@@ -169,7 +162,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		aiConfigured: Boolean(aiCredentials),
 		aiProvider: aiCredentials?.provider ?? null,
 		aiModel: aiCredentials?.model ?? null,
-		pluggyConfigured: Boolean(pluggyCredentials),
+		pluggyConfigured: pluggyStatus !== PluggyStatus.Disconnected,
 		accounts: userAccounts,
 		recentTransactions,
 		summary: {

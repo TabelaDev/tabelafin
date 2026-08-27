@@ -1,6 +1,4 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { setFlash } from 'sveltekit-flash-message/server';
-import type { Actions, PageServerLoad } from './$types';
+import { AccountType } from '$lib/enums/account-type';
 import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
 import {
@@ -10,11 +8,17 @@ import {
 	isManualAccount,
 	updateAccountBalance
 } from '$lib/server/db/accounts';
+import { requireLogin } from '$lib/server/require-login';
 import { signedBalance, sumSignedBalance } from '$lib/utils/accounts';
 import { parseCents } from '$lib/utils/money';
 
+import { fail } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
+
 export const load: PageServerLoad = async ({ locals, platform }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 	const userId = locals.userId;
@@ -22,13 +26,13 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const userAccounts = await getAccountsByUser(db, userId);
 
 	const checking = userAccounts
-		.filter((a) => a.type === 'checking')
+		.filter((a) => a.type === AccountType.Checking)
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 	const investment = userAccounts
-		.filter((a) => a.type === 'investment')
+		.filter((a) => a.type === AccountType.Investment)
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 	const credit = userAccounts
-		.filter((a) => a.type === 'credit_card')
+		.filter((a) => a.type === AccountType.CreditCard)
 		.reduce((sum, a) => sum + a.cachedBalance, 0);
 
 	return {
@@ -51,13 +55,12 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	};
 };
 
-const ACCOUNT_TYPES = ['checking', 'credit_card', 'investment'] as const;
-type AccountType = (typeof ACCOUNT_TYPES)[number];
+const ACCOUNT_TYPES = Object.values(AccountType);
 
 export const actions: Actions = {
 	create: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const name = String(form.get('name') ?? '').trim();
@@ -83,7 +86,7 @@ export const actions: Actions = {
 
 	updateBalance: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const accountId = String(form.get('accountId') ?? '');
@@ -101,7 +104,7 @@ export const actions: Actions = {
 
 	delete: async (event) => {
 		const { request, locals, platform } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const accountId = String(form.get('accountId') ?? '');

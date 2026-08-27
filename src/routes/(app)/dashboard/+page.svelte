@@ -1,12 +1,16 @@
 <script lang="ts">
-	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
-	import { resolve } from '$app/paths';
-	import Chart from '$lib/components/Chart.svelte';
 	import { horizontalBarOptions } from '$lib/client/charts';
-	import { Card, Table, Button } from '@tabeladev/tabelawebui';
-	import type { ApexOptions } from 'apexcharts';
-	import { formatCompactCurrency, formatCurrency, formatDate } from '$lib/utils/format';
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
+	import Chart from '$lib/components/Chart.svelte';
+	import { ChartType } from '$lib/enums/chart-type';
 	import { signedBalance } from '$lib/utils/accounts';
+	import { getCategoryColor } from '$lib/utils/categories';
+	import { formatCompactCurrency, formatCurrency, formatDate } from '$lib/utils/format';
+
+	import { resolve } from '$app/paths';
+	import { Button, Card, Page, StatTile, Table } from '@tabeladev/tabelawebui';
+	import type { ApexOptions } from 'apexcharts';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -72,10 +76,7 @@
 	const hasSideCharts = $derived(data.summary.topCategories.length > 0 || donutSeries.length > 0);
 	const evolutionClass = $derived(hasSideCharts ? 'lg:col-span-2 lg:row-span-2' : 'lg:col-span-3');
 
-	const categoryColor = (cat: string | null) => {
-		if (!cat) return 'ctp-overlay1';
-		return data.categories.find((c) => c.name === cat)?.color ?? 'ctp-overlay1';
-	};
+	const categoryColor = (cat: string | null) => getCategoryColor(data.categories, cat);
 
 	// Top 4 accounts by balance (there are 189 investment holdings — filter).
 	// Sorted and shown on the signed axis: by raw balance the card's open
@@ -97,71 +98,41 @@
 	<title>Dashboard: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
+<Page.Shell>
 	<!-- Header -->
-	<header class="flex items-center justify-between">
-		<div>
-			<h1 class="font-mono text-2xl font-bold">Dashboard</h1>
-			<p class="font-mono text-sm text-ink-soft">
-				<span class="text-ink-faint">//</span>
-				{monthName}
-			</p>
-		</div>
-		<a href={resolve('/new')}>
-			<Button variant="primary">+ Nova transação</Button>
-		</a>
-	</header>
+	<Page.Header title="Dashboard" subtitle={monthName}>
+		{#snippet action()}
+			<a href={resolve('/new')}>
+				<Button variant="primary">+ Nova transação</Button>
+			</a>
+		{/snippet}
+	</Page.Header>
 
 	<!-- Summary cards -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-		<Card>
-			<Card.Content>
-				<p class="font-mono text-xs text-ink-soft">Saldo total</p>
-				<p class="mt-1 font-mono text-xl font-bold">
-					{formatCompactCurrency(data.summary.totalBalance)}
-				</p>
-			</Card.Content>
-		</Card>
-		<Card>
-			<Card.Content>
-				<a
-					href={resolve(`/transactions?month=${currentMonth}&type=expenses`)}
-					class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
-				>
-					Gastos do mês →
-				</a>
-				<p class="mt-1 font-mono text-xl font-bold text-ctp-red">
-					{formatCurrency(data.summary.monthExpense)}
-				</p>
+		<StatTile label="Saldo total" value={formatCompactCurrency(data.summary.totalBalance)} />
+		<StatTile
+			label="Gastos do mês →"
+			href={resolve(`/transactions?month=${currentMonth}&type=expenses`)}
+			value={formatCurrency(data.summary.monthExpense)}
+			valueClass="text-ctp-red"
+		>
+			{#snippet footer()}
 				{#if expenseDelta !== null}
-					<span class="font-mono text-xs {expenseDelta > 0 ? 'text-ctp-red' : 'text-ctp-green'}">
+					<span class={expenseDelta > 0 ? 'text-ctp-red' : 'text-ctp-green'}>
 						{expenseDelta > 0 ? '▲' : '▼'}
 						{Math.abs(expenseDelta).toFixed(1)}% vs. mês anterior
 					</span>
 				{/if}
-			</Card.Content>
-		</Card>
-		<Card>
-			<Card.Content>
-				<a
-					href={resolve(`/transactions?month=${currentMonth}&type=income`)}
-					class="font-mono text-xs text-ink-soft underline underline-offset-4 transition-colors hover:text-accent"
-				>
-					Receitas do mês →
-				</a>
-				<p class="mt-1 font-mono text-xl font-bold text-ctp-green">
-					{formatCurrency(data.summary.monthIncome)}
-				</p>
-			</Card.Content>
-		</Card>
-		<Card>
-			<Card.Content>
-				<p class="font-mono text-xs text-ink-soft">Investimentos</p>
-				<p class="mt-1 font-mono text-xl font-bold">
-					{formatCompactCurrency(data.summary.investmentBalance)}
-				</p>
-			</Card.Content>
-		</Card>
+			{/snippet}
+		</StatTile>
+		<StatTile
+			label="Receitas do mês →"
+			href={resolve(`/transactions?month=${currentMonth}&type=income`)}
+			value={formatCurrency(data.summary.monthIncome)}
+			valueClass="text-ctp-green"
+		/>
+		<StatTile label="Investimentos" value={formatCompactCurrency(data.summary.investmentBalance)} />
 	</div>
 
 	<!-- Charts: 2x3 grid — evolution takes 2 columns × 2 rows; top categories
@@ -170,13 +141,13 @@
 	<div class="grid grid-cols-1 gap-3 lg:grid-cols-3 {hasSideCharts && 'lg:grid-rows-2'}">
 		{#if data.summary.monthValues.length > 0}
 			<Card class={evolutionClass}>
+				<Card.Header>
+					<Card.Title>Evolução do saldo</Card.Title>
+					<Card.Description>últimos 6 meses</Card.Description>
+				</Card.Header>
 				<Card.Content>
-					<div class="mb-2">
-						<h2 class="font-mono text-sm font-semibold">Evolução do saldo</h2>
-						<p class="font-mono text-xs text-ink-soft">últimos 6 meses</p>
-					</div>
 					<div class="min-h-56 flex-1">
-						<Chart type="area" series={areaSeries} options={areaOptions} />
+						<Chart type={ChartType.Area} series={areaSeries} options={areaOptions} />
 					</div>
 				</Card.Content>
 			</Card>
@@ -184,18 +155,20 @@
 
 		{#if data.summary.topCategories.length > 0}
 			<Card class="lg:col-span-1">
-				<Card.Content>
-					<div class="mb-2 flex items-center justify-between">
-						<div>
-							<h2 class="font-mono text-sm font-semibold">Top categorias</h2>
-							<p class="font-mono text-xs text-ink-soft">maiores gastos do mês</p>
-						</div>
+				<Card.Header>
+					<div>
+						<Card.Title>Top categorias</Card.Title>
+						<Card.Description>maiores gastos do mês</Card.Description>
+					</div>
+					<Card.Action>
 						<a href={resolve('/categories')} class="font-mono text-xs text-accent hover:underline"
 							>ver todas</a
 						>
-					</div>
+					</Card.Action>
+				</Card.Header>
+				<Card.Content>
 					<div class="min-h-40 flex-1">
-						<Chart type="bar" series={barSeries} options={barOptions} />
+						<Chart type={ChartType.Bar} series={barSeries} options={barOptions} />
 					</div>
 				</Card.Content>
 			</Card>
@@ -203,13 +176,13 @@
 
 		{#if donutSeries.length > 0}
 			<Card class="lg:col-span-1">
+				<Card.Header>
+					<Card.Title>Composição de gastos</Card.Title>
+					<Card.Description>por categoria</Card.Description>
+				</Card.Header>
 				<Card.Content>
-					<div class="mb-2">
-						<h2 class="font-mono text-sm font-semibold">Composição de gastos</h2>
-						<p class="font-mono text-xs text-ink-soft">por categoria</p>
-					</div>
 					<div class="min-h-48 flex-1">
-						<Chart type="donut" series={donutSeries} options={donutOptions} />
+						<Chart type={ChartType.Donut} series={donutSeries} options={donutOptions} />
 					</div>
 				</Card.Content>
 			</Card>
@@ -219,14 +192,14 @@
 	<!-- Accounts — first; "see all" leads to the dedicated page -->
 	<Card>
 		<Card.Header>
-			<div class="flex items-center justify-between">
-				<h2 class="font-mono text-sm font-semibold">Contas</h2>
-				{#if data.accounts.length > 0}
+			<Card.Title>Contas</Card.Title>
+			{#if data.accounts.length > 0}
+				<Card.Action>
 					<a href={resolve('/accounts')} class="font-mono text-xs text-accent hover:underline"
 						>ver todas</a
 					>
-				{/if}
-			</div>
+				</Card.Action>
+			{/if}
 		</Card.Header>
 
 		<Card.Content>
@@ -256,12 +229,12 @@
 	<!-- Recent transactions — real table -->
 	<Card>
 		<Card.Header>
-			<div class="flex items-center justify-between">
-				<h2 class="font-mono text-sm font-semibold">Transações recentes</h2>
+			<Card.Title>Transações recentes</Card.Title>
+			<Card.Action>
 				<a href={resolve('/transactions')} class="font-mono text-xs text-accent hover:underline"
 					>ver todas</a
 				>
-			</div>
+			</Card.Action>
 		</Card.Header>
 
 		<Card.Content>
@@ -280,6 +253,9 @@
 					amount: tx.amount
 				}))}
 				pageSize={0}
+				labels={{
+					empty: 'Nenhuma transação ainda. Adicione uma manualmente ou conecte suas contas.'
+				}}
 			>
 				{#snippet cell(row: Record<string, unknown>, key: string)}
 					{#if key === 'date'}
@@ -300,12 +276,7 @@
 						{row.description}
 					{/if}
 				{/snippet}
-				{#snippet empty()}
-					<p class="py-8 text-center font-mono text-sm text-ink-soft">
-						Nenhuma transação ainda. Adicione uma manualmente ou conecte suas contas.
-					</p>
-				{/snippet}
 			</Table>
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>

@@ -1,43 +1,42 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import { enhance } from '$app/forms';
-	import { page } from '$app/state';
-	import {
-		Badge,
-		Button,
-		Card,
-		Dialog,
-		Divider,
-		Input,
-		Label,
-		Select,
-		Tabs,
-		Toggle
-	} from '@tabeladev/tabelawebui';
-	import { PUBLIC_TABELAHUB_URL } from '$env/static/public';
-	import { handleAction } from '$lib/utils/forms';
-	import { openOnboarding } from '$lib/stores/onboarding-store';
-	import { openStatementImport } from '$lib/stores/statement-import-store';
+	import AiSetupDialog from '$lib/components/Dialogs/AiSetupDialog.svelte';
+	import DeleteAccountDialog from '$lib/components/Dialogs/DeleteAccountDialog.svelte';
+	import EraseDataDialog from '$lib/components/Dialogs/EraseDataDialog.svelte';
+	import ImportStatementsDialog from '$lib/components/Dialogs/ImportStatementsDialog.svelte';
+	import PluggySetupDialog from '$lib/components/Dialogs/PluggySetupDialog.svelte';
 	import ExtensionInstallModal from '$lib/components/ExtensionInstallModal.svelte';
-	import StatementUpload from '$lib/components/StatementUpload.svelte';
-	import CsvImport from '$lib/components/CsvImport.svelte';
-	import type { AiProvider } from '$lib/utils/ai-providers';
+	import { PluggyStatus } from '$lib/enums/pluggy-status';
+	import { handleAction } from '$lib/utils/forms';
+
+	import { PUBLIC_TABELAHUB_URL } from '$env/static/public';
+
+	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { Badge, Button, Card, Divider, Input, Label, Page, Toggle } from '@tabeladev/tabelawebui';
+
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let hideAiForm = $state<HTMLFormElement | null>(null);
 	let showInstallModal = $state(false);
 	let showDelete = $state(false);
+	let showErase = $state(false);
 	let showImport = $state(false);
+	let showPluggySetup = $state(false);
+	let showAiSetup = $state(false);
 	let importTab = $state('takeout');
 
 	const extensionLabel = $derived(
-		page.data.pluggyStatus === 'expired'
+		page.data.pluggyStatus === PluggyStatus.Expired
 			? 'Renovar'
-			: page.data.pluggyStatus === 'connected'
+			: page.data.pluggyStatus === PluggyStatus.Connected
 				? 'Revisar'
 				: 'Vincular'
 	);
+
+	const pluggyConfigured = $derived(page.data.pluggyStatus !== PluggyStatus.Disconnected);
+	const pluggyExpired = $derived(page.data.pluggyStatus === PluggyStatus.Expired);
 
 	let editingName = $state(false);
 	let editName = $state('');
@@ -58,13 +57,8 @@
 	<title>Perfil: TabelaFin</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
-	<header>
-		<h1 class="font-mono text-2xl font-bold">Perfil</h1>
-		<p class="font-mono text-sm text-ink-soft">
-			<span class="text-ink-faint">//</span> Gerencie sua conta e conexões.
-		</p>
-	</header>
+<Page.Shell>
+	<Page.Header title="Perfil" subtitle="Gerencie sua conta e conexões." />
 
 	<!-- Account details -->
 	<Card>
@@ -138,13 +132,15 @@
 				</Card.Description>
 			</div>
 			<Card.Action>
-				{#if data.pluggyConfigured}
+				{#if pluggyExpired}
+					<Badge variant="danger">Expirado</Badge>
+				{:else if pluggyConfigured}
 					<Badge variant="success">Conectado</Badge>
 				{:else}
 					<Badge variant="danger">Não conectado</Badge>
 				{/if}
-				<Button size="sm" onclick={() => openOnboarding('pluggy')}>
-					{data.pluggyConfigured ? 'Reconectar' : 'Conectar Open Finance'}
+				<Button size="sm" onclick={() => (showPluggySetup = true)}>
+					{pluggyExpired ? 'Renovar' : pluggyConfigured ? 'Reconectar' : 'Conectar Open Finance'}
 				</Button>
 			</Card.Action>
 		</Card.Header>
@@ -162,7 +158,7 @@
 			</div>
 			<Card.Action>
 				<Button size="sm" onclick={() => (showInstallModal = true)}>Instalar</Button>
-				<Button size="sm" onclick={() => openOnboarding('pluggy')}>
+				<Button size="sm" onclick={() => (showPluggySetup = true)}>
 					{extensionLabel}
 				</Button>
 			</Card.Action>
@@ -228,7 +224,7 @@
 					{:else}
 						<Badge variant="danger">Não configurada</Badge>
 					{/if}
-					<Button size="sm" onclick={() => openOnboarding('ai')}>
+					<Button size="sm" onclick={() => (showAiSetup = true)}>
 						{data.aiConfigured ? 'Alterar' : 'Configurar IA'}
 					</Button>
 				</Card.Action>
@@ -245,9 +241,7 @@
 							Customize como a IA categoriza transações, gera relatórios e responde no chat.
 						</Card.Description>
 					</div>
-					<Card.Action>
-						<span class="font-mono text-sm text-accent">→</span>
-					</Card.Action>
+					<Card.Action navigate />
 				</Card.Header>
 			</Card>
 		</a>
@@ -256,16 +250,31 @@
 	<!-- LGPD art. 18 -->
 	<Divider label="Dados" />
 
-	<Card>
+	<a href={resolve('/profile/export')} class="block">
+		<Card>
+			<Card.Header>
+				<div>
+					<Card.Title>Exportar dados</Card.Title>
+					<Card.Description>
+						Baixe transações, contas, categorias, regras e mais nos formatos JSON, CSV ou Excel.
+					</Card.Description>
+				</div>
+				<Card.Action navigate />
+			</Card.Header>
+		</Card>
+	</a>
+
+	<Card variant="danger">
 		<Card.Header>
 			<div>
-				<Card.Title>Exportar dados</Card.Title>
+				<Card.Title>Apagar meus dados</Card.Title>
 				<Card.Description>
-					Baixe transações, contas, categorias, regras e credenciais em JSON.
+					Remove permanentemente transações, contas, categorias, tags, regras, recorrências,
+					relatórios, conversas e credenciais. Sua conta e login serão mantidos.
 				</Card.Description>
 			</div>
 			<Card.Action>
-				<Button href="/api/account/export" size="sm" download>Baixar meus dados (JSON)</Button>
+				<Button variant="danger" size="sm" onclick={() => (showErase = true)}>Apagar dados</Button>
 			</Card.Action>
 		</Card.Header>
 	</Card>
@@ -292,72 +301,25 @@
 			</p>
 		</Card.Content>
 	</Card>
-</div>
+</Page.Shell>
 
 <!-- Account deletion dialog -->
-<Dialog bind:open={showDelete} title="Excluir minha conta">
-	<form
-		method="POST"
-		action="?/deleteAccount"
-		use:enhance={handleAction()}
-		class="flex flex-col gap-4"
-	>
-		<p class="font-mono text-sm text-ink-soft">
-			Isso apaga <strong>permanentemente</strong> suas transações, contas, categorias, tags, recorrências,
-			relatórios, conversas e credenciais. Não dá pra desfazer.
-		</p>
-		<p class="font-mono text-sm text-ink-soft">
-			Se quiser guardar uma cópia, baixe seus dados antes.
-		</p>
+<DeleteAccountDialog bind:open={showDelete} email={data.user?.email ?? ''} />
 
-		<div class="flex flex-col gap-2">
-			<Label for="confirmEmail">
-				Digite <span class="font-semibold">{' ' + data.user?.email + ' '}</span> para confirmar
-			</Label>
-			<Input id="confirmEmail" name="confirmEmail" type="email" autocomplete="off" required />
-		</div>
-
-		<div class="flex justify-end gap-2">
-			<Button type="button" size="sm" onclick={() => (showDelete = false)}>Cancelar</Button>
-			<Button type="submit" size="sm" variant="danger">Excluir definitivamente</Button>
-		</div>
-	</form>
-</Dialog>
+<!-- Erase data dialog -->
+<EraseDataDialog bind:open={showErase} />
 
 <!-- Import statements dialog -->
-<Dialog bind:open={showImport} title="Importar extratos">
-	<Tabs
-		items={[
-			{ value: 'takeout', label: 'Gmail Takeout' },
-			{ value: 'pdf', label: 'PDF avulso' },
-			{ value: 'csv', label: 'CSV' }
-		]}
-		bind:value={importTab}
-	/>
-	{#if importTab === 'takeout'}
-		<div>
-			<p class="mb-3 font-mono text-xs text-ink-soft">
-				Exporte seus emails do Gmail com o filtro do banco. Cada extrato PDF/CSV/OFX é extraído
-				automaticamente.
-			</p>
-			<Button
-				onclick={() => {
-					showImport = false;
-					openStatementImport();
-				}}>Importar Takeout</Button
-			>
-		</div>
-	{:else if importTab === 'pdf'}
-		<div>
-			{#if data.aiConfigured && data.aiProvider && data.aiModel}
-				<StatementUpload provider={data.aiProvider as AiProvider} model={data.aiModel} />
-			{:else}
-				<p class="font-mono text-xs text-ink-soft">
-					Configure uma chave de IA em Perfil → IA antes de importar PDFs.
-				</p>
-			{/if}
-		</div>
-	{:else if importTab === 'csv'}
-		<CsvImport onImported={() => (showImport = false)} />
-	{/if}
-</Dialog>
+<ImportStatementsDialog
+	bind:open={showImport}
+	bind:importTab
+	aiConfigured={data.aiConfigured}
+	aiProvider={data.aiProvider}
+	aiModel={data.aiModel}
+/>
+
+<!-- Pluggy setup dialog -->
+<PluggySetupDialog bind:open={showPluggySetup} />
+
+<!-- AI setup dialog -->
+<AiSetupDialog bind:open={showAiSetup} />

@@ -1,27 +1,32 @@
-import { and, eq, isNull, ne } from 'drizzle-orm';
-import { error, fail, redirect } from '@sveltejs/kit';
-import { setFlash } from 'sveltekit-flash-message/server';
-import type { Actions, PageServerLoad } from './$types';
+import { AccountType } from '$lib/enums/account-type';
+import { Frequency } from '$lib/enums/frequency';
 import { ToastType } from '$lib/enums/toast-type';
 import { getDb } from '$lib/server/db';
-import { financeAccounts, transactions } from '$lib/server/db/schema';
-import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { deleteRuleForDescription } from '$lib/server/db/categorization-rules';
+import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
 import {
 	createRecurringExpense,
 	getActiveRecurringExpenseByDescription,
 	updateRecurringExpense
 } from '$lib/server/db/recurring-expenses';
-import { deleteRuleForDescription } from '$lib/server/db/categorization-rules';
-import { upsertCategorizationRule } from '$lib/server/db/categorization-rules';
-import { getTagsByUser, getTagsForTransaction, setTransactionTags } from '$lib/server/db/tags';
+import { financeAccounts, transactions } from '$lib/server/db/schema';
 import {
 	applyTagRules,
 	getTagRulesForDescription,
 	setTagRulesForDescription
 } from '$lib/server/db/tag-rules';
+import { getTagsByUser, getTagsForTransaction, setTransactionTags } from '$lib/server/db/tags';
+import { getCategoriesByUser } from '$lib/server/db/user-categories';
+import { requireLogin } from '$lib/server/require-login';
+
+import { error, fail } from '@sveltejs/kit';
+import { and, eq, isNull, ne } from 'drizzle-orm';
+import { setFlash } from 'sveltekit-flash-message/server';
+
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, platform, params }) => {
-	if (!locals.userId) redirect(303, '/login');
+	if (!locals.userId) requireLogin();
 
 	const db = getDb(platform!.env.DB);
 
@@ -67,7 +72,7 @@ export const load: PageServerLoad = async ({ locals, platform, params }) => {
 			// For display, credit card transactions have their sign flipped: a positive
 			// purchase in the API is spending (shown negative); a negative refund is
 			// money back (shown positive). Flipped unconditionally.
-			displayAmount: account?.type === 'credit_card' ? -tx.amount : tx.amount
+			displayAmount: account?.type === AccountType.CreditCard ? -tx.amount : tx.amount
 		},
 		account: account
 			? { name: account.name, institution: account.institution, type: account.type }
@@ -84,7 +89,7 @@ export const load: PageServerLoad = async ({ locals, platform, params }) => {
 export const actions: Actions = {
 	categorize: async (event) => {
 		const { request, locals, platform, params } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const category = String(form.get('category') ?? '').trim();
@@ -130,17 +135,17 @@ export const actions: Actions = {
 	// from the form (monthly by default).
 	recurring: async (event) => {
 		const { request, locals, platform, params } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
-		const frequency = String(form.get('frequency') ?? 'monthly');
+		const frequency = String(form.get('frequency') ?? Frequency.Monthly);
 		const nextChargeDate = form.get('nextChargeDate');
-		const validFrequencies = ['weekly', 'monthly', 'quarterly', 'yearly'];
+		const validFrequencies = Object.values(Frequency);
 		// `fail` rather than a bare `{ error }`: the form only surfaces the
 		// message when result.type is 'failure', and a plain return counts as a
 		// success — so the card announced "Recorrência criada." for a rejected
 		// submit.
-		if (!validFrequencies.includes(frequency)) {
+		if (!validFrequencies.includes(frequency as Frequency)) {
 			return fail(400, { error: 'Frequência inválida.' });
 		}
 
@@ -166,7 +171,7 @@ export const actions: Actions = {
 			description: tx.description,
 			amount,
 			category: tx.category ?? undefined,
-			frequency: frequency as 'monthly' | 'yearly' | 'weekly' | 'quarterly',
+			frequency: frequency as Frequency,
 			nextChargeDate:
 				typeof nextChargeDate === 'string' && nextChargeDate ? new Date(nextChargeDate) : undefined
 		});
@@ -180,7 +185,7 @@ export const actions: Actions = {
 	// with that description, which the card says out loud before offering this.
 	removeRecurrence: async (event) => {
 		const { locals, platform, params } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const db = getDb(platform!.env.DB);
 		const [tx] = await db.select().from(transactions).where(eq(transactions.id, params.id));
@@ -203,7 +208,7 @@ export const actions: Actions = {
 	// before another one can be chosen.
 	removeCategory: async (event) => {
 		const { locals, platform, params } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const db = getDb(platform!.env.DB);
 		const [tx] = await db.select().from(transactions).where(eq(transactions.id, params.id));
@@ -229,7 +234,7 @@ export const actions: Actions = {
 	// for this description and backfills the history with it.
 	tags: async (event) => {
 		const { request, locals, platform, params } = event;
-		if (!locals.userId) redirect(303, '/login');
+		if (!locals.userId) requireLogin();
 
 		const form = await request.formData();
 		const raw = String(form.get('tags') ?? '');
