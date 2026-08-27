@@ -1,5 +1,6 @@
 import type { Cookies } from '@sveltejs/kit';
-import { SessionService, type SessionData } from './session.service';
+
+import { type SessionData, SessionService } from './session.service';
 import { UserService } from './user.service';
 
 export class AuthService {

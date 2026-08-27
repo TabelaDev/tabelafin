@@ -1,6 +1,24 @@
-import { eq } from 'drizzle-orm';
-import { users } from '$lib/server/db/schema';
 import { getDb } from '$lib/server/db';
+import {
+	aiCredentials,
+	categorizationRules,
+	chatConversations,
+	financeAccounts,
+	monthlyReports,
+	pluggyCredentials,
+	pluggyItems,
+	pushSubscriptions,
+	recurringExpenses,
+	statementReviews,
+	statementUploads,
+	tags,
+	transactions,
+	userAiPrompts,
+	userCategories,
+	users
+} from '$lib/server/db/schema';
+
+import { eq } from 'drizzle-orm';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -75,5 +93,23 @@ export class UserService {
 
 	async deleteAccount(id: string) {
 		await this.db.delete(users).where(eq(users.id, id));
+	}
+
+	async eraseUserData(id: string) {
+		await this.db.delete(transactions).where(eq(transactions.userId, id));
+		await this.db.delete(financeAccounts).where(eq(financeAccounts.userId, id));
+		await this.db.delete(pluggyItems).where(eq(pluggyItems.userId, id));
+		await this.db.delete(pluggyCredentials).where(eq(pluggyCredentials.userId, id));
+		await this.db.delete(aiCredentials).where(eq(aiCredentials.userId, id));
+		await this.db.delete(statementUploads).where(eq(statementUploads.userId, id));
+		await this.db.delete(statementReviews).where(eq(statementReviews.userId, id));
+		await this.db.delete(monthlyReports).where(eq(monthlyReports.userId, id));
+		await this.db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, id));
+		await this.db.delete(userAiPrompts).where(eq(userAiPrompts.userId, id));
+		await this.db.delete(recurringExpenses).where(eq(recurringExpenses.userId, id));
+		await this.db.delete(chatConversations).where(eq(chatConversations.userId, id));
+		await this.db.delete(userCategories).where(eq(userCategories.userId, id));
+		await this.db.delete(categorizationRules).where(eq(categorizationRules.userId, id));
+		await this.db.delete(tags).where(eq(tags.userId, id));
 	}
 }

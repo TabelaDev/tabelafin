@@ -1,17 +1,19 @@
-import { eq } from 'drizzle-orm';
-import { getDb } from '$lib/server/db';
-import { statementReviews } from '$lib/server/db/schema';
-import { TransactionService } from './transaction.service';
-import { UserService } from './user.service';
-import { parseWithParser } from '$lib/server/statements/index';
-import { extractTransactionsFromPdf } from '$lib/server/ai/extract';
-import { decryptSecret } from '$lib/server/crypto';
-import { FileType } from '$lib/enums/file-type';
-import { StatementReviewStatus } from '$lib/enums/statement-review';
 import { Category } from '$lib/enums/category';
 import { Currency } from '$lib/enums/currency';
+import { FileType } from '$lib/enums/file-type';
+import { StatementReviewStatus } from '$lib/enums/statement-review';
+import { extractTransactionsFromPdf } from '$lib/server/ai/extract';
+import { decryptSecret } from '$lib/server/crypto';
+import { getDb } from '$lib/server/db';
+import { statementReviews } from '$lib/server/db/schema';
+import { insertPdfTransaction } from '$lib/server/db/transactions';
+import { parseWithParser } from '$lib/server/statements/index';
 import { modelSupportsDocuments } from '$lib/utils/ai-providers';
 import type { AiProvider } from '$lib/utils/ai-providers';
+
+import { eq } from 'drizzle-orm';
+
+import { UserService } from './user.service';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -147,8 +149,6 @@ export class StatementService {
 		reviewId: string,
 		transactions: { date: string; description: string; amount: number; category?: string }[]
 	): Promise<ApplyResult> {
-		const txService = new TransactionService(this.db);
-
 		let inserted = 0;
 		let duplicates = 0;
 
@@ -156,7 +156,7 @@ export class StatementService {
 			const [dateYear, dateMonth, dateDay] = tx.date.split('-').map(Number);
 			const date = new Date(Date.UTC(dateYear, dateMonth - 1, dateDay));
 
-			const result = await txService.insertFromPdf({
+			const result = await insertPdfTransaction(this.db, {
 				userId,
 				statementUploadId: reviewId,
 				date,
