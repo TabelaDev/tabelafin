@@ -1,7 +1,10 @@
 // Tags — ad-hoc groupings orthogonal to categories (a one-off "Viagem SP"
 // without a category). Manual only: AI/rules never touch tags. A transaction
 // carries many tags (junction table `transaction_tags`).
+import { AccountType } from '$lib/enums/account-type';
+
 import { and, eq, gte, inArray, isNull, lt } from 'drizzle-orm';
+
 import type { getDb } from './index';
 import { financeAccounts, tags, transactionTags, transactions } from './schema';
 import { classifyMovement, isNotInternalTransfer } from './transactions';
@@ -184,7 +187,7 @@ export async function getTagTotals(
 			income: 0
 		};
 		const { expense, income } = classifyMovement(
-			row.accountId ? row.accountType : undefined,
+			row.accountId ? (row.accountType as AccountType) : undefined,
 			row.amount
 		);
 		current.count += 1;

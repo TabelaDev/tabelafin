@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
+import { describe, expect, it } from 'vitest';
+
 import { getTagsForTransactions, setTransactionTags } from './tags';
 
 // A drizzle instance that records the SQL it would have sent, with a pluggable

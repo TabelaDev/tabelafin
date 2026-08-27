@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+
 import type { getDb } from './index';
 import { pushSubscriptions } from './schema';
 

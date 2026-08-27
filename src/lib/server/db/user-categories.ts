@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+
 import type { getDb } from './index';
 import { userCategories } from './schema';
 

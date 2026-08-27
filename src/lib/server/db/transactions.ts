@@ -1,12 +1,15 @@
-import { and, eq, gt, gte, inArray, isNull, lte, ne, notInArray, or, sql } from 'drizzle-orm';
-import type { getDb } from './index';
-import { transactions } from './schema';
-import type { TransactionCategory } from '$lib/utils/categories';
+import { AccountType } from '$lib/enums/account-type';
+import { getRuleForDescription } from '$lib/server/db/categorization-rules';
 import {
 	INTERNAL_TRANSFER_CATEGORIES,
 	INTERNAL_TRANSFER_DESCRIPTIONS
 } from '$lib/server/pluggy/internal-transfers';
-import { getRuleForDescription } from '$lib/server/db/categorization-rules';
+import type { TransactionCategory } from '$lib/utils/categories';
+
+import { and, eq, gt, gte, inArray, isNull, lte, ne, notInArray, or, sql } from 'drizzle-orm';
+
+import type { getDb } from './index';
+import { transactions } from './schema';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -53,10 +56,10 @@ export interface MovementSplit {
 // use the checking convention. Shared by every surface that sums spending
 // (dashboard, categories, reports, chat) so they always agree.
 export function classifyMovement(
-	accountType: string | null | undefined,
+	accountType: AccountType | null | undefined,
 	amount: number
 ): MovementSplit {
-	if (accountType === 'credit_card') {
+	if (accountType === AccountType.CreditCard) {
 		return { expense: amount, income: 0 };
 	}
 	// Checking/manual convention: negative amount = spending. `expense` is
@@ -64,6 +67,39 @@ export function classifyMovement(
 	// total, not a net (a card purchase is +100, a checking expense -100 — both
 	// must count as R$100 of spending, not cancel out).
 	return amount >= 0 ? { expense: 0, income: amount } : { expense: -amount, income: 0 };
+}
+
+export interface TransactionSummary {
+	/** Total income across the rows. */
+	income: number;
+	/** Total spending across the rows (see classifyMovement — always >= 0 per row). */
+	expense: number;
+	/** Spending only, bucketed by category ('Outros' when uncategorised). */
+	categoryTotals: Record<string, number>;
+}
+
+// Aggregates a set of transactions into income/expense totals and a
+// per-category spending breakdown via classifyMovement. Shared by the
+// dashboard and the monthly report generator so a change to the "Outros"
+// fallback or the expense-only bucketing can't make the two disagree.
+export function summarizeTransactions(
+	rows: (typeof transactions.$inferSelect)[],
+	accountTypeById: Map<string, AccountType>
+): TransactionSummary {
+	let income = 0;
+	let expense = 0;
+	const categoryTotals: Record<string, number> = {};
+	for (const tx of rows) {
+		const accType = tx.accountId ? accountTypeById.get(tx.accountId) : undefined;
+		const split = classifyMovement(accType, tx.amount);
+		income += split.income;
+		expense += split.expense;
+		if (split.expense !== 0) {
+			const category = tx.category ?? 'Outros';
+			categoryTotals[category] = (categoryTotals[category] ?? 0) + split.expense;
+		}
+	}
+	return { income, expense, categoryTotals };
 }
 
 export interface NewPluggyTransactionInput {

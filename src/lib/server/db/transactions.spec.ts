@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { AccountType } from '$lib/enums/account-type';
+
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
+import { describe, expect, it } from 'vitest';
+
 import {
 	amountsMatchForDedupe,
 	classifyMovement,
@@ -72,28 +75,31 @@ describe('isWithinSupersedeWindow', () => {
 // check counts every card purchase as income (the bug this helper fixes).
 describe('classifyMovement', () => {
 	it('checking account: negative is expense (reported positive)', () => {
-		expect(classifyMovement('checking', -782.54)).toEqual({ expense: 782.54, income: 0 });
+		expect(classifyMovement(AccountType.Checking, -782.54)).toEqual({ expense: 782.54, income: 0 });
 	});
 
 	it('checking account: positive is income', () => {
-		expect(classifyMovement('checking', 2000)).toEqual({ expense: 0, income: 2000 });
+		expect(classifyMovement(AccountType.Checking, 2000)).toEqual({ expense: 0, income: 2000 });
 	});
 
 	it('credit card: positive purchase is spending, not income', () => {
-		expect(classifyMovement('credit_card', 782.54)).toEqual({ expense: 782.54, income: 0 });
+		expect(classifyMovement(AccountType.CreditCard, 782.54)).toEqual({
+			expense: 782.54,
+			income: 0
+		});
 	});
 
 	// A R$10 purchase followed by its R$10 estorno nets to zero spending — the
 	// refund must not show up as income ("receita").
 	it('credit card: a refund nets against the purchase', () => {
-		expect(classifyMovement('credit_card', -10)).toEqual({ expense: -10, income: 0 });
+		expect(classifyMovement(AccountType.CreditCard, -10)).toEqual({ expense: -10, income: 0 });
 	});
 
 	// A checking expense (-100) and a card purchase (+100) are BOTH R$100 of
 	// spending — summed they must not cancel out.
 	it('checking and card spending add up (uniform expense sign)', () => {
-		const checking = classifyMovement('checking', -100).expense;
-		const card = classifyMovement('credit_card', 100).expense;
+		const checking = classifyMovement(AccountType.Checking, -100).expense;
+		const card = classifyMovement(AccountType.CreditCard, 100).expense;
 		expect(checking + card).toBe(200);
 	});
 
@@ -103,8 +109,8 @@ describe('classifyMovement', () => {
 	});
 
 	it('zero contributes nothing on either axis', () => {
-		expect(classifyMovement('checking', 0)).toEqual({ expense: 0, income: 0 });
-		expect(classifyMovement('credit_card', 0)).toEqual({ expense: 0, income: 0 });
+		expect(classifyMovement(AccountType.Checking, 0)).toEqual({ expense: 0, income: 0 });
+		expect(classifyMovement(AccountType.CreditCard, 0)).toEqual({ expense: 0, income: 0 });
 	});
 
 	// The failure that actually happened: a migration nulled `account_id` on every
@@ -114,7 +120,7 @@ describe('classifyMovement', () => {
 	// losing the link, so the fix is never mistaken for cosmetic: the SAME amount
 	// classifies to opposite axes depending on whether the account is known.
 	it('losing the account link flips a card purchase to income', () => {
-		expect(classifyMovement('credit_card', 2558)).toEqual({ expense: 2558, income: 0 });
+		expect(classifyMovement(AccountType.CreditCard, 2558)).toEqual({ expense: 2558, income: 0 });
 		expect(classifyMovement(undefined, 2558)).toEqual({ expense: 0, income: 2558 });
 	});
 });

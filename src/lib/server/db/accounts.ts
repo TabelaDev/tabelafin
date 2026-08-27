@@ -1,4 +1,7 @@
+import { AccountType } from '$lib/enums/account-type';
+
 import { and, eq } from 'drizzle-orm';
+
 import type { getDb } from './index';
 import { financeAccounts as accounts, pluggyItems } from './schema';
 
@@ -9,7 +12,7 @@ export interface AccountInput {
 	pluggyItemId: string;
 	pluggyAccountId: string;
 	institution: string;
-	type: 'checking' | 'credit_card' | 'investment';
+	type: AccountType;
 	name: string;
 	currency: string;
 	cachedBalance: number;
@@ -64,7 +67,7 @@ async function ensureManualItem(db: Db, userId: string): Promise<string> {
 export interface ManualAccountInput {
 	userId: string;
 	name: string;
-	type: 'checking' | 'credit_card' | 'investment';
+	type: AccountType;
 	balance: number;
 }
 

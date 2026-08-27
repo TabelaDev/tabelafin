@@ -3,8 +3,9 @@
 // the categorisation rules, but for the many-to-many tag set: a description can
 // map to several tags (several rows), and deleting/re-adding replaces the set.
 import { and, eq, isNull } from 'drizzle-orm';
+
 import type { getDb } from './index';
-import { transactions, transactionTags } from './schema';
+import { transactionTags, transactions } from './schema';
 import { tagRules } from './schema';
 import { getOrCreateTag } from './tags';
 

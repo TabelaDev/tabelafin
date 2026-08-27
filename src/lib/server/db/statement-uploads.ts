@@ -2,6 +2,7 @@
 // itself is never persisted — only the record of the processing and the
 // structured result, on the transactions linked through statement_upload_id.
 import { and, eq } from 'drizzle-orm';
+
 import type { getDb } from './index';
 import { statementUploads } from './schema';
 

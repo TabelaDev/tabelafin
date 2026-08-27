@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { shouldRecoverySync, shouldRefreshSync, SYNC_COOLDOWN_MS } from './pluggy-items';
+import { describe, expect, it } from 'vitest';
+
+import { SYNC_COOLDOWN_MS, shouldRecoverySync, shouldRefreshSync } from './pluggy-items';
 
 const NOW = new Date('2026-08-16T12:00:00Z');
 

@@ -1,6 +1,7 @@
 // LGPD art. 18 — the two rights that have to be exercisable without asking a
 // human: portability/access (export) and elimination (delete).
 import { eq, inArray } from 'drizzle-orm';
+
 import type { getDb } from './index';
 import {
 	categorizationRules,

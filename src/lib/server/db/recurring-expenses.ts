@@ -1,4 +1,7 @@
+import { Frequency } from '$lib/enums/frequency';
+
 import { and, eq } from 'drizzle-orm';
+
 import type { getDb } from './index';
 import { recurringExpenses } from './schema';
 
@@ -8,7 +11,7 @@ export interface RecurringExpenseInput {
 	description: string;
 	amount: number;
 	category?: string;
-	frequency: 'monthly' | 'yearly' | 'weekly' | 'quarterly';
+	frequency: Frequency;
 	nextChargeDate?: Date;
 }
 
