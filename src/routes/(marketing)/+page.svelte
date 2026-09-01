@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_TABELAHUB_URL } from '$env/static/public';
+	import { PUBLIC_TABELAUTH_URL } from '$env/static/public';
 
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -159,7 +159,7 @@
 		justify
 	>
 		{#snippet actions()}
-			<Button href="{PUBLIC_TABELAHUB_URL}/signup" variant="primary" size="lg">Começar</Button>
+			<Button href="{PUBLIC_TABELAUTH_URL}/signup" variant="primary" size="lg">Começar</Button>
 			<Button href={REPO_URL} target="_blank" rel="noreferrer" variant="outline" size="lg">
 				<CodeXmlIcon class="size-4" />
 				Ver o código

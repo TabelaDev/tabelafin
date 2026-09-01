@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_APP_URL, PUBLIC_TABELAHUB_URL } from '$env/static/public';
+	import { PUBLIC_APP_URL, PUBLIC_TABELAUTH_URL } from '$env/static/public';
 
 	import { resolve } from '$app/paths';
 	import { Button, Card, Wordmark } from '@tabeladev/tabelawebui';
@@ -22,9 +22,9 @@
 			<Card.Description>Redirecionando para o login...</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<p class="text-sm text-ink-soft">O login é feito pelo TabelaHub.</p>
+			<p class="text-sm text-ink-soft">O login é feito pelo TabelaAuth.</p>
 			<Button
-				href="{PUBLIC_TABELAHUB_URL}/login?redirect={encodeURIComponent(
+				href="{PUBLIC_TABELAUTH_URL}/login?redirect={encodeURIComponent(
 					PUBLIC_APP_URL + '/api/auth/hub-callback'
 				)}"
 				class="w-full"

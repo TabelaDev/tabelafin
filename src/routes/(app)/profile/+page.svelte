@@ -8,7 +8,7 @@
 	import { PluggyStatus } from '$lib/enums/pluggy-status';
 	import { handleAction } from '$lib/utils/forms';
 
-	import { PUBLIC_TABELAHUB_URL } from '$env/static/public';
+	import { PUBLIC_TABELAUTH_URL } from '$env/static/public';
 
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -94,11 +94,11 @@
 					</div>
 					<p class="font-mono text-xs text-ink-faint">
 						E-mail: <a
-							href="{PUBLIC_TABELAHUB_URL}/account"
+							href="{PUBLIC_TABELAUTH_URL}/account"
 							target="_blank"
 							rel="noreferrer"
 							class="text-accent hover:underline">{data.user?.email}</a
-						> · gerenciado pelo TabelaHub.
+						> · gerenciado pelo TabelaAuth.
 					</p>
 				</form>
 			{:else}
@@ -109,11 +109,11 @@
 					</div>
 					<p class="font-mono text-xs text-ink-faint">
 						E-mail: <a
-							href="{PUBLIC_TABELAHUB_URL}/account"
+							href="{PUBLIC_TABELAUTH_URL}/account"
 							target="_blank"
 							rel="noreferrer"
 							class="text-accent hover:underline">{data.user?.email}</a
-						> · gerenciado pelo TabelaHub.
+						> · gerenciado pelo TabelaAuth.
 					</p>
 				</div>
 			{/if}
@@ -295,7 +295,7 @@
 		<Card.Content>
 			<p class="font-mono text-xs text-ink-faint">
 				O que fazemos com seus dados está na
-				<a href="{PUBLIC_TABELAHUB_URL}/privacidade" class="text-accent hover:underline">
+				<a href="{PUBLIC_TABELAUTH_URL}/privacidade" class="text-accent hover:underline">
 					política de privacidade
 				</a>.
 			</p>
