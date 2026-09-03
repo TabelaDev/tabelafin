@@ -18,7 +18,7 @@ self.addEventListener('push', (event) => {
 		}
 	}
 
-	const title = payload.title || 'TabelaFin';
+	const title = payload.title || 'TAbelhaFin';
 	const url = payload.url || '/dashboard';
 
 	event.waitUntil(

@@ -122,7 +122,7 @@
 </script>
 
 <svelte:head>
-	<title>Parcelas futuras: TabelaFin</title>
+	<title>Parcelas futuras: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

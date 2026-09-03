@@ -15,7 +15,7 @@ import { fetchWithRetry } from '$lib/server/http';
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-const FROM_NAME = 'TabelaFin';
+const FROM_NAME = 'TAbelhaFin';
 
 // The From address comes from the environment (`EMAIL_FROM`) rather than being
 // hardcoded, because **Brevo will not deliver from an unverified sender** — and
@@ -83,9 +83,9 @@ export async function sendVerificationEmail(
 		to,
 		apiKey,
 		from,
-		subject: 'Confirme seu e-mail — TabelaFin',
+		subject: 'Confirme seu e-mail — TAbelhaFin',
 		text: [
-			'Confirme seu endereço de e-mail para ativar sua conta no TabelaFin.',
+			'Confirme seu endereço de e-mail para ativar sua conta no TAbelhaFin.',
 			'',
 			verificationUrl,
 			'',
@@ -104,9 +104,9 @@ export async function sendPasswordResetEmail(
 		to,
 		apiKey,
 		from,
-		subject: 'Redefinir sua senha — TabelaFin',
+		subject: 'Redefinir sua senha — TAbelhaFin',
 		text: [
-			'Recebemos um pedido para redefinir a senha da sua conta no TabelaFin.',
+			'Recebemos um pedido para redefinir a senha da sua conta no TAbelhaFin.',
 			'',
 			resetUrl,
 			'',

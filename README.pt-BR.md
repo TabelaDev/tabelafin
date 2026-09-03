@@ -1,6 +1,6 @@
 <div align="center">
 
-# TabelaFin
+# TAbelhaFin
 
 **Finanças pessoais com sync automático via Open Finance e categorização com IA — BYOK, sem assinatura.**
 
@@ -9,7 +9,7 @@
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-Svelte-ff3e00?style=flat-square&logo=svelte&logoColor=white)](https://kit.svelte.dev)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square)](LICENSE)
-[![Built with tabelawebui](https://img.shields.io/badge/theme-tabelawebui-d6b4f7?style=flat-square)](https://github.com/TAbelhaDev/tabelhawebui)
+[![Built with tabelhawebui](https://img.shields.io/badge/theme-tabelhawebui-d6b4f7?style=flat-square)](https://github.com/TAbelhaDev/tabelhawebui)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/ianptkcs)
 
@@ -31,7 +31,7 @@ pra convenção.
 ## Como funciona
 
 1. Você conecta suas contas ao **Meu Pluggy** (o produto pessoal e gratuito da
-   Pluggy) e cola o token de acesso da sua sessão no onboarding do TabelaFin.
+   Pluggy) e cola o token de acesso da sua sessão no onboarding do TAbelhaFin.
 2. Um cron diário sincroniza accounts, transactions e investments via a API do
    Meu Pluggy.
 3. As transações novas são categorizadas em lote pela sua própria IA (BYOK),
@@ -55,14 +55,14 @@ básico.
 
 ## Traga suas próprias credenciais
 
-Mesmo padrão BYOK do [TabelaCal](https://github.com/TAbelhaDev/tabelacal), em
+Mesmo padrão BYOK do [TAbelhaCal](https://github.com/TAbelhaDev/tabelacal), em
 dobro:
 
 - **IA**: cole sua própria API key (Anthropic, OpenAI ou DeepSeek) e escolha o
   modelo. Você paga sua própria inferência.
 - **Open Finance**: cada usuário traz sua própria conexão via
   [Meu Pluggy](https://www.pluggy.ai/meu-pluggy) (gratuito pra uso pessoal),
-  em vez do TabelaFin manter uma conta Pluggy comercial paga compartilhada.
+  em vez do TAbelhaFin manter uma conta Pluggy comercial paga compartilhada.
 
 Ver `ESCOPO.md` pra decisões de produto com mais detalhe.
 
@@ -125,6 +125,6 @@ Veja [CHANGELOG.md](CHANGELOG.md) para o histórico de versões.
 ## Licença
 
 [AGPL-3.0](LICENSE) — copyleft forte: você pode usar, modificar e até
-hospedar o TabelaFin comercialmente, mas qualquer versão modificada, inclusive
+hospedar o TAbelhaFin comercialmente, mas qualquer versão modificada, inclusive
 rodando como serviço via rede (SaaS), precisa continuar open source sob a
 mesma licença.

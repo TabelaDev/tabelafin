@@ -7,7 +7,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/sqlite-core';
 
-// The `user` table — Better Auth's shape plus TabelaFin's own fields.
+// The `user` table — Better Auth's shape plus TAbelhaFin's own fields.
 // Better Auth owns authentication (email/password, sessions); the extra fields
 // (timezone, default_currency) belong to the app.
 export const users = sqliteTable('user', {
@@ -16,7 +16,7 @@ export const users = sqliteTable('user', {
 	email: text('email').notNull().unique(),
 	emailVerified: integer('emailVerified', { mode: 'boolean' }).notNull().default(false),
 	image: text('image'),
-	// TabelaFin's own fields
+	// TAbelhaFin's own fields
 	timezone: text('timezone').notNull().default('UTC'),
 	defaultCurrency: text('default_currency').notNull().default('BRL'),
 	// Hide every mention of and feature around AI in the user's UI.
@@ -174,7 +174,7 @@ export const transactions = sqliteTable(
 		// The raw category as it comes from the Meu Pluggy API (e.g. "Investments",
 		// "Same person transfer", "Credit card payment"). Used to spot internal
 		// transfers and investment movements, which do NOT count as spending or
-		// income on the dashboard — distinct from `category`, which is TabelaFin's
+		// income on the dashboard — distinct from `category`, which is TAbelhaFin's
 		// own categorisation by AI/rules.
 		pluggyCategory: text('pluggy_category'),
 		category: text('category'),

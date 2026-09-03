@@ -1,6 +1,6 @@
 // Batch AI categorisation (ESCOPO.md §3.3): never one call per transaction, and
 // never recurring on each dashboard view. Same fetch-based dispatch pattern
-// (Anthropic/OpenAI/DeepSeek) as TabelaCal (server/ai/parse.ts): no SDK, only
+// (Anthropic/OpenAI/DeepSeek) as TAbelhaCal (server/ai/parse.ts): no SDK, only
 // fetch(), so it runs in `workerd`.
 //
 // "One call per sync" was the original rule, but it does not survive a real
@@ -208,7 +208,7 @@ async function categorizeWithAnthropic(input: CategorizeInput): Promise<Categori
 	return toResults(toolUse.input, input.categories);
 }
 
-// OpenAI and DeepSeek speak the same chat-completions format — see TabelaCal's
+// OpenAI and DeepSeek speak the same chat-completions format — see TAbelhaCal's
 // server/ai/parse.ts for the same pattern.
 async function categorizeWithOpenAiCompatible(
 	input: CategorizeInput,

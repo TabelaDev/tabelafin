@@ -25,7 +25,7 @@
 			/>
 		</Instruction.Step>
 		<Instruction.Step title="Extraia a pasta">
-			Vai baixar um arquivo <code>tabelafin-main.zip</code>. Clique duas vezes para descompactar e
+			Vai baixar um arquivo <code>tabelhafin-main.zip</code>. Clique duas vezes para descompactar e
 			localize a pasta <code>extension/</code> que está dentro dela.
 		</Instruction.Step>
 		<Instruction.Step title="Abra as extensões do Chrome">

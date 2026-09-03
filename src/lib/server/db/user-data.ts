@@ -75,7 +75,7 @@ export async function exportUserData(db: Db, userId: string) {
 	return {
 		exportedAt: new Date().toISOString(),
 		// Version the shape so a future import path can tell formats apart.
-		format: 'tabelafin-export-v1',
+		format: 'tabelhafin-export-v1',
 		profile: profile
 			? { id: profile.id, name: profile.name, email: profile.email, createdAt: profile.createdAt }
 			: null,

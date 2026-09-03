@@ -66,7 +66,7 @@
 </script>
 
 <svelte:head>
-	<title>Regras de tag: TabelaFin</title>
+	<title>Regras de tag: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

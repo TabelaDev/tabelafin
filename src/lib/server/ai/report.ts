@@ -1,5 +1,5 @@
 // The monthly report's narrative (ESCOPO.md §3.6) — the same three-provider
-// fetch-based dispatch as server/ai/categorize.ts and TabelaCal's
+// fetch-based dispatch as server/ai/categorize.ts and TAbelhaCal's
 // server/ai/parse.ts, but without tool use: the output here is free text (a short
 // paragraph), not structured data, so a plain completion call is enough.
 import { DEFAULT_REPORT_INSTRUCTION } from '$lib/prompts';

@@ -54,7 +54,7 @@
 </script>
 
 <svelte:head>
-	<title>Perfil: TabelaFin</title>
+	<title>Perfil: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>
@@ -98,7 +98,7 @@
 							target="_blank"
 							rel="noreferrer"
 							class="text-accent hover:underline">{data.user?.email}</a
-						> · gerenciado pelo TabelaAuth.
+						> · gerenciado pelo TAbelhaAuth.
 					</p>
 				</form>
 			{:else}
@@ -113,7 +113,7 @@
 							target="_blank"
 							rel="noreferrer"
 							class="text-accent hover:underline">{data.user?.email}</a
-						> · gerenciado pelo TabelaAuth.
+						> · gerenciado pelo TAbelhaAuth.
 					</p>
 				</div>
 			{/if}

@@ -17,7 +17,7 @@
 
 	const REPO_URL = 'https://github.com/TAbelhaDev/tabelhafin';
 
-	const TITLE = 'TabelaFin';
+	const TITLE = 'TAbelhaFin';
 	const DESCRIPTION =
 		'Open Finance, categorização por regras locais ou pela sua própria chave de IA, e os números numa tabela direta. Sem assinatura: a chave de IA é sua e o código é aberto.';
 
@@ -140,7 +140,7 @@
 	<meta name="description" content={DESCRIPTION} />
 	<link rel="canonical" href={canonical} />
 	<meta property="og:type" content="website" />
-	<meta property="og:site_name" content="TabelaFin" />
+	<meta property="og:site_name" content="TAbelhaFin" />
 	<meta property="og:locale" content="pt_BR" />
 	<meta property="og:title" content={TITLE} />
 	<meta property="og:description" content={DESCRIPTION} />
@@ -154,7 +154,7 @@
 	<Landing.Hero
 		eyebrow="Suas finanças sem mistério"
 		title={heroTitle}
-		lead="O TabelaFin conecta Open Finance, categoriza suas contas com regras locais ou com a sua própria IA e mostra os números numa tabela direta. Sem assinatura, sem planos empurrados: você controla o seu próprio custo."
+		lead="O TAbelhaFin conecta Open Finance, categoriza suas contas com regras locais ou com a sua própria IA e mostra os números numa tabela direta. Sem assinatura, sem planos empurrados: você controla o seu próprio custo."
 		note="Crie sua conta e configure IA ou Open Finance apenas se quiser."
 		justify
 	>

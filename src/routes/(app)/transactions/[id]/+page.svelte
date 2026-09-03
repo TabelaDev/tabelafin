@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>Transação: TabelaFin</title>
+	<title>Transação: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 const TEST_EMAIL = process.env.TEST_EMAIL || 'test@tabelafin.local';
 
 function d1(command: string) {
-	execSync(`bunx wrangler d1 execute tabelafin-db --local --command "${command}"`, {
+	execSync(`bunx wrangler d1 execute tabelhafin-db --local --command "${command}"`, {
 		stdio: 'inherit'
 	});
 }

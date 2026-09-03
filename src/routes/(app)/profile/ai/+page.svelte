@@ -51,7 +51,7 @@
 </script>
 
 <svelte:head>
-	<title>Configuração de IA: TabelaFin</title>
+	<title>Configuração de IA: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

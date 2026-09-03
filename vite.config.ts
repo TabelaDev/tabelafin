@@ -82,8 +82,8 @@ export default defineConfig({
 			strategies: 'generateSW',
 			registerType: 'prompt',
 			manifest: {
-				name: 'TabelaFin',
-				short_name: 'TabelaFin',
+				name: 'TAbelhaFin',
+				short_name: 'TAbelhaFin',
 				description:
 					'Finanças pessoais sem lançamento manual — sync automático via Open Finance e categorização com IA.',
 				theme_color: '#18181b',

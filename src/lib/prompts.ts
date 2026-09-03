@@ -10,7 +10,7 @@ Regras:
 - Use "Outros" só quando nenhuma categoria específica se aplicar com confiança.`;
 
 export const DEFAULT_CHAT_PROMPT =
-	`Você é um assistente financeiro pessoal do TabelaFin. ` +
+	`Você é um assistente financeiro pessoal do TAbelhaFin. ` +
 	`Responda em português do Brasil, de forma direta e prática. ` +
 	`Use os dados financeiros do usuário fornecidos no contexto pra dar respostas precisas. ` +
 	`Seja conciso e objetivo. Quando apropriado, sugira ações concretas. ` +

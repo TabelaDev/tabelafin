@@ -179,7 +179,7 @@ async function sendReportReadyPush(
 	const message = {
 		data: {
 			title: 'Relatório mensal pronto',
-			body: `Seu relatório de ${yearMonth} já está disponível no TabelaFin.`,
+			body: `Seu relatório de ${yearMonth} já está disponível no TAbelhaFin.`,
 			url: '/dashboard'
 		},
 		options: { ttl: 1800 }
@@ -199,7 +199,7 @@ async function sendReportReadyPush(
 				);
 				const res = await fetch(sub.endpoint, payload as RequestInit);
 				// 404/410 = a dead subscription (uninstalled or revoked) — the same
-				// cleanup TabelaCal does in server/push/reminders.ts.
+				// cleanup TAbelhaCal does in server/push/reminders.ts.
 				if (res.status === 404 || res.status === 410) {
 					await deletePushSubscriptionById(db, sub.id);
 				}

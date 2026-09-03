@@ -71,7 +71,7 @@
 
 // Cover
 #align(center + horizon)[
-  #text(size: 28pt, weight: "bold", fill: rgb("#6c5ce7"))[TabelaFin]
+  #text(size: 28pt, weight: "bold", fill: rgb("#6c5ce7"))[TAbelhaFin]
   #v(0.5cm)
   #text(size: 18pt)[Relatório Financeiro Mensal]
   #v(0.3cm)
@@ -148,7 +148,7 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = `tabelafin-${report.yearMonth}.pdf`;
+			link.download = `tabelhafin-${report.yearMonth}.pdf`;
 			link.click();
 			URL.revokeObjectURL(url);
 		} catch (e) {
@@ -160,7 +160,7 @@ ${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
 </script>
 
 <svelte:head>
-	<title>Relatórios: TabelaFin</title>
+	<title>Relatórios: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

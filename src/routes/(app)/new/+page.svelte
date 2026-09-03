@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>Nova Transação: TabelaFin</title>
+	<title>Nova Transação: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

@@ -1,4 +1,4 @@
-// TabelaFin monthly report template
+// TAbelhaFin monthly report template
 // Compiled client-side via typst.ts (WASM)
 
 #set page(
@@ -7,7 +7,7 @@
   header: context {
     if counter(page).get().first() > 1 [
       #set text(size: 8pt, fill: rgb("#888"))
-      TabelaFin — Relatório Mensal
+      TAbelhaFin — Relatório Mensal
       #h(1fr)
       #datetime.today().display("[day]/[month]/[year]")
     ]
@@ -25,7 +25,7 @@
 
 // --- CAPA ---
 #align(center + horizon)[
-  #text(size: 28pt, weight: "bold", fill: rgb("#6c5ce7"))[TabelaFin]
+  #text(size: 28pt, weight: "bold", fill: rgb("#6c5ce7"))[TAbelhaFin]
   #v(0.5cm)
   #text(size: 18pt)[Relatório Financeiro Mensal]
   #v(0.3cm)

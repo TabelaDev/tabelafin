@@ -63,7 +63,7 @@
 </script>
 
 <svelte:head>
-	<title>Regras automáticas: TabelaFin</title>
+	<title>Regras automáticas: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

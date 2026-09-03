@@ -1,7 +1,7 @@
-# TabelaFin Extension — Meu Pluggy Bridge
+# TAbelhaFin Extension — Meu Pluggy Bridge
 
 A Chrome extension (Manifest V3, **not published to the Web Store**) that captures
-the Meu Pluggy session token automatically and syncs it with TabelaFin. The user
+the Meu Pluggy session token automatically and syncs it with TAbelhaFin. The user
 only needs to **sign in to Meu Pluggy** — no copy-paste.
 
 Full context on the decision (and why an extension instead of Client ID/Secret or
@@ -16,7 +16,7 @@ Pluggy Connect): `docs/pluggy-integration.md`.
 
 ## Pairing (one time)
 
-1. In TabelaFin (Profile → Browser extension → "Pair / review"), click
+1. In TAbelhaFin (Profile → Browser extension → "Pair / review"), click
    **Generate pairing code**.
 2. Copy the code and open this extension's popup.
 3. Paste the code into the **Pairing code** field and click **Save**.

@@ -49,7 +49,7 @@
 </script>
 
 <svelte:head>
-	<title>Gerenciar tags: TabelaFin</title>
+	<title>Gerenciar tags: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

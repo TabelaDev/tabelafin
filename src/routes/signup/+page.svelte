@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Criar conta: TabelaFin</title>
+	<title>Criar conta: TAbelhaFin</title>
 </svelte:head>
 
 <div class="relative mx-auto flex min-h-svh max-w-md flex-col justify-center gap-6 p-6">
@@ -22,7 +22,7 @@
 			<Card.Description>Redirecionando para o cadastro...</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<p class="text-sm text-ink-soft">O cadastro é feito pelo TabelaAuth.</p>
+			<p class="text-sm text-ink-soft">O cadastro é feito pelo TAbelhaAuth.</p>
 			<Button
 				href="{PUBLIC_TABELHAUTH_URL}/signup?redirect={encodeURIComponent(
 					PUBLIC_APP_URL + '/api/auth/hub-callback'

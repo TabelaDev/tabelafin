@@ -12,7 +12,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 // After the auth migration to tabelaauth, tabelafin no longer runs Better Auth
 // locally. Authentication is fully delegated to tabelaauth:
 //   1. User logs in on tabelaauth
-//   2. TabelaAuth redirects to /api/auth/hub-callback?hub_token=<hmac token>
+//   2. TAbelhaAuth redirects to /api/auth/hub-callback?hub_token=<hmac token>
 //   3. That route verifies the token, creates a KV session, sets the cookie
 //   4. This hook validates the session cookie on every subsequent request
 const auth: Handle = async ({ event, resolve }) => {

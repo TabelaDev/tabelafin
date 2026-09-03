@@ -95,7 +95,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard: TabelaFin</title>
+	<title>Dashboard: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

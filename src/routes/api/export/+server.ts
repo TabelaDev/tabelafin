@@ -52,7 +52,7 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
 		return new Response(JSON.stringify(filtered, null, 2), {
 			headers: {
 				'content-type': 'application/json; charset=utf-8',
-				'content-disposition': `attachment; filename="tabelafin-${stamp}.json"`,
+				'content-disposition': `attachment; filename="tabelhafin-${stamp}.json"`,
 				'cache-control': 'no-store'
 			}
 		});
@@ -107,7 +107,7 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
 		return new Response(csv, {
 			headers: {
 				'content-type': 'text/csv; charset=utf-8',
-				'content-disposition': `attachment; filename="tabelafin-transacoes-${stamp}.csv"`,
+				'content-disposition': `attachment; filename="tabelhafin-transacoes-${stamp}.csv"`,
 				'cache-control': 'no-store'
 			}
 		});
@@ -137,7 +137,7 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
 	return new Response(xlsxBuffer, {
 		headers: {
 			'content-type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-			'content-disposition': `attachment; filename="tabelafin-transacoes-${stamp}.xlsx"`,
+			'content-disposition': `attachment; filename="tabelhafin-transacoes-${stamp}.xlsx"`,
 			'cache-control': 'no-store'
 		}
 	});

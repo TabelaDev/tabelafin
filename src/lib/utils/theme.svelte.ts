@@ -21,7 +21,7 @@ import { browser } from '$app/environment';
 
 export type Mode = 'light' | 'dark';
 
-/** The same key the tabelawebui ThemeToggle writes. */
+/** The same key the tabelhawebui ThemeToggle writes. */
 const STORAGE_KEY = 'theme';
 
 function readFromDom(): Mode {
@@ -73,7 +73,7 @@ class ThemeState {
 		this.#current = readFromDom();
 
 		// The library's toggle mutates the class without telling anyone — observing
-		// is the only coupling point available. This goes away once tabelawebui
+		// is the only coupling point available. This goes away once tabelhawebui
 		// accepts a callback on the toggle (request
 		// 20260817-theme-toggle-integravel.md).
 		//

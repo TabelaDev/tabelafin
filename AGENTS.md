@@ -127,7 +127,7 @@ automático.
 - `(marketing)/` — público. O header/nav mora no `+layout.svelte` do grupo, nunca dentro
   da página. A landing redireciona quem já tem sessão pra `/dashboard`.
 - `(app)/` — logado. Guard único em `(app)/+layout.server.ts`.
-- `login/`, `signup/`, `logout/` — soltas na raiz (o TabelaRPGDK usa `auth/`; ver a
+- `login/`, `signup/`, `logout/` — soltas na raiz (o TAbelhaRPGDK usa `auth/`; ver a
   convenção compartilhada).
 - `api/` — endpoints JSON/binários (chat, upload, push, onboarding, auth). Mutação de
   tela é **form action**, não fetch pra `/api`.
@@ -140,7 +140,7 @@ automático.
 
 Regras comuns aos apps web da TAbelhaDev (grupos de rota, tokens de tema, landing, SEO):
 `docs/convencoes-web.md` no repo do
-[tabelawebui](https://github.com/TAbelhaDev/tabelhawebui). Não duplicar as regras aqui.
+[tabelhawebui](https://github.com/TAbelhaDev/tabelhawebui). Não duplicar as regras aqui.
 
 ## Cuidado com docs desatualizados
 

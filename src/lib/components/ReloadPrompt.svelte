@@ -10,14 +10,14 @@
 	$effect(() => {
 		if ($offlineReady && !offlineToastShown) {
 			offlineToastShown = true;
-			toast.success('TabelaFin está pronto para uso offline.');
+			toast.success('TAbelhaFin está pronto para uso offline.');
 		}
 	});
 
 	$effect(() => {
 		if ($needRefresh && !refreshToastShown) {
 			refreshToastShown = true;
-			toast('Nova versão do TabelaFin disponível.', {
+			toast('Nova versão do TAbelhaFin disponível.', {
 				duration: Number.POSITIVE_INFINITY,
 				action: {
 					label: 'Atualizar',

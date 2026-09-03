@@ -212,7 +212,7 @@ async function extractWithOpenAI(input: ExtractInput): Promise<ExtractedTransact
 
 // Tolerates noisy entries (an invalid date, an invented category, an empty
 // description) by discarding them row by row — one badly formed transaction never
-// brings down the whole upload. Currency is not part of the schema: a TabelaFin
+// brings down the whole upload. Currency is not part of the schema: a TAbelhaFin
 // statement or invoice is always BRL, written at insert time.
 function parseExtraction(rawInput: unknown, categories: string[]): ExtractedTransaction[] {
 	const parsed = rawInput as { transactions?: Array<Record<string, unknown>> };

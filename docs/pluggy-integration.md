@@ -5,7 +5,7 @@
 
 ## O problema em uma frase
 
-O TabelaFin é BYOK (cada usuário traz a própria credencial) e feito pra quem
+O TAbelhaFin é BYOK (cada usuário traz a própria credencial) e feito pra quem
 **não programa**. A Pluggy oferece caminhos diferentes pra puxar dados
 bancários, e cada um cobra um preço diferente em fricção, privacidade e
 durabilidade. Escolher o caminho é a decisão mais cara do produto — errar

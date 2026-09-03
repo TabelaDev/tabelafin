@@ -14,7 +14,7 @@
 </script>
 
 <svelte:head>
-	<title>Tags: TabelaFin</title>
+	<title>Tags: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

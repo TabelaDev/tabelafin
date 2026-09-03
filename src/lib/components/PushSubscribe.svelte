@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Opt-in for the "monthly report ready" notification — see ESCOPO.md §3.6.
-	// Same convention as TabelaCal (talk to the navigator's own registration,
+	// Same convention as TAbelhaCal (talk to the navigator's own registration,
 	// not virtual:pwa-register) and the toast pattern from
 	// $lib/components/ReloadPrompt.svelte.
 	import { Button } from '@tabelhadev/tabelhawebui';

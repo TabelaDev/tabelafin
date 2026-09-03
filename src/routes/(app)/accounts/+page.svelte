@@ -93,7 +93,7 @@
 </script>
 
 <svelte:head>
-	<title>Contas: TabelaFin</title>
+	<title>Contas: TAbelhaFin</title>
 </svelte:head>
 
 {#snippet investmentExplainer()}

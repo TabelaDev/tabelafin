@@ -72,7 +72,7 @@ test.describe('tema', () => {
 			'aria-label',
 			nowDark ? 'Usar tema claro' : 'Usar tema escuro'
 		);
-		// data-theme has to follow the class, or the tabelawebui tokens and the
+		// data-theme has to follow the class, or the tabelhawebui tokens and the
 		// native controls stay on the previous theme.
 		await expect(page.locator('html')).toHaveAttribute('data-theme', nowDark ? 'dark' : 'light');
 	});

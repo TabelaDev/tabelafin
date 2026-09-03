@@ -16,7 +16,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 	return new Response(JSON.stringify(data, null, 2), {
 		headers: {
 			'content-type': 'application/json; charset=utf-8',
-			'content-disposition': `attachment; filename="tabelafin-${stamp}.json"`,
+			'content-disposition': `attachment; filename="tabelhafin-${stamp}.json"`,
 			// Never let an intermediary hold on to a copy of someone's finances.
 			'cache-control': 'no-store'
 		}

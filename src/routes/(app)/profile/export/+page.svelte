@@ -89,7 +89,7 @@
 			const filenameMatch = disposition.match(/filename="(.+)"/);
 			const filename =
 				filenameMatch?.[1] ??
-				`tabelafin-export.${format === 'xlsx' ? 'xlsx' : format === 'csv' ? 'csv' : 'json'}`;
+				`tabelhafin-export.${format === 'xlsx' ? 'xlsx' : format === 'csv' ? 'csv' : 'json'}`;
 
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');

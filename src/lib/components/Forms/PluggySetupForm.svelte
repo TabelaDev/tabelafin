@@ -211,7 +211,7 @@
 
 <div class="flex flex-col gap-4">
 	<p class="text-sm text-ink-soft">
-		O TabelaFin lê seus dados bancários pelo Meu Pluggy. Há duas formas de conectar: escolha a que
+		O TAbelhaFin lê seus dados bancários pelo Meu Pluggy. Há duas formas de conectar: escolha a que
 		preferir:
 	</p>
 

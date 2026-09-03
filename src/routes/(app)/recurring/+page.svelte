@@ -66,7 +66,7 @@
 </script>
 
 <svelte:head>
-	<title>Recorrências: TabelaFin</title>
+	<title>Recorrências: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

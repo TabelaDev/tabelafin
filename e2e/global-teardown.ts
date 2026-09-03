@@ -5,7 +5,7 @@ import { execSync } from 'node:child_process';
 // limpa antes por garantia (caso uma execução anterior tenha sido interrompida).
 export default async function globalTeardown() {
 	execSync(
-		`bunx wrangler d1 execute tabelafin-db --local --command "DELETE FROM transactions WHERE source='manual'"`,
+		`bunx wrangler d1 execute tabelhafin-db --local --command "DELETE FROM transactions WHERE source='manual'"`,
 		{ stdio: 'inherit' }
 	);
 }

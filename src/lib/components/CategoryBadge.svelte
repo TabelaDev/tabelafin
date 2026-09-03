@@ -1,7 +1,7 @@
 <script lang="ts">
 	// A category chip coloured by the category's own accent.
 	//
-	// This used to be `<Badge style={...}>` from tabelawebui, but Badge takes
+	// This used to be `<Badge style={...}>` from tabelhawebui, but Badge takes
 	// only variant/children/class and does not spread the rest — so the style
 	// was dropped at runtime and every category rendered in the default grey.
 	// The colour has to be inline because it comes from data: a Tailwind class
@@ -29,7 +29,7 @@
 </span>
 
 <style>
-	/* Same box as tabelawebui's Badge; only the colours differ, and those come
+	/* Same box as tabelhawebui's Badge; only the colours differ, and those come
 	   from the category. */
 	.twui-badge {
 		display: inline-flex;

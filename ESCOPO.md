@@ -1,4 +1,4 @@
-# TabelaFin — Documento de Escopo (rascunho v0.1)
+# TAbelhaFin — Documento de Escopo (rascunho v0.1)
 
 > App de finanças pessoais que puxa sozinho os dados do Nubank (conta +
 > cartão) e da XP (conta digital + investimentos) via Open Finance, categoriza
@@ -17,8 +17,8 @@ sessão:
 
 - Scaffold SvelteKit + Cloudflare Workers (adapter, PWA, worker com cron),
   Drizzle/D1 com o schema completo da seção 5.
-- **Login**: como o TabelaFin não usa nenhuma API do Google, o login **não**
-  é OAuth (diferente do TabelaCal) — é um token compartilhado (`LOGIN_TOKEN`
+- **Login**: como o TAbelhaFin não usa nenhuma API do Google, o login **não**
+  é OAuth (diferente do TAbelhaCal) — é um token compartilhado (`LOGIN_TOKEN`
   secret) que autentica um único usuário fixo (`OWNER_EMAIL`). Decisão nova,
   não estava documentada neste ESCOPO originalmente — pragmática porque o app
   é de uso pessoal único por enquanto (ver "Fora de escopo" abaixo). Ver
@@ -99,9 +99,9 @@ precisar digitar nada.
 
 ### 2.1 Hospedado, não self-hosted
 
-**Decisão:** o TabelaFin roda como **serviço hospedado** — um Cloudflare
+**Decisão:** o TAbelhaFin roda como **serviço hospedado** — um Cloudflare
 Worker central serve UI, API e dados. Mesma decisão do
-[TabelaCal](https://github.com/TAbelhaDev/tabelacal): self-host cria fricção de
+[TAbelhaCal](https://github.com/TAbelhaDev/tabelacal): self-host cria fricção de
 setup que não compensa, mesmo o público inicial sendo só o Ian.
 
 ### 2.2 BYOK para a IA
@@ -110,11 +110,11 @@ Cada usuário cola sua **própria API key de LLM** (Anthropic/OpenAI) e escolhe
 o **modelo**. Usada tanto pra categorizar transações quanto pra extrair dados
 de PDF (seção 2.4). O usuário paga sua própria inferência; sem custo
 compartilhado. Reaproveita **exatamente** o padrão já em produção no
-TabelaCal (`src/lib/lib/ai-providers.ts`, `src/lib/server/ai/parse.ts`).
+TAbelhaCal (`src/lib/lib/ai-providers.ts`, `src/lib/server/ai/parse.ts`).
 
 ### 2.3 Open Finance: BYO Meu Pluggy (API interna, sem plano comercial)
 
-**A parte mais importante do design**: em vez de o TabelaFin ter uma conta
+**A parte mais importante do design**: em vez de o TAbelhaFin ter uma conta
 Pluggy comercial paga compartilhada por todo mundo (planos a partir de
 R$2.500/mês), **cada usuário traz sua própria conexão** via a API interna do
 Meu Pluggy (`my-api.pluggy.ai`), que é gratuita pra uso pessoal:
@@ -125,8 +125,8 @@ Meu Pluggy (`my-api.pluggy.ai`), que é gratuita pra uso pessoal:
    dentro da própria UI do Meu Pluggy.
 3. Faz login em meu.pluggy.ai e copia o **JWT access token** (via DevTools:
    Network > qualquer chamada a `my-api.pluggy.ai` > header `Authorization`).
-4. Cola o token no onboarding do TabelaFin.
-5. O TabelaFin usa o token (armazenado criptografado com `MASTER_KEY`) pra
+4. Cola o token no onboarding do TAbelhaFin.
+5. O TAbelhaFin usa o token (armazenado criptografado com `MASTER_KEY`) pra
    chamar a API interna do Meu Pluggy e sincronizar contas, transações e
    investimentos **daquele usuário especificamente**.
 
@@ -152,7 +152,7 @@ parsing client-side. O PDF (base64) é enviado direto pra API do modelo que o
 usuário escolheu, usando suporte nativo de "document understanding" (bloco
 `document` da Claude Messages API; input de arquivo na OpenAI), pedindo
 extração + categorização estruturada num único request — mesmo formato de
-tool-use/structured-output que o TabelaCal já usa pra transformar linguagem
+tool-use/structured-output que o TAbelhaCal já usa pra transformar linguagem
 natural em JSON de evento.
 
 **Por quê:** extração via texto reconstruído exigiria heurística de layout
@@ -177,7 +177,7 @@ Antes de usar o app, o usuário completa 2 cadastros independentes:
 - **Open Finance**: Client ID + Client Secret do próprio Meu Pluggy dele →
   conecta Nubank + XP.
 
-A partir daí, o TabelaFin cuida de tudo: sync, categorização, relatório,
+A partir daí, o TAbelhaFin cuida de tudo: sync, categorização, relatório,
 hosting.
 
 ## 3. Fluxos / UX
@@ -198,14 +198,14 @@ hosting.
    investimentos.
 6. **Relatório mensal automático**: cron no dia 1 gera o relatório do mês
    anterior e dispara notificação push avisando que está pronto — reaproveita
-   o código de Web Push já validado no TabelaCal pros lembretes de evento.
+   o código de Web Push já validado no TAbelhaCal pros lembretes de evento.
    E-mail fica fora do MVP (sem infra de e-mail ainda).
 
 ## 4. Escopo
 
 ### MVP (v1)
 
-- Onboarding: IA (chave + modelo) — reaproveitar componente do TabelaCal.
+- Onboarding: IA (chave + modelo) — reaproveitar componente do TAbelhaCal.
 - Onboarding: wizard guiado de conexão Meu Pluggy.
 - Sync automático via Pluggy: conta/cartão + investimentos XP.
 - Upload de PDF como fallback, com capability gating por modelo.
@@ -234,13 +234,13 @@ hosting.
 
 ## 5. Modelo de dados (Drizzle + D1) — proposta
 
-Reaproveita o padrão de envelope encryption do TabelaCal (`MASTER_KEY`
+Reaproveita o padrão de envelope encryption do TAbelhaCal (`MASTER_KEY`
 AES-GCM via WebCrypto, nonce separado por segredo).
 
 ```
 users                 (id, email, timezone, default_currency, created_at)
 
-ai_credentials         -- BYOK de IA, reaproveitado do TabelaCal sem mudança de forma
+ai_credentials         -- BYOK de IA, reaproveitado do TAbelhaCal sem mudança de forma
   user_id, provider, model, key_encrypted, nonce
 
 pluggy_credentials     -- JWT access token do Meu Pluggy (seção 2.3)
@@ -283,7 +283,7 @@ query de dashboard/relatório filtra `superseded_by_transaction_id IS NULL`.
 1. ✅ **Hospedagem**: serviço hospedado central (Cloudflare Workers), não
    self-hosted.
 2. ✅ **IA**: BYOK — chave própria do usuário + escolha de modelo (mesmo
-   padrão do TabelaCal).
+   padrão do TAbelhaCal).
 3. ✅ **Open Finance**: BYO Meu Pluggy por usuário (não conta Pluggy
    comercial centralizada) — evita custo compartilhado e mantém uso 100%
    gratuito.
@@ -292,7 +292,7 @@ query de dashboard/relatório filtra `superseded_by_transaction_id IS NULL`.
 5. ✅ **Categorização**: em lote na ingestão, nunca por transação isolada nem
    recorrente a cada view do dashboard.
 6. ✅ **Sync**: cron diário (Pluggy) + cron mensal (relatório + push),
-   reaproveitando o handler `scheduled` já existente no TabelaCal.
+   reaproveitando o handler `scheduled` já existente no TAbelhaCal.
 7. ⬜ Formato exato do wizard de onboarding do Meu Pluggy (quantas telas, que
    nível de hand-holding visual) — a definir na Fase de UI.
 8. ⬜ Confirmar com a Pluggy a situação de ToS caso o app seja aberto pra

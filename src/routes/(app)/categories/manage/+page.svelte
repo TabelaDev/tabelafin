@@ -80,7 +80,7 @@
 </script>
 
 <svelte:head>
-	<title>Categorias: TabelaFin</title>
+	<title>Categorias: TAbelhaFin</title>
 </svelte:head>
 
 <Page.Shell>

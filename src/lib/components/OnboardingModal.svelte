@@ -51,7 +51,7 @@
 	}
 </script>
 
-<Dialog bind:open title="Configurar TabelaFin" size="lg">
+<Dialog bind:open title="Configurar TAbelhaFin" size="lg">
 	<div class="mb-4">
 		<Stepper items={stepperItems} bind:value={step} />
 	</div>
