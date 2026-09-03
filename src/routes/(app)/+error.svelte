@@ -2,7 +2,7 @@
 	import { dev } from '$app/environment';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { ErrorPage } from '@tabeladev/tabelawebui';
+	import { ErrorPage } from '@tabelhadev/tabelhawebui';
 
 	let { error }: { error: App.Error } = $props();
 

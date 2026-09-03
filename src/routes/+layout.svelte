@@ -4,7 +4,7 @@
 	import { theme } from '$lib/utils/theme.svelte';
 
 	import { page } from '$app/state';
-	import { Toaster, toast } from '@tabeladev/tabelawebui';
+	import { Toaster, toast } from '@tabelhadev/tabelhawebui';
 	import { getFlash } from 'sveltekit-flash-message';
 	import { pwaInfo } from 'virtual:pwa-info';
 

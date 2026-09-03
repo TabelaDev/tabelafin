@@ -4,7 +4,7 @@
 	import { closeOnboarding, onboarding } from '$lib/stores/onboarding-store';
 
 	import { invalidateAll } from '$app/navigation';
-	import { Dialog, Stepper } from '@tabeladev/tabelawebui';
+	import { Dialog, Stepper } from '@tabelhadev/tabelhawebui';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 

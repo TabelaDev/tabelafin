@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Dialog, Instruction } from '@tabeladev/tabelawebui';
+	import { Button, Dialog, Instruction } from '@tabelhadev/tabelhawebui';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 </script>
@@ -8,8 +8,8 @@
 	<Instruction.Steps>
 		<Instruction.Step title="Acesse e baixe o código">
 			Acesse
-			<a href="https://github.com/TabelaDev/tabelafin" target="_blank" rel="noreferrer"
-				>github.com/TabelaDev/tabelafin</a
+			<a href="https://github.com/TAbelhaDev/tabelhafin" target="_blank" rel="noreferrer"
+				>github.com/TAbelhaDev/tabelhafin</a
 			>
 			no seu navegador. No repositório, clique no botão verde <code>Code</code> e depois em
 			<code>Download ZIP</code>.

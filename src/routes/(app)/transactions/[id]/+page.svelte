@@ -8,7 +8,7 @@
 
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { Badge, Button, Card, Page, Select, TagInput, Toggle } from '@tabeladev/tabelawebui';
+	import { Badge, Button, Card, Page, Select, TagInput, Toggle } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

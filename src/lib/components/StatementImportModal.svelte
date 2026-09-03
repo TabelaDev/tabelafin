@@ -33,7 +33,7 @@
 	} from '$lib/stores/statement-import-store';
 
 	import { invalidateAll } from '$app/navigation';
-	import { Button, Checkbox, Dialog, Input, Stepper, toast } from '@tabeladev/tabelawebui';
+	import { Button, Checkbox, Dialog, Input, Stepper, toast } from '@tabelhadev/tabelhawebui';
 
 	const STEPS = [
 		{ value: 'instructions', label: 'Takeout' },

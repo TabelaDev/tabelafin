@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { toast } from '@tabeladev/tabelawebui';
+	import { toast } from '@tabelhadev/tabelhawebui';
 	import { useRegisterSW } from 'virtual:pwa-register/svelte';
 
 	const { needRefresh, offlineReady, updateServiceWorker } = useRegisterSW();

@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "tabelafin",
+	"name": "tabelhafin",
 	"compatibility_date": "2026-08-01",
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "worker/entry.js",
@@ -27,13 +27,13 @@
 		"head_sampling_rate": 1
 	},
 	"vars": {
-		"ORIGIN": "https://tabelafin.ianptkcs-023.workers.dev",
-		"PUBLIC_TABELAUTH_URL": "https://tabelaauth.ianptkcs-023.workers.dev",
-		"PUBLIC_APP_URL": "https://tabelafin.ianptkcs-023.workers.dev",
+		"ORIGIN": "https://tabelhafin.tabelhadev.workers.dev",
+		"PUBLIC_TABELHAUTH_URL": "https://tabelhaauth.tabelhadev.workers.dev",
+		"PUBLIC_APP_URL": "https://tabelhafin.tabelhadev.workers.dev",
 		"VAPID_PUBLIC_KEY": "BLRtiZgDBYkAVW92C0WIfRmlehgF0g4vI7i6xC8VKYHziKVdcyxv3jtj0BIoin5LU255BX4pknqJENcPfswYAns",
-		"VAPID_SUBJECT": "https://tabelafin.ianptkcs-023.workers.dev",
+		"VAPID_SUBJECT": "https://tabelhafin.tabelhadev.workers.dev",
 		// Better Auth: base URL for session callbacks
-		"BETTER_AUTH_URL": "https://tabelafin.ianptkcs-023.workers.dev",
+		"BETTER_AUTH_URL": "https://tabelhafin.tabelhadev.workers.dev",
 		// From address for the verification / password-reset e-mails. A var and
 		// not a secret — it is public by definition, it appears in every message
 		// sent. **Brevo will not deliver from an unverified sender**, so this
@@ -51,37 +51,37 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "tabelafin-db",
-			"database_id": "08a3cf81-b376-41ab-b41d-21a0778f3257",
+			"database_name": "tabelhafin-db",
+			"database_id": "b1ec4cf7-fd3a-481e-8af6-c274dc7f275c",
 			"migrations_dir": "drizzle"
 		}
 	],
-	"kv_namespaces": [{ "binding": "SESSIONS", "id": "34086589c9b34c1ab5c5b59e236662f0" }],
+	"kv_namespaces": [{ "binding": "SESSIONS", "id": "d2bcf53267d8450785a074e04a7029b4" }],
 	// Staging: isolated resources (own D1/KV, vars pointing to staging subdomain),
 	// no crons — manual trigger from the dashboard for testing.
 	// Secrets via `wrangler secret put <NAME> --env staging`.
 	"env": {
 		"staging": {
-			"name": "tabelafin-staging",
+			"name": "tabelhafin-staging",
 			// Environments inherit `triggers.crons` from top-level; empty list zeroes them out
 			// (staging has no cron — manual trigger from the dashboard for testing).
 			"triggers": { "crons": [] },
 			"vars": {
-				"ORIGIN": "https://tabelafin-staging.ianptkcs-023.workers.dev",
+				"ORIGIN": "https://tabelhafin-staging.tabelhadev.workers.dev",
 				"VAPID_PUBLIC_KEY": "BNGg4bHjsBjz2tVbuoyGXAaBMmbaUbKgYizkf82DAYVO3hBWm7nNSghb6qx0hDYjn-N_lHN6RHaqSeoRkc5ZtH8",
-				"VAPID_SUBJECT": "https://tabelafin-staging.ianptkcs-023.workers.dev",
-				"BETTER_AUTH_URL": "https://tabelafin-staging.ianptkcs-023.workers.dev",
+				"VAPID_SUBJECT": "https://tabelhafin-staging.tabelhadev.workers.dev",
+				"BETTER_AUTH_URL": "https://tabelhafin-staging.tabelhadev.workers.dev",
 				"EMAIL_FROM": "ianptkcs@gmail.com"
 			},
 			"d1_databases": [
 				{
 					"binding": "DB",
-					"database_name": "tabelafin-db-staging",
-					"database_id": "1eda2c73-fc28-4dbc-a4cb-9b7852f4f168",
+					"database_name": "tabelhafin-db-staging",
+					"database_id": "e33f1fd6-c9d0-469d-a02d-f7ea836186f9",
 					"migrations_dir": "drizzle"
 				}
 			],
-			"kv_namespaces": [{ "binding": "SESSIONS", "id": "678a10fb88e74c74b7d2ebdc59ef356c" }]
+			"kv_namespaces": [{ "binding": "SESSIONS", "id": "be80b51c9f6247ca9f0971655ece1aa6" }]
 		}
 	}
 }

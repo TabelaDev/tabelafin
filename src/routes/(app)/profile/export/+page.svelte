@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Button, Card, List, ListItem, Page, Select, toast } from '@tabeladev/tabelawebui';
+	import { Button, Card, List, ListItem, Page, Select, toast } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

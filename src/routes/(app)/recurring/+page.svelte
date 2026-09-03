@@ -6,7 +6,7 @@
 	import { handleAction } from '$lib/utils/forms';
 
 	import { enhance } from '$app/forms';
-	import { Button, Card, Input, Label, Page, Select } from '@tabeladev/tabelawebui';
+	import { Button, Card, Input, Label, Page, Select } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

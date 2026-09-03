@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Badge, Button, Card, Page } from '@tabeladev/tabelawebui';
+	import { Badge, Button, Card, Page } from '@tabelhadev/tabelhawebui';
 
 	let { data } = $props();
 

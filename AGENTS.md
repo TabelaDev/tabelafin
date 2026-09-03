@@ -1,8 +1,8 @@
-# tabelafin — contexto essencial
+# tabelhafin — contexto essencial
 
 App de finanças pessoais (Open Finance + categorização por IA, BYOK). Repo **aberto**,
 AGPL-3.0. Antes de mexer, leia o `README.md` (produto) e o `CONTRIBUTING.md` (política de
-linguagem de toda a TabelaDev).
+linguagem de toda a TAbelhaDev).
 
 ## Stack
 
@@ -16,7 +16,7 @@ linguagem de toda a TabelaDev).
   sync diário do Pluggy (`0 6 * * *`) e relatório mensal (`0 7 1 * *`). Por isso existem
   **dois** wrangler configs: `wrangler.jsonc` (real) e `wrangler.adapter.jsonc` (só pro
   adapter não sobrescrever o `entry.js`).
-- **UI:** `@tabeladev/tabelawebui` (registry). Tailwind v4, um único stylesheet em
+- **UI:** `@tabelhadev/tabelhawebui` (registry). Tailwind v4, um único stylesheet em
   `src/routes/layout.css`. Sem shadcn.
 - **PWA:** `@vite-pwa/sveltekit` + `src/lib/components/ReloadPrompt.svelte`.
 - **Layout de `src/lib/`:** `components/` (.svelte), `stores/` (svelte/store),
@@ -66,7 +66,7 @@ Backup local antes de aplicar: `.wrangler/state/v3/d1/` inteiro num tar.
 
 ## Domínio custom (pendente)
 
-Hoje o app roda em `tabelafin.ianptkcs-023.workers.dev`. Trocar por um domínio
+Hoje o app roda em `tabelhafin.tabelhadev.workers.dev`. Trocar por um domínio
 próprio **não é só mudar a var** — quatro coisas quebram juntas e precisam ser
 mudadas no mesmo deploy:
 
@@ -86,17 +86,17 @@ Quanto mais tarde, mais gente com pareamento e push pra refazer.
 
 ## Staging (homologação)
 
-Dois ambientes no Cloudflare Workers, via environments do wrangler: `tabelafin`
-(prod, `tabelafin.ianptkcs-023.workers.dev`) e `tabelafin-staging`
-(`tabelafin-staging.ianptkcs-023.workers.dev`). Recursos **isolados**: D1
-`tabelafin-db-staging` + KV `SESSIONS_STAGING`, nunca compartilham banco/sessão
+Dois ambientes no Cloudflare Workers, via environments do wrangler: `tabelhafin`
+(prod, `tabelhafin.tabelhadev.workers.dev`) e `tabelhafin-staging`
+(`tabelhafin-staging.tabelhadev.workers.dev`). Recursos **isolados**: D1
+`tabelhafin-db-staging` + KV `SESSIONS_STAGING`, nunca compartilham banco/sessão
 com prod. O build do SvelteKit é env-agnóstico (URL vem de var em runtime), então
 `bun run build` gera o mesmo bundle pra ambos.
 
 Runbook de implantação do staging (feito uma vez, depois vira só o deploy):
 
 1. Criar recursos (anotar os ids de saída):
-   `wrangler d1 create tabelafin-db-staging`
+   `wrangler d1 create tabelhafin-db-staging`
    `wrangler kv namespace create SESSIONS_STAGING`
 2. No `wrangler.jsonc`, adicionar o bloco `env.staging` (nome, vars apontando pro
    subdomínio de staging, D1/KV criados acima). Atenção: environments **herdam**
@@ -105,7 +105,7 @@ Runbook de implantação do staging (feito uma vez, depois vira só o deploy):
    herdados mesmo sem você pedir, e o limite do plano Free é 5 por conta).
    Rodar `bun run check` depois: o `wrangler types` regenera
    `worker-configuration.d.ts`, e se o hash mudar, commitar o arquivo novo.
-3. Migrações: `wrangler d1 migrations apply tabelafin-db-staging --remote --env staging`
+3. Migrações: `wrangler d1 migrations apply tabelhafin-db-staging --remote --env staging`
    (sem `--env staging` o wrangler não acha o banco — ele só existe no env).
 4. Secrets (valores novos, não reusar os de prod):
    - `wrangler secret put MASTER_KEY --env staging`
@@ -138,9 +138,9 @@ automático.
 
 ## Convenções compartilhadas
 
-Regras comuns aos apps web da TabelaDev (grupos de rota, tokens de tema, landing, SEO):
+Regras comuns aos apps web da TAbelhaDev (grupos de rota, tokens de tema, landing, SEO):
 `docs/convencoes-web.md` no repo do
-[tabelawebui](https://github.com/TabelaDev/tabelawebui). Não duplicar as regras aqui.
+[tabelawebui](https://github.com/TAbelhaDev/tabelhawebui). Não duplicar as regras aqui.
 
 ## Cuidado com docs desatualizados
 

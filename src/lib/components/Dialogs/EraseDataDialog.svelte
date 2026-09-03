@@ -2,7 +2,7 @@
 	import { handleAction } from '$lib/utils/forms';
 
 	import { enhance } from '$app/forms';
-	import { Button, Dialog, Input, Label } from '@tabeladev/tabelawebui';
+	import { Button, Dialog, Input, Label } from '@tabelhadev/tabelhawebui';
 
 	let {
 		open = $bindable()

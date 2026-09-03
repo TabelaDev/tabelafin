@@ -10,7 +10,7 @@
 		toYearMonth
 	} from '$lib/utils/format';
 
-	import { Card, Input, Page, Select, StatTile, Table } from '@tabeladev/tabelawebui';
+	import { Card, Input, Page, Select, StatTile, Table } from '@tabelhadev/tabelhawebui';
 	import type { ApexOptions } from 'apexcharts';
 
 	import type { PageData } from './$types';

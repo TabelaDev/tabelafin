@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { AI_PROVIDERS, type AiProvider } from '$lib/utils/ai-providers';
 
-	import { Button, Dialog, Input, Label, Select } from '@tabeladev/tabelawebui';
+	import { Button, Dialog, Input, Label, Select, toast } from '@tabelhadev/tabelhawebui';
 
 	let {
 		onSuccess,
@@ -30,6 +30,7 @@
 	async function submit() {
 		if (!apiKey.trim()) {
 			error = 'Informe sua API key.';
+			toast.error(error);
 			return;
 		}
 		submitting = true;
@@ -43,9 +44,15 @@
 			const data = (await res.json()) as { error?: string };
 			if (!res.ok || data.error) {
 				error = data.error ?? 'Não foi possível salvar. Tente novamente.';
+				toast.error(error);
 				return;
 			}
+			const providerLabel = AI_PROVIDERS[provider].label;
+			toast.success(`IA configurada: ${providerLabel} com ${model} pronta para categorizar.`);
 			onSuccess?.();
+		} catch {
+			error = 'Não foi possível salvar. Tente novamente.';
+			toast.error(error);
 		} finally {
 			submitting = false;
 		}

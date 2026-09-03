@@ -4,7 +4,7 @@
 //
 // The Meu Pluggy token expires in ~24h; this flow runs every time the user
 // opens Meu Pluggy, so the app always has a fresh token with no action needed.
-const DEFAULT_ORIGIN = 'https://tabelafin.ianptkcs-023.workers.dev';
+const DEFAULT_ORIGIN = 'https://tabelhafin.tabelhadev.workers.dev';
 
 async function pushToken(token) {
 	const { origin, deviceToken } = await chrome.storage.local.get(['origin', 'deviceToken']);
@@ -55,7 +55,7 @@ function isTrustedSender(sender) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message && message.type === 'PLUGGY_TOKEN') {
 		if (!isTrustedSender(sender)) {
-			console.warn('[tabelafin] mensagem de origem não confiável ignorada');
+			console.warn('[tabelhafin] mensagem de origem não confiável ignorada');
 			sendResponse({ ok: false, error: 'Origem não confiável.' });
 			return true;
 		}

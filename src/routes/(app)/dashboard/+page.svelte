@@ -8,7 +8,7 @@
 	import { formatCompactCurrency, formatCurrency, formatDate } from '$lib/utils/format';
 
 	import { resolve } from '$app/paths';
-	import { Button, Card, Page, StatTile, Table } from '@tabeladev/tabelawebui';
+	import { Button, Card, Page, StatTile, Table } from '@tabelhadev/tabelhawebui';
 	import type { ApexOptions } from 'apexcharts';
 
 	import type { PageData } from './$types';

@@ -2,7 +2,7 @@
 	import PushSubscribe from '$lib/components/PushSubscribe.svelte';
 	import { formatCompactCurrency } from '$lib/utils/format';
 
-	import { Button, Card, Page } from '@tabeladev/tabelawebui';
+	import { Button, Card, Page } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

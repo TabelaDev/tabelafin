@@ -11,9 +11,9 @@ export const load: PageServerLoad = async ({ url, platform, cookies, locals }) =
 	}
 
 	const hubUrl =
-		platform.env.PUBLIC_TABELAUTH_URL ||
-		env.PUBLIC_TABELAUTH_URL ||
-		'https://tabelaauth.ianptkcs-023.workers.dev';
+		platform.env.PUBLIC_TABELHAUTH_URL ||
+		env.PUBLIC_TABELHAUTH_URL ||
+		'https://tabelhaauth.tabelhadev.workers.dev';
 
 	try {
 		const exchangeRes = await fetch(

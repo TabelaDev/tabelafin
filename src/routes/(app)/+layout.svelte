@@ -8,7 +8,7 @@
 
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { AppShell, FloatingActionPill, Status, StatusPill } from '@tabeladev/tabelawebui';
+	import { AppShell, FloatingActionPill, Status, StatusPill } from '@tabelhadev/tabelhawebui';
 	import { onMount } from 'svelte';
 
 	import type { LayoutData } from './$types';

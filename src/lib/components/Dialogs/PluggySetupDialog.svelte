@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PluggySetupForm from '$lib/components/Forms/PluggySetupForm.svelte';
 
-	import { Dialog } from '@tabeladev/tabelawebui';
+	import { Dialog } from '@tabelhadev/tabelhawebui';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 </script>

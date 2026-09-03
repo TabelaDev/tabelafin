@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Button } from '@tabeladev/tabelawebui';
+	import { Button, toast } from '@tabelhadev/tabelhawebui';
 
 	// The Pluggy Connect widget over CDN — it exposes a global `PluggyConnect`
 	// once loaded, with no bundler or npm install needed (see ESCOPO.md §2.3).
@@ -63,13 +63,22 @@
 	// fetches the real details from Pluggy and persists the account(s)/item.
 	async function saveItem(itemId: string): Promise<void> {
 		status = 'saving';
-		const res = await fetch('/api/pluggy/items', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ itemId })
-		});
-		if (!res.ok) throw new Error('Não foi possível salvar a conexão.');
-		await goto(resolve('/dashboard'));
+		try {
+			const res = await fetch('/api/pluggy/items', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ itemId })
+			});
+			if (!res.ok) throw new Error('Não foi possível salvar a conexão.');
+			toast.success('Conexão salva! Redirecionando para o dashboard.');
+			await goto(resolve('/dashboard'));
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erro desconhecido.';
+			status = 'error';
+			errorMessage = message;
+			toast.error(message);
+			throw err;
+		}
 	}
 
 	async function connect(): Promise<void> {
@@ -89,19 +98,24 @@
 				includeSandbox: false,
 				onSuccess: (data) => {
 					saveItem(data.item.id).catch((err: unknown) => {
+						const message = err instanceof Error ? err.message : 'Erro desconhecido.';
 						status = 'error';
-						errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+						errorMessage = message;
+						// toast.error já emitido em saveItem; evita duplicar
 					});
 				},
 				onError: (err) => {
 					status = 'error';
 					errorMessage = err.message;
+					toast.error(err.message);
 				}
 			});
 			await pluggyConnect.init();
 		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erro desconhecido.';
 			status = 'error';
-			errorMessage = err instanceof Error ? err.message : 'Erro desconhecido.';
+			errorMessage = message;
+			toast.error(message);
 		}
 	}
 </script>

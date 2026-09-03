@@ -5,7 +5,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Button, Card, Checkbox, Page, Select, Table, toast } from '@tabeladev/tabelawebui';
+	import { Button, Card, Checkbox, Page, Select, Table, toast } from '@tabelhadev/tabelhawebui';
 
 	let { data } = $props();
 

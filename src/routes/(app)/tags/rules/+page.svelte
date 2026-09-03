@@ -3,7 +3,7 @@
 
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { Badge, Button, Card, Input, Label, Page, Table, TagInput } from '@tabeladev/tabelawebui';
+	import { Badge, Button, Card, Input, Label, Page, Table, TagInput } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

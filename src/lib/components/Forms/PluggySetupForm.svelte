@@ -2,7 +2,7 @@
 	import ExtensionInstallModal from '$lib/components/ExtensionInstallModal.svelte';
 
 	import { invalidateAll } from '$app/navigation';
-	import { Button, Dialog, Input, Instruction, Label, Tabs } from '@tabeladev/tabelawebui';
+	import { Button, Dialog, Input, Instruction, Label, Tabs, toast } from '@tabelhadev/tabelhawebui';
 
 	let {
 		onSuccess,
@@ -33,9 +33,14 @@
 			const data = (await res.json()) as { deviceToken?: string; error?: string };
 			if (!res.ok || !data.deviceToken) {
 				statusMsg = data.error ?? 'Não foi possível gerar o código.';
+				toast.error(statusMsg);
 				return;
 			}
 			deviceToken = data.deviceToken;
+			toast.success('Código de pareamento gerado. Cole na extensão para conectar.');
+		} catch {
+			statusMsg = 'Não foi possível gerar o código.';
+			toast.error(statusMsg);
 		} finally {
 			pairingLoading = false;
 		}
@@ -43,6 +48,7 @@
 
 	async function copyDeviceToken() {
 		await navigator.clipboard.writeText(deviceToken);
+		toast.success('Código copiado para a área de transferência.');
 	}
 
 	async function checkStatus() {
@@ -50,18 +56,32 @@
 		statusMsg = '';
 		try {
 			const res = await fetch('/api/pluggy/status');
-			const data = (await res.json()) as { configured?: boolean; error?: string };
+			const data = (await res.json()) as {
+				configured?: boolean;
+				status?: string;
+				error?: string;
+			};
 			if (!res.ok) {
 				statusMsg = data.error ?? 'Não foi possível verificar agora.';
+				toast.error(statusMsg);
 				return;
 			}
 			if (!data.configured) {
 				statusMsg =
 					'Ainda não chegou nenhum token. Confira se a extensão está vinculada e abra o Meu Pluggy.';
+				toast.warning(statusMsg);
 				return;
 			}
+			const statusLabel =
+				data.status === 'connected'
+					? 'Conexão verificada: Open Finance já está ativo.'
+					: 'Conexão encontrada! Sincronizando suas contas em segundo plano.';
+			toast.success(statusLabel);
 			await invalidateAll();
 			onSuccess?.();
+		} catch {
+			statusMsg = 'Não foi possível verificar agora.';
+			toast.error(statusMsg);
 		} finally {
 			checking = false;
 		}
@@ -70,6 +90,7 @@
 	async function submitToken() {
 		if (!token.trim()) {
 			error = 'Cole o token de acesso do Meu Pluggy.';
+			toast.error(error);
 			return;
 		}
 		submitting = true;
@@ -83,10 +104,15 @@
 			const data = (await res.json()) as { error?: string };
 			if (!res.ok || data.error) {
 				error = data.error ?? 'Não foi possível conectar. Tente novamente.';
+				toast.error(error);
 				return;
 			}
+			toast.success('Open Finance conectado! Suas contas serão sincronizadas em instantes.');
 			await invalidateAll();
 			onSuccess?.();
+		} catch {
+			error = 'Não foi possível conectar. Tente novamente.';
+			toast.error(error);
 		} finally {
 			submitting = false;
 		}
@@ -99,12 +125,15 @@
 			if (!res.ok) {
 				const data = (await res.json().catch(() => null)) as { error?: string } | null;
 				statusMsg = data?.error ?? 'Não foi possível pular agora.';
+				toast.error(statusMsg);
 				return;
 			}
+			toast.info('Onboarding pulado. Você pode conectar o Open Finance depois em Perfil.');
 			await invalidateAll();
 			onSuccess?.();
 		} catch {
 			statusMsg = 'Não foi possível pular agora.';
+			toast.error(statusMsg);
 		}
 	}
 </script>

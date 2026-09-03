@@ -3,8 +3,8 @@
 	// Same convention as TabelaCal (talk to the navigator's own registration,
 	// not virtual:pwa-register) and the toast pattern from
 	// $lib/components/ReloadPrompt.svelte.
-	import { Button } from '@tabeladev/tabelawebui';
-	import { toast } from '@tabeladev/tabelawebui';
+	import { Button } from '@tabelhadev/tabelhawebui';
+	import { toast } from '@tabelhadev/tabelhawebui';
 
 	let { vapidPublicKey }: { vapidPublicKey: string } = $props();
 

@@ -1,5 +1,5 @@
 {
-	"name": "tabelafin",
+	"name": "tabelhafin",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -12,8 +12,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
-		"link:twui": "bun add file:../tabelawebui",
-		"publish:twui": "bun add @tabeladev/tabelawebui@latest",
+		"link:twui": "bun add file:../tabelhawebui",
+		"publish:twui": "bun add @tabelhadev/tabelhawebui@latest",
 		"test:unit": "vitest",
 		"test": "bun run test:unit -- --run",
 		"test:e2e": "playwright test",
@@ -22,8 +22,8 @@
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
-		"deploy": "bun run build && wrangler d1 migrations apply tabelafin-db --remote && wrangler deploy",
-		"deploy:staging": "bun run build && wrangler d1 migrations apply tabelafin-db-staging --remote --env staging && wrangler deploy --env staging"
+		"deploy": "bun run build && wrangler d1 migrations apply tabelhafin-db --remote && wrangler deploy",
+		"deploy:staging": "bun run build && wrangler d1 migrations apply tabelhafin-db-staging --remote --env staging && wrangler deploy --env staging"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
@@ -63,7 +63,7 @@
 		"@better-auth/drizzle-adapter": "^1.6.26",
 		"@block65/webcrypto-web-push": "^1.0.2",
 		"@myriaddreamin/typst.ts": "^0.7.0",
-		"@tabeladev/tabelawebui": "^0.28.2",
+		"@tabelhadev/tabelhawebui": "^0.28.4",
 		"apexcharts": "^6.7.0",
 		"better-auth": "^1.6.26",
 		"fflate": "^0.8.3",

@@ -37,9 +37,9 @@ O usuário cria uma conta de desenvolvedor no dashboard da Pluggy, cria uma
   teria que **pedir aprovação de acesso a dados reais individualmente**. Uma
   aprovação por usuário é inviável pra um público que não coda.
 
-### 3. Pluggy Connect com um app único da TabelaDev
+### 3. Pluggy Connect com um app único da TAbelhaDev
 
-A TabelaDev segura uma única aplicação + credencial, e o usuário final só clica
+A TAbelhaDev segura uma única aplicação + credencial, e o usuário final só clica
 em "conectar banco" num widget.
 
 - **Prós**: de longe a menor fricção pro usuário final — é o padrão de todo

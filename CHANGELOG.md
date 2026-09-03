@@ -15,7 +15,7 @@ este projeto segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
   suporte a documento, PWA instalável, cron diário (sync) + mensal (relatório).
 - Estrutura inicial do repositório open source (licença AGPL-3.0, templates de
   issue/PR, workflows de CI e release).
-- Recursos Cloudflare reais (D1 `tabelafin-db`, KV `SESSIONS`, par VAPID).
+- Recursos Cloudflare reais (D1 `tabelhafin-db`, KV `SESSIONS`, par VAPID).
 - Login de usuário único via token compartilhado (sem OAuth do Google — o
   TabelaFin não usa nenhuma API do Google), onboarding de credenciais de IA e
   dashboard protegido inicial.

@@ -1,7 +1,7 @@
 // Theme (light/dark) — owned by the app.
 //
 // There used to be two owners fighting. The `ThemeToggle` from
-// `@tabeladev/tabelawebui` is hardcoded inside `AppShellSidebar` (no prop, no
+// `@tabelhadev/tabelhawebui` is hardcoded inside `AppShellSidebar` (no prop, no
 // snippet to replace it) and on click writes straight to the root element and to
 // `localStorage['theme']`. In parallel, `mode-watcher` decided the theme from ITS
 // own key (`mode-watcher-mode`). Neither read the other's: the user's explicit

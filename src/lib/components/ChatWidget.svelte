@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, ChatMessage, Textarea } from '@tabeladev/tabelawebui';
+	import { Button, ChatMessage, Textarea } from '@tabelhadev/tabelhawebui';
 	import { cubicOut } from 'svelte/easing';
 	import { scale } from 'svelte/transition';
 

@@ -17,7 +17,7 @@
 		TagInput,
 		Toggle,
 		toast
-	} from '@tabeladev/tabelawebui';
+	} from '@tabelhadev/tabelhawebui';
 	import { untrack } from 'svelte';
 
 	import type { PageData } from './$types';

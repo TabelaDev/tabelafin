@@ -82,7 +82,7 @@ os dados batendo com a conta do Ian).
 
 ### Recursos Cloudflare já criados (conta real, não placeholder)
 
-D1 `tabelafin-db` (`08a3cf81-b376-41ab-b41d-21a0778f3257`), KV `SESSIONS`
+D1 `tabelhafin-db` (`08a3cf81-b376-41ab-b41d-21a0778f3257`), KV `SESSIONS`
 (`34086589c9b34c1ab5c5b59e236662f0`), par VAPID novo. Segredos
 (`MASTER_KEY`, `LOGIN_TOKEN`, `VAPID_PRIVATE_KEY`) só em `.dev.vars` local,
 nunca commitados — `wrangler secret put` ainda não foi rodado em produção
@@ -101,7 +101,7 @@ precisar digitar nada.
 
 **Decisão:** o TabelaFin roda como **serviço hospedado** — um Cloudflare
 Worker central serve UI, API e dados. Mesma decisão do
-[TabelaCal](https://github.com/TabelaDev/tabelacal): self-host cria fricção de
+[TabelaCal](https://github.com/TAbelhaDev/tabelacal): self-host cria fricção de
 setup que não compensa, mesmo o público inicial sendo só o Ian.
 
 ### 2.2 BYOK para a IA

@@ -2,7 +2,7 @@
 	import { formatCurrency } from '$lib/utils/format';
 
 	import { resolve } from '$app/paths';
-	import { Card, Page } from '@tabeladev/tabelawebui';
+	import { Card, Page } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

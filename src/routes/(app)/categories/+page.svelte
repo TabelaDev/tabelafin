@@ -5,7 +5,7 @@
 	import { formatCurrency } from '$lib/utils/format';
 
 	import { resolve } from '$app/paths';
-	import { Card, Page, Select } from '@tabeladev/tabelawebui';
+	import { Card, Page, Select } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

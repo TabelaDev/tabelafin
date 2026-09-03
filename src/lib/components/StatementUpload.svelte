@@ -6,9 +6,9 @@
 	// (BYOK — never swap the model out from under the user).
 	import { type AiProvider, modelSupportsDocuments } from '$lib/utils/ai-providers';
 
-	import { Button } from '@tabeladev/tabelawebui';
-	import { Input } from '@tabeladev/tabelawebui';
-	import { toast } from '@tabeladev/tabelawebui';
+	import { Button } from '@tabelhadev/tabelhawebui';
+	import { Input } from '@tabelhadev/tabelhawebui';
+	import { toast } from '@tabelhadev/tabelhawebui';
 
 	let { provider, model }: { provider: AiProvider; model: string } = $props();
 

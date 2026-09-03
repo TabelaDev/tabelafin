@@ -4,7 +4,7 @@
 	import { openStatementImport } from '$lib/stores/statement-import-store';
 	import type { AiProvider } from '$lib/utils/ai-providers';
 
-	import { Button, Dialog, Tabs } from '@tabeladev/tabelawebui';
+	import { Button, Dialog, Tabs } from '@tabelhadev/tabelhawebui';
 
 	let {
 		open = $bindable(),

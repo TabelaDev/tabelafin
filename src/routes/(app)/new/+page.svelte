@@ -13,7 +13,7 @@
 		Page,
 		Select,
 		TagInput
-	} from '@tabeladev/tabelawebui';
+	} from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

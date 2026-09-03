@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { PUBLIC_APP_URL, PUBLIC_TABELAUTH_URL } from '$env/static/public';
+	import { PUBLIC_APP_URL, PUBLIC_TABELHAUTH_URL } from '$env/static/public';
 
 	import { resolve } from '$app/paths';
-	import { Button, Card, Wordmark } from '@tabeladev/tabelawebui';
+	import { Button, Card, Wordmark } from '@tabelhadev/tabelhawebui';
 </script>
 
 <svelte:head>
@@ -24,7 +24,7 @@
 		<Card.Content>
 			<p class="text-sm text-ink-soft">O cadastro é feito pelo TabelaAuth.</p>
 			<Button
-				href="{PUBLIC_TABELAUTH_URL}/signup?redirect={encodeURIComponent(
+				href="{PUBLIC_TABELHAUTH_URL}/signup?redirect={encodeURIComponent(
 					PUBLIC_APP_URL + '/api/auth/hub-callback'
 				)}"
 				class="w-full"

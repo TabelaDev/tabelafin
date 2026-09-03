@@ -8,12 +8,12 @@
 	import { PluggyStatus } from '$lib/enums/pluggy-status';
 	import { handleAction } from '$lib/utils/forms';
 
-	import { PUBLIC_TABELAUTH_URL } from '$env/static/public';
+	import { PUBLIC_TABELHAUTH_URL } from '$env/static/public';
 
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Badge, Button, Card, Divider, Input, Label, Page, Toggle } from '@tabeladev/tabelawebui';
+	import { Badge, Button, Card, Divider, Input, Label, Page, Toggle } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 
@@ -94,7 +94,7 @@
 					</div>
 					<p class="font-mono text-xs text-ink-faint">
 						E-mail: <a
-							href="{PUBLIC_TABELAUTH_URL}/account"
+							href="{PUBLIC_TABELHAUTH_URL}/account"
 							target="_blank"
 							rel="noreferrer"
 							class="text-accent hover:underline">{data.user?.email}</a
@@ -109,7 +109,7 @@
 					</div>
 					<p class="font-mono text-xs text-ink-faint">
 						E-mail: <a
-							href="{PUBLIC_TABELAUTH_URL}/account"
+							href="{PUBLIC_TABELHAUTH_URL}/account"
 							target="_blank"
 							rel="noreferrer"
 							class="text-accent hover:underline">{data.user?.email}</a
@@ -295,7 +295,7 @@
 		<Card.Content>
 			<p class="font-mono text-xs text-ink-faint">
 				O que fazemos com seus dados está na
-				<a href="{PUBLIC_TABELAUTH_URL}/privacidade" class="text-accent hover:underline">
+				<a href="{PUBLIC_TABELHAUTH_URL}/privacidade" class="text-accent hover:underline">
 					política de privacidade
 				</a>.
 			</p>

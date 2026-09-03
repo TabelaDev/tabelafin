@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Button, Input, toast } from '@tabeladev/tabelawebui';
+	import { Button, Input, toast } from '@tabelhadev/tabelhawebui';
 
 	let { onImported }: { onImported?: () => void } = $props();
 

@@ -5,7 +5,7 @@
 
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import { Button, Card, Input, Page, Select, Table } from '@tabeladev/tabelawebui';
+	import { Button, Card, Input, Page, Select, Table } from '@tabelhadev/tabelhawebui';
 
 	import type { PageData } from './$types';
 

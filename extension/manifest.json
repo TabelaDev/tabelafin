@@ -6,8 +6,8 @@
 	"permissions": ["storage"],
 	"host_permissions": [
 		"https://meu.pluggy.ai/*",
-		"https://tabelafin.ianptkcs-023.workers.dev/*",
-		"https://tabelafin-staging.ianptkcs-023.workers.dev/*"
+		"https://tabelhafin.tabelhadev.workers.dev/*",
+		"https://tabelhafin-staging.tabelhadev.workers.dev/*"
 	],
 	"background": {
 		"service_worker": "background.js"

@@ -21,7 +21,7 @@ Pluggy Connect): `docs/pluggy-integration.md`.
 2. Copy the code and open this extension's popup.
 3. Paste the code into the **Pairing code** field and click **Save**.
    - Keep the **App origin** field at its default
-     (`https://tabelafin.ianptkcs-023.workers.dev`), or point it to staging/dev
+     (`https://tabelhafin.tabelhadev.workers.dev`), or point it to staging/dev
      when testing locally.
 
 ## Usage

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import AiSetupForm from '$lib/components/Forms/AiSetupForm.svelte';
 
-	import { Dialog } from '@tabeladev/tabelawebui';
+	import { Dialog } from '@tabelhadev/tabelhawebui';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 </script>

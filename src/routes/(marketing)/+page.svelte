@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_TABELAUTH_URL } from '$env/static/public';
+	import { PUBLIC_TABELHAUTH_URL } from '$env/static/public';
 
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -13,9 +13,9 @@
 	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
 	import SmartphoneIcon from '@lucide/svelte/icons/smartphone';
 	import TagsIcon from '@lucide/svelte/icons/tags';
-	import { Button, Landing, Wordmark } from '@tabeladev/tabelawebui';
+	import { Button, Landing, Wordmark } from '@tabelhadev/tabelhawebui';
 
-	const REPO_URL = 'https://github.com/TabelaDev/tabelafin';
+	const REPO_URL = 'https://github.com/TAbelhaDev/tabelhafin';
 
 	const TITLE = 'TabelaFin';
 	const DESCRIPTION =
@@ -159,7 +159,7 @@
 		justify
 	>
 		{#snippet actions()}
-			<Button href="{PUBLIC_TABELAUTH_URL}/signup" variant="primary" size="lg">Começar</Button>
+			<Button href="{PUBLIC_TABELHAUTH_URL}/signup" variant="primary" size="lg">Começar</Button>
 			<Button href={REPO_URL} target="_blank" rel="noreferrer" variant="outline" size="lg">
 				<CodeXmlIcon class="size-4" />
 				Ver o código

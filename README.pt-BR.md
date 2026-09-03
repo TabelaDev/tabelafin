@@ -9,7 +9,7 @@
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-Svelte-ff3e00?style=flat-square&logo=svelte&logoColor=white)](https://kit.svelte.dev)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square)](LICENSE)
-[![Built with tabelawebui](https://img.shields.io/badge/theme-tabelawebui-d6b4f7?style=flat-square)](https://github.com/TabelaDev/tabelawebui)
+[![Built with tabelawebui](https://img.shields.io/badge/theme-tabelawebui-d6b4f7?style=flat-square)](https://github.com/TAbelhaDev/tabelhawebui)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/ianptkcs)
 
@@ -55,7 +55,7 @@ básico.
 
 ## Traga suas próprias credenciais
 
-Mesmo padrão BYOK do [TabelaCal](https://github.com/TabelaDev/tabelacal), em
+Mesmo padrão BYOK do [TabelaCal](https://github.com/TAbelhaDev/tabelacal), em
 dobro:
 
 - **IA**: cole sua própria API key (Anthropic, OpenAI ou DeepSeek) e escolha o
@@ -74,7 +74,7 @@ Stack: SvelteKit + Cloudflare Workers (D1 + KV), Bun como package manager.
 bun install
 
 # aplica as migrations no D1 local
-bunx wrangler d1 migrations apply tabelafin-db --local
+bunx wrangler d1 migrations apply tabelhafin-db --local
 
 bun run dev
 ```
